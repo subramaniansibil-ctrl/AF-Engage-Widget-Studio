@@ -37,7 +37,7 @@ export const apiSlice = createApi({
       return headers;
     },
   }),
-  tagTypes: ['Status', 'Auth'],
+  tagTypes: ['Status', 'Auth', 'AdvisorDashboard', 'Client'],
   endpoints: (builder) => ({
     getStatus: builder.query<APIStatus, void>({
       query: () => '/status',

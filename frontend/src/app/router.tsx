@@ -9,6 +9,12 @@ const LoginPage = lazy(() =>
 const AdvisorDashboardPage = lazy(() =>
   import('../pages/AdvisorDashboardPage').then((module) => ({ default: module.AdvisorDashboardPage })),
 );
+const AdvisorClientsPage = lazy(() =>
+  import('../pages/AdvisorClientsPage').then((module) => ({ default: module.AdvisorClientsPage })),
+);
+const AdvisorClientDetailPage = lazy(() =>
+  import('../pages/AdvisorClientDetailPage').then((module) => ({ default: module.AdvisorClientDetailPage })),
+);
 const ClientDashboardPage = lazy(() =>
   import('../pages/ClientDashboardPage').then((module) => ({ default: module.ClientDashboardPage })),
 );
@@ -44,7 +50,11 @@ export const router = createBrowserRouter([
             children: [
               {
                 element: <AdvisorRoute />,
-                children: [{ path: 'advisor/dashboard', element: routeElement(AdvisorDashboardPage) }],
+                children: [
+                  { path: 'advisor/dashboard', element: routeElement(AdvisorDashboardPage) },
+                  { path: 'advisor/clients', element: routeElement(AdvisorClientsPage) },
+                  { path: 'advisor/clients/:clientId', element: routeElement(AdvisorClientDetailPage) },
+                ],
               },
               {
                 element: <ClientRoute />,

@@ -6,6 +6,8 @@ Phase 1 establishes the project structure, application shell, routing, state man
 
 Phase 2 adds mock authentication, role-aware frontend routing, JWT-ready backend middleware, and Redux-managed auth state.
 
+Phase 3 adds the Advisor Portal with dashboard metrics, client search/filtering, and client profile views backed by mock portfolio and retirement data.
+
 ## Tech Stack
 
 Frontend:
@@ -62,6 +64,9 @@ Infrastructure:
 - `POST /api/v1/auth/login`
 - `POST /api/v1/auth/logout`
 - `GET /api/v1/auth/me`
+- `GET /api/v1/advisor/dashboard`
+- `GET /api/v1/advisor/clients`
+- `GET /api/v1/advisor/clients/:id`
 
 ## Mock Accounts
 

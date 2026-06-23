@@ -1,0 +1,34 @@
+package services
+
+import (
+	"context"
+
+	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/models"
+	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/repositories"
+)
+
+type AdvisorService interface {
+	GetDashboardStats(ctx context.Context) (models.AdvisorDashboardStats, error)
+	ListClients(ctx context.Context, filters repositories.ClientFilters) ([]models.Client, error)
+	GetClientByID(ctx context.Context, id string) (models.Client, error)
+}
+
+type advisorService struct {
+	repository repositories.AdvisorRepository
+}
+
+func NewAdvisorService(repository repositories.AdvisorRepository) AdvisorService {
+	return &advisorService{repository: repository}
+}
+
+func (s *advisorService) GetDashboardStats(ctx context.Context) (models.AdvisorDashboardStats, error) {
+	return s.repository.GetDashboardStats(ctx)
+}
+
+func (s *advisorService) ListClients(ctx context.Context, filters repositories.ClientFilters) ([]models.Client, error) {
+	return s.repository.ListClients(ctx, filters)
+}
+
+func (s *advisorService) GetClientByID(ctx context.Context, id string) (models.Client, error) {
+	return s.repository.GetClientByID(ctx, id)
+}

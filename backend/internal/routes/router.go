@@ -5,10 +5,11 @@ import (
 	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/config"
 	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/handlers"
 	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/middleware"
+	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/models"
 	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/services"
 )
 
-func NewRouter(cfg config.Config, statusService services.StatusService, authService services.AuthService) *gin.Engine {
+func NewRouter(cfg config.Config, statusService services.StatusService, authService services.AuthService, advisorService services.AdvisorService) *gin.Engine {
 	if cfg.Environment == "production" {
 		gin.SetMode(gin.ReleaseMode)
 	}
@@ -18,6 +19,7 @@ func NewRouter(cfg config.Config, statusService services.StatusService, authServ
 
 	statusHandler := handlers.NewStatusHandler(statusService)
 	authHandler := handlers.NewAuthHandler(authService)
+	advisorHandler := handlers.NewAdvisorHandler(advisorService)
 	router.GET("/health", statusHandler.Health)
 
 	v1 := router.Group("/api/v1")
@@ -28,6 +30,12 @@ func NewRouter(cfg config.Config, statusService services.StatusService, authServ
 			auth.POST("/login", authHandler.Login)
 			auth.POST("/logout", authHandler.Logout)
 			auth.GET("/me", middleware.AuthMiddleware(authService), authHandler.Me)
+		}
+		advisor := v1.Group("/advisor", middleware.AuthMiddleware(authService), middleware.RoleMiddleware(models.RoleAdvisor, models.RoleAdmin))
+		{
+			advisor.GET("/dashboard", advisorHandler.Dashboard)
+			advisor.GET("/clients", advisorHandler.ListClients)
+			advisor.GET("/clients/:id", advisorHandler.GetClient)
 		}
 	}
 
