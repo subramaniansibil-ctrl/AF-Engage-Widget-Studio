@@ -1,0 +1,17 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    environment:
+      APP_ENV: development
+      HTTP_ADDRESS: :8080
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build:
+      context: ./frontend
+    depends_on:
+      - backend
+    ports:
+      - "5173:80"
