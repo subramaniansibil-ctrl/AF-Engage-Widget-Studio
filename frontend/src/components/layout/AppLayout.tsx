@@ -1,15 +1,40 @@
-import { NavLink, Outlet } from 'react-router-dom';
-import { LayoutDashboard, Menu, UserRound } from 'lucide-react';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { LogOut, Menu, Shield, UserRound, UsersRound } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useGetStatusQuery } from '../../features/api/apiSlice';
+import { useAppDispatch, useAppSelector } from '../../app/hooks';
+import { useGetStatusQuery, useLogoutMutation } from '../../features/api/apiSlice';
+import { logout, type Role } from '../../features/auth/authSlice';
 
-const navItems = [
-  { to: '/advisor/dashboard', label: 'Advisor', icon: LayoutDashboard },
-  { to: '/client/dashboard', label: 'Client', icon: UserRound },
+interface NavItem {
+  to: string;
+  label: string;
+  icon: typeof UsersRound;
+  roles: Role[];
+}
+
+const navItems: NavItem[] = [
+  { to: '/advisor/dashboard', label: 'Advisor', icon: UsersRound, roles: ['ADVISOR', 'ADMIN'] },
+  { to: '/client/dashboard', label: 'Client', icon: UserRound, roles: ['CLIENT', 'ADMIN'] },
+  { to: '/admin/dashboard', label: 'Admin', icon: Shield, roles: ['ADMIN'] },
 ];
 
 export function AppLayout() {
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+  const { user, role } = useAppSelector((state) => state.auth);
   const { data: status } = useGetStatusQuery();
+  const [logoutRequest, { isLoading: isLoggingOut }] = useLogoutMutation();
+
+  const visibleNavItems = navItems.filter((item) => role && item.roles.includes(role));
+
+  async function handleLogout() {
+    try {
+      await logoutRequest().unwrap();
+    } finally {
+      dispatch(logout());
+      navigate('/login', { replace: true });
+    }
+  }
 
   return (
     <div className="min-h-screen bg-mist text-ink">
@@ -20,7 +45,7 @@ export function AppLayout() {
             <h1 className="mt-1 text-xl font-bold">Widget Studio</h1>
           </div>
           <nav className="flex gap-2 overflow-x-auto lg:flex-col lg:overflow-visible">
-            {navItems.map((item) => {
+            {visibleNavItems.map((item) => {
               const Icon = item.icon;
               return (
                 <NavLink
@@ -54,12 +79,23 @@ export function AppLayout() {
                   <Menu className="h-5 w-5" />
                 </button>
                 <div>
-                  <p className="text-sm text-ink/60">Application shell</p>
-                  <p className="font-semibold">AF Engage Widget Studio</p>
+                  <p className="text-sm text-ink/60">{user?.role ?? 'Workspace'}</p>
+                  <p className="font-semibold">{user?.name ?? 'AF Engage Widget Studio'}</p>
                 </div>
               </div>
-              <div className="rounded-md border border-ink/10 px-3 py-2 text-sm text-ink/70">
-                API {status?.environment ?? 'checking'}
+              <div className="flex items-center gap-3">
+                <div className="rounded-md border border-ink/10 px-3 py-2 text-sm text-ink/70">
+                  API {status?.environment ?? 'checking'}
+                </div>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
+                  className="inline-flex items-center gap-2 rounded-md border border-ink/10 px-3 py-2 text-sm font-medium text-ink/70 transition hover:bg-ink/5 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Logout</span>
+                </button>
               </div>
             </div>
           </header>

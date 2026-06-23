@@ -20,4 +20,5 @@ frontend/dist/
 
 # Go local caches and binaries
 bin/
+backend/server
 *.test

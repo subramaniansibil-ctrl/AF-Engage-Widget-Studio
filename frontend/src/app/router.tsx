@@ -1,6 +1,7 @@
 import { lazy, Suspense, type ComponentType } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
+import { AdminRoute, AdvisorRoute, ClientRoute, ProtectedRoute } from '../components/routes/RouteGuards';
 
 const LoginPage = lazy(() =>
   import('../pages/LoginPage').then((module) => ({ default: module.LoginPage })),
@@ -10,6 +11,9 @@ const AdvisorDashboardPage = lazy(() =>
 );
 const ClientDashboardPage = lazy(() =>
   import('../pages/ClientDashboardPage').then((module) => ({ default: module.ClientDashboardPage })),
+);
+const AdminDashboardPage = lazy(() =>
+  import('../pages/AdminDashboardPage').then((module) => ({ default: module.AdminDashboardPage })),
 );
 const NotFoundPage = lazy(() =>
   import('../pages/NotFoundPage').then((module) => ({ default: module.NotFoundPage })),
@@ -30,11 +34,30 @@ export const router = createBrowserRouter([
   },
   {
     path: '/',
-    element: <AppLayout />,
     children: [
       { index: true, element: <Navigate to="/advisor/dashboard" replace /> },
-      { path: 'advisor/dashboard', element: routeElement(AdvisorDashboardPage) },
-      { path: 'client/dashboard', element: routeElement(ClientDashboardPage) },
+      {
+        element: <ProtectedRoute />,
+        children: [
+          {
+            element: <AppLayout />,
+            children: [
+              {
+                element: <AdvisorRoute />,
+                children: [{ path: 'advisor/dashboard', element: routeElement(AdvisorDashboardPage) }],
+              },
+              {
+                element: <ClientRoute />,
+                children: [{ path: 'client/dashboard', element: routeElement(ClientDashboardPage) }],
+              },
+              {
+                element: <AdminRoute />,
+                children: [{ path: 'admin/dashboard', element: routeElement(AdminDashboardPage) }],
+              },
+            ],
+          },
+        ],
+      },
     ],
   },
   {

@@ -1,5 +1,6 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import type { RootState } from '../../app/store';
+import type { AuthUser } from '../auth/authSlice';
 
 export interface APIStatus {
   service: string;
@@ -14,6 +15,16 @@ export interface HealthResponse {
   service: string;
 }
 
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  user: AuthUser;
+  token: string;
+}
+
 export const apiSlice = createApi({
   reducerPath: 'api',
   baseQuery: fetchBaseQuery({
@@ -26,13 +37,37 @@ export const apiSlice = createApi({
       return headers;
     },
   }),
-  tagTypes: ['Status'],
+  tagTypes: ['Status', 'Auth'],
   endpoints: (builder) => ({
     getStatus: builder.query<APIStatus, void>({
       query: () => '/status',
       providesTags: ['Status'],
     }),
+    login: builder.mutation<LoginResponse, LoginRequest>({
+      query: (body) => ({
+        url: '/auth/login',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['Auth'],
+    }),
+    logout: builder.mutation<{ success: boolean }, void>({
+      query: () => ({
+        url: '/auth/logout',
+        method: 'POST',
+      }),
+      invalidatesTags: ['Auth'],
+    }),
+    getCurrentUser: builder.query<AuthUser, void>({
+      query: () => '/auth/me',
+      providesTags: ['Auth'],
+    }),
   }),
 });
 
-export const { useGetStatusQuery } = apiSlice;
+export const {
+  useGetCurrentUserQuery,
+  useGetStatusQuery,
+  useLoginMutation,
+  useLogoutMutation,
+} = apiSlice;

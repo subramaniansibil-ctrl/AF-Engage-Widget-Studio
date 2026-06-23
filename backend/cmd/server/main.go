@@ -12,8 +12,10 @@ import (
 func main() {
 	cfg := config.Load()
 	statusRepository := repositories.NewStatusRepository(cfg)
+	authRepository := repositories.NewMockAuthRepository()
 	statusService := services.NewStatusService(statusRepository)
-	router := routes.NewRouter(cfg, statusService)
+	authService := services.NewAuthService(authRepository)
+	router := routes.NewRouter(cfg, statusService, authService)
 
 	log.Printf("%s listening on %s", cfg.ServiceName, cfg.HTTPAddress)
 	if err := router.Run(cfg.HTTPAddress); err != nil {

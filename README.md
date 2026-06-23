@@ -4,6 +4,8 @@ AF Engage Widget Studio is a full-stack foundation for financial advisors to bui
 
 Phase 1 establishes the project structure, application shell, routing, state management, API plumbing, backend health/status endpoints, and Docker support.
 
+Phase 2 adds mock authentication, role-aware frontend routing, JWT-ready backend middleware, and Redux-managed auth state.
+
 ## Tech Stack
 
 Frontend:
@@ -57,6 +59,17 @@ Infrastructure:
 
 - `GET /health`
 - `GET /api/v1/status`
+- `POST /api/v1/auth/login`
+- `POST /api/v1/auth/logout`
+- `GET /api/v1/auth/me`
+
+## Mock Accounts
+
+```text
+advisor@afengage.com / password123 / ADVISOR
+client@afengage.com / password123 / CLIENT
+admin@afengage.com / password123 / ADMIN
+```
 
 ## Local Setup
 
