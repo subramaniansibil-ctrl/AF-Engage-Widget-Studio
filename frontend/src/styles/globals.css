@@ -15,6 +15,30 @@ body {
   min-width: 320px;
 }
 
+.dark .text-ink,
+.dark .hover\:text-ink:hover {
+  color: rgb(255 255 255 / 0.92) !important;
+}
+
+.dark .text-ink\/75,
+.dark .text-ink\/70,
+.dark .text-ink\/65,
+.dark .text-ink\/60,
+.dark .text-ink\/55,
+.dark .text-ink\/50,
+.dark .text-ink\/45 {
+  color: rgb(255 255 255 / 0.68) !important;
+}
+
+.dark .bg-white {
+  background-color: rgb(255 255 255 / 0.06) !important;
+}
+
+.dark .border-ink\/10,
+.dark .border-ink\/15 {
+  border-color: rgb(255 255 255 / 0.12) !important;
+}
+
 #codex-browser-sidebar-comments-root,
 [id^="codex-browser-sidebar-comments"] {
   background: transparent !important;

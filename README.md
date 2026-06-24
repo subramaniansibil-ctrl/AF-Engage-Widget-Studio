@@ -14,6 +14,8 @@ Phase 5 adds the Client Portal with personalized dashboards, published widget re
 
 Phase 8 adds PostgreSQL-ready persistence, SQL migrations, seed data, and `APP_DATA_MODE` switching between mock and Postgres repositories.
 
+Phase 9 makes the app demo-ready with loading skeletons, error boundaries, toast notifications, dark mode, structured backend logging, validation, CORS/rate limiting, graceful shutdown, tests, and expanded documentation.
+
 ## Tech Stack
 
 Frontend:
@@ -27,12 +29,14 @@ Frontend:
 - RTK Query
 - Recharts
 - Framer Motion
+- Vitest and Testing Library
 
 Backend:
 
 - Go
 - Gin framework
 - Clean Architecture-inspired package layout
+- Structured logging, validation, rate limiting, CORS, graceful shutdown
 
 Infrastructure:
 
@@ -57,6 +61,9 @@ Infrastructure:
 │   ├── internal/services
 │   └── internal/utils
 │   └── migrations
+├── docs
+│   ├── API.md
+│   └── ARCHITECTURE.md
 ├── frontend
 │   ├── src/app
 │   ├── src/components
@@ -68,29 +75,7 @@ Infrastructure:
 
 ## Backend API
 
-- `GET /health`
-- `GET /api/v1/status`
-- `POST /api/v1/auth/login`
-- `POST /api/v1/auth/logout`
-- `GET /api/v1/auth/me`
-- `GET /api/v1/advisor/dashboard`
-- `GET /api/v1/advisor/clients`
-- `GET /api/v1/advisor/clients/:id`
-- `GET /api/v1/widgets`
-- `GET /api/v1/widgets/:id`
-- `POST /api/v1/advisor/clients/:clientId/widgets/configure`
-- `POST /api/v1/advisor/clients/:clientId/widgets/assign`
-- `GET /api/v1/advisor/clients/:clientId/assigned-widgets`
-- `POST /api/v1/advisor/clients/:clientId/publish-dashboard`
-- `GET /api/v1/client/dashboard`
-- `GET /api/v1/client/widgets`
-- `GET /api/v1/client/recommendations`
-- `POST /api/v1/client/simulations`
-- `GET /api/v1/analytics/advisor`
-- `GET /api/v1/analytics/widgets`
-- `GET /api/v1/notifications`
-- `PATCH /api/v1/notifications/:id/read`
-- `GET /api/v1/audit-logs`
+See [docs/API.md](docs/API.md) for routes, auth notes, and example requests.
 
 ## Mock Accounts
 
@@ -170,9 +155,21 @@ Docker URLs:
 ```bash
 cd frontend
 npm run build
+npm test
 npm audit
 
 cd ../backend
 go test ./...
 APP_DATA_MODE=mock go run ./cmd/server
 ```
+
+## Demo Notes
+
+- Demo credentials are listed above and seeded in both mock and Postgres modes.
+- The UI supports light/dark mode, responsive advisor/client/admin portals, loading skeletons, empty states, error boundaries, and toast feedback.
+- Screenshots can be added under `docs/screenshots/` for the final hackathon deck.
+
+## Additional Documentation
+
+- [API documentation](docs/API.md)
+- [Architecture overview](docs/ARCHITECTURE.md)

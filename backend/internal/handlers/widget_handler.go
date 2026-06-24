@@ -44,7 +44,7 @@ func (h *WidgetHandler) GetWidget(c *gin.Context) {
 func (h *WidgetHandler) ConfigureWidget(c *gin.Context) {
 	var request models.ConfigureWidgetRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
-		utils.JSONError(c, http.StatusBadRequest, "widgetId is required")
+		utils.JSONValidationError(c, err)
 		return
 	}
 
@@ -63,7 +63,7 @@ func (h *WidgetHandler) ConfigureWidget(c *gin.Context) {
 func (h *WidgetHandler) AssignWidget(c *gin.Context) {
 	var request models.AssignWidgetRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
-		utils.JSONError(c, http.StatusBadRequest, "widgetId is required")
+		utils.JSONValidationError(c, err)
 		return
 	}
 

@@ -1,12 +1,12 @@
 package models
 
 type TwoPotSimulationRequest struct {
-	SavingsPotBalance    float64 `json:"savingsPotBalance"`
-	RetirementPotBalance float64 `json:"retirementPotBalance"`
-	WithdrawalAmount     float64 `json:"withdrawalAmount"`
-	TaxRate              float64 `json:"taxRate"`
-	YearsToRetirement    int     `json:"yearsToRetirement"`
-	ExpectedGrowthRate   float64 `json:"expectedGrowthRate"`
+	SavingsPotBalance    float64 `json:"savingsPotBalance" binding:"gte=0"`
+	RetirementPotBalance float64 `json:"retirementPotBalance" binding:"gte=0"`
+	WithdrawalAmount     float64 `json:"withdrawalAmount" binding:"gte=0"`
+	TaxRate              float64 `json:"taxRate" binding:"gte=0,lte=60"`
+	YearsToRetirement    int     `json:"yearsToRetirement" binding:"gte=0,lte=60"`
+	ExpectedGrowthRate   float64 `json:"expectedGrowthRate" binding:"gte=-20,lte=20"`
 }
 
 type TwoPotSimulationResponse struct {
@@ -19,11 +19,11 @@ type TwoPotSimulationResponse struct {
 }
 
 type OnefeeSimulationRequest struct {
-	PortfolioValue       float64 `json:"portfolioValue"`
-	CurrentFeePercentage float64 `json:"currentFeePercentage"`
-	OnefeePercentage     float64 `json:"onefeePercentage"`
-	InvestmentTerm       int     `json:"investmentTerm"`
-	ExpectedGrowthRate   float64 `json:"expectedGrowthRate"`
+	PortfolioValue       float64 `json:"portfolioValue" binding:"gte=0"`
+	CurrentFeePercentage float64 `json:"currentFeePercentage" binding:"gte=0,lte=5"`
+	OnefeePercentage     float64 `json:"onefeePercentage" binding:"gte=0,lte=5"`
+	InvestmentTerm       int     `json:"investmentTerm" binding:"gte=0,lte=60"`
+	ExpectedGrowthRate   float64 `json:"expectedGrowthRate" binding:"gte=-20,lte=20"`
 }
 
 type OnefeeSimulationResponse struct {
@@ -37,11 +37,11 @@ type OnefeeSimulationResponse struct {
 }
 
 type IncomeSustainabilityRequest struct {
-	RetirementPortfolioValue float64 `json:"retirementPortfolioValue"`
-	MonthlyIncome            float64 `json:"monthlyIncome"`
-	AnnualGrowthRate         float64 `json:"annualGrowthRate"`
-	InflationRate            float64 `json:"inflationRate"`
-	RetirementYears          int     `json:"retirementYears"`
+	RetirementPortfolioValue float64 `json:"retirementPortfolioValue" binding:"gte=0"`
+	MonthlyIncome            float64 `json:"monthlyIncome" binding:"gte=0"`
+	AnnualGrowthRate         float64 `json:"annualGrowthRate" binding:"gte=-20,lte=20"`
+	InflationRate            float64 `json:"inflationRate" binding:"gte=0,lte=20"`
+	RetirementYears          int     `json:"retirementYears" binding:"gte=1,lte=60"`
 }
 
 type IncomeSustainabilityResponse struct {

@@ -23,7 +23,7 @@ func NewAuthHandler(service services.AuthService) *AuthHandler {
 func (h *AuthHandler) Login(c *gin.Context) {
 	var request models.LoginRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
-		utils.JSONError(c, http.StatusBadRequest, "email and password are required")
+		utils.JSONValidationError(c, err)
 		return
 	}
 

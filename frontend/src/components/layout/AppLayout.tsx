@@ -5,6 +5,8 @@ import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { useGetStatusQuery, useLogoutMutation } from '../../features/api/apiSlice';
 import { logout, type Role } from '../../features/auth/authSlice';
 import { NotificationMenu } from './NotificationMenu';
+import { ThemeToggle } from '../ui/ThemeToggle';
+import { setMobileSidebarOpen } from '../../features/ui/uiSlice';
 
 interface NavItem {
   to: string;
@@ -27,6 +29,7 @@ export function AppLayout() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { user, role } = useAppSelector((state) => state.auth);
+  const { mobileSidebarOpen } = useAppSelector((state) => state.ui);
   const { data: status } = useGetStatusQuery();
   const [logoutRequest, { isLoading: isLoggingOut }] = useLogoutMutation();
 
@@ -42,9 +45,15 @@ export function AppLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-mist text-ink">
+    <div className="min-h-screen bg-mist text-ink dark:bg-ink dark:text-white">
       <div className="grid min-h-screen lg:grid-cols-[260px_1fr]">
-        <aside className="border-b border-ink/10 bg-white px-5 py-5 lg:border-b-0 lg:border-r">
+        <aside
+          className={[
+            'border-b border-ink/10 bg-white px-5 py-5 transition dark:border-white/10 dark:bg-ink',
+            mobileSidebarOpen ? 'block' : 'hidden',
+            'lg:block lg:border-b-0 lg:border-r',
+          ].join(' ')}
+        >
           <div className="mb-8">
             <p className="text-sm font-semibold text-sage">AF Engage</p>
             <h1 className="mt-1 text-xl font-bold">Widget Studio</h1>
@@ -64,6 +73,7 @@ export function AppLayout() {
                         : 'text-ink/70 hover:bg-ink/5 hover:text-ink',
                     ].join(' ')
                   }
+                  onClick={() => dispatch(setMobileSidebarOpen(false))}
                 >
                   <Icon aria-hidden="true" className="h-4 w-4 shrink-0" />
                   <span>{item.label}</span>
@@ -73,12 +83,13 @@ export function AppLayout() {
           </nav>
         </aside>
         <div className="flex min-w-0 flex-col">
-          <header className="border-b border-ink/10 bg-white px-6 py-4">
+          <header className="border-b border-ink/10 bg-white px-6 py-4 dark:border-white/10 dark:bg-ink">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <button
                   type="button"
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-ink/10 text-ink lg:hidden"
+                  onClick={() => dispatch(setMobileSidebarOpen(!mobileSidebarOpen))}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-ink/10 text-ink dark:border-white/10 dark:text-white lg:hidden"
                   aria-label="Open navigation"
                 >
                   <Menu className="h-5 w-5" />
@@ -90,14 +101,15 @@ export function AppLayout() {
               </div>
               <div className="flex items-center gap-3">
                 <NotificationMenu />
-                <div className="rounded-md border border-ink/10 px-3 py-2 text-sm text-ink/70">
+                <ThemeToggle />
+                <div className="hidden rounded-md border border-ink/10 px-3 py-2 text-sm text-ink/70 dark:border-white/10 dark:text-white/70 sm:block">
                   API {status?.environment ?? 'checking'}
                 </div>
                 <button
                   type="button"
                   onClick={handleLogout}
                   disabled={isLoggingOut}
-                  className="inline-flex items-center gap-2 rounded-md border border-ink/10 px-3 py-2 text-sm font-medium text-ink/70 transition hover:bg-ink/5 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex items-center gap-2 rounded-md border border-ink/10 px-3 py-2 text-sm font-medium text-ink/70 transition hover:bg-ink/5 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:text-white/70 dark:hover:bg-white/10 dark:hover:text-white"
                 >
                   <LogOut className="h-4 w-4" />
                   <span>Logout</span>

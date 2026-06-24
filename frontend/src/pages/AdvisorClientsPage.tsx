@@ -6,6 +6,9 @@ import {
   RiskProfile,
   useGetClientsQuery,
 } from '../features/advisor/advisorApi';
+import { Card } from '../components/ui/Card';
+import { EmptyState } from '../components/ui/EmptyState';
+import { Skeleton } from '../components/ui/Skeleton';
 
 const currency = new Intl.NumberFormat('en-US', {
   style: 'currency',
@@ -45,7 +48,7 @@ export function AdvisorClientsPage() {
         </p>
       </section>
 
-      <section className="rounded-lg border border-ink/10 bg-white p-4 shadow-panel">
+      <Card className="p-4">
         <div className="grid gap-3 lg:grid-cols-[1fr_220px_240px]">
           <label className="relative block">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink/45" />
@@ -79,13 +82,20 @@ export function AdvisorClientsPage() {
             ))}
           </select>
         </div>
-      </section>
+      </Card>
 
-      <section className="overflow-hidden rounded-lg border border-ink/10 bg-white shadow-panel">
+      <Card className="overflow-hidden">
         <div className="flex items-center justify-between border-b border-ink/10 px-4 py-3">
           <p className="text-sm font-semibold">{isFetching ? 'Refreshing clients...' : `${clients.length} clients`}</p>
           <p className="text-xs text-ink/55">Pagination-ready list view</p>
         </div>
+        {isFetching && !clients.length ? (
+          <div className="space-y-3 p-4" data-testid="clients-loading">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <Skeleton key={index} className="h-14" />
+            ))}
+          </div>
+        ) : (
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-ink/10">
             <thead className="bg-ink/5">
@@ -112,17 +122,19 @@ export function AdvisorClientsPage() {
                   <td className="px-4 py-3 text-right text-sm font-medium">{currency.format(client.portfolio.totalValue)}</td>
                 </tr>
               ))}
-              {!clients.length && (
-                <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-sm text-ink/60">
-                    No clients match the current filters.
-                  </td>
-                </tr>
-              )}
             </tbody>
           </table>
         </div>
-      </section>
+        )}
+        {!isFetching && !clients.length && (
+          <div className="p-4">
+            <EmptyState
+              title="No clients found"
+              description="Adjust the search text or filters to broaden the advisor book."
+            />
+          </div>
+        )}
+      </Card>
     </div>
   );
 }

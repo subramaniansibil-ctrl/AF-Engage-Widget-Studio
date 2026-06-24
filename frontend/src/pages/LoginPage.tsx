@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../app/hooks';
 import { dashboardForRole } from '../components/routes/RouteGuards';
+import { Button } from '../components/ui/Button';
+import { addToast } from '../features/ui/uiSlice';
 import { useLoginMutation } from '../features/api/apiSlice';
 import { login, type Role } from '../features/auth/authSlice';
 
@@ -56,20 +58,49 @@ export function LoginPage() {
     try {
       const response = await loginRequest({ email, password }).unwrap();
       dispatch(login(response));
+      dispatch(addToast({
+        title: 'Signed in',
+        description: `Welcome back, ${response.user.name}.`,
+        variant: 'success',
+      }));
       navigate(
         canRoleAccessPath(response.user.role, from) ? from! : dashboardForRole(response.user.role),
         { replace: true },
       );
     } catch (error) {
       setErrorMessage(loginErrorMessage(error));
+      dispatch(addToast({
+        title: 'Login failed',
+        description: loginErrorMessage(error),
+        variant: 'error',
+      }));
     }
   }
 
   return (
-    <main className="grid min-h-screen place-items-center bg-mist px-6 text-ink">
+    <main className="grid min-h-screen bg-mist text-ink dark:bg-ink dark:text-white lg:grid-cols-[1.05fr_0.95fr]">
+      <section className="hidden min-h-screen bg-[radial-gradient(circle_at_20%_20%,rgba(90,127,113,0.24),transparent_35%),linear-gradient(135deg,#17212f,#26384a)] px-10 py-10 text-white lg:flex lg:flex-col lg:justify-between">
+        <div>
+          <p className="text-sm font-semibold text-sage">AF Engage</p>
+          <h1 className="mt-2 text-4xl font-bold">Widget Studio</h1>
+        </div>
+        <div className="max-w-xl">
+          <p className="text-sm uppercase text-white/55">Hackathon demo workspace</p>
+          <h2 className="mt-4 text-5xl font-bold leading-tight">Personalized financial journeys, assembled in minutes.</h2>
+          <p className="mt-5 text-base leading-7 text-white/70">
+            Advisors configure reusable simulation widgets, publish client dashboards, and track engagement from one polished portal.
+          </p>
+        </div>
+        <div className="grid grid-cols-3 gap-3 text-sm text-white/70">
+          <span className="rounded-md border border-white/10 bg-white/5 px-3 py-2">Advisor portal</span>
+          <span className="rounded-md border border-white/10 bg-white/5 px-3 py-2">Client widgets</span>
+          <span className="rounded-md border border-white/10 bg-white/5 px-3 py-2">Postgres ready</span>
+        </div>
+      </section>
+      <section className="grid min-h-screen place-items-center px-6 py-10">
       <motion.form
         onSubmit={handleSubmit}
-        className="w-full max-w-md rounded-lg border border-ink/10 bg-white p-8 shadow-panel"
+        className="w-full max-w-md rounded-lg border border-ink/10 bg-white p-8 shadow-panel dark:border-white/10 dark:bg-white/5"
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.24 }}
@@ -87,7 +118,7 @@ export function LoginPage() {
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className="mt-2 w-full rounded-md border border-ink/15 px-3 py-3 text-sm outline-none transition focus:border-sage focus:ring-2 focus:ring-sage/20"
+              className="mt-2 w-full rounded-md border border-ink/15 bg-white px-3 py-3 text-sm outline-none transition focus:border-sage focus:ring-2 focus:ring-sage/20 dark:border-white/15 dark:bg-white/10"
               autoComplete="email"
               required
             />
@@ -98,7 +129,7 @@ export function LoginPage() {
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="mt-2 w-full rounded-md border border-ink/15 px-3 py-3 text-sm outline-none transition focus:border-sage focus:ring-2 focus:ring-sage/20"
+              className="mt-2 w-full rounded-md border border-ink/15 bg-white px-3 py-3 text-sm outline-none transition focus:border-sage focus:ring-2 focus:ring-sage/20 dark:border-white/15 dark:bg-white/10"
               autoComplete="current-password"
               required
             />
@@ -111,20 +142,21 @@ export function LoginPage() {
           </p>
         )}
 
-        <button
+        <Button
           type="submit"
           disabled={isLoading}
-          className="mt-6 w-full rounded-md bg-ink px-4 py-3 text-sm font-semibold text-white transition hover:bg-ink/90 disabled:cursor-not-allowed disabled:bg-ink/50"
+          className="mt-6 w-full py-3"
         >
           {isLoading ? 'Signing in...' : 'Sign in'}
-        </button>
+        </Button>
 
-        <div className="mt-6 rounded-md bg-ink/5 p-3 text-xs leading-5 text-ink/65">
+        <div className="mt-6 rounded-md bg-ink/5 p-3 text-xs leading-5 text-ink/65 dark:bg-white/10 dark:text-white/65">
           <p>advisor@afengage.com / password123</p>
           <p>client@afengage.com / password123</p>
           <p>admin@afengage.com / password123</p>
         </div>
       </motion.form>
+      </section>
     </main>
   );
 }

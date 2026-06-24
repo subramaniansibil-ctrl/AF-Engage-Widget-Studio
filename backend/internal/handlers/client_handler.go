@@ -71,7 +71,7 @@ func (h *ClientHandler) SaveSimulation(c *gin.Context) {
 
 	var request models.SimulationRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
-		utils.JSONError(c, http.StatusBadRequest, "widgetId is required")
+		utils.JSONValidationError(c, err)
 		return
 	}
 

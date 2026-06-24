@@ -2,8 +2,15 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
+	"log/slog"
+	"net/http"
+	"os"
+	"os/signal"
 	"strings"
+	"syscall"
+	"time"
 
 	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/config"
 	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/database"
@@ -15,6 +22,8 @@ import (
 func main() {
 	cfg := config.Load()
 	ctx := context.Background()
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
 	statusRepository := repositories.NewStatusRepository(cfg)
 
 	authRepository := repositories.AuthRepository(repositories.NewMockAuthRepository())
@@ -26,20 +35,22 @@ func main() {
 	if strings.EqualFold(cfg.DataMode, "postgres") {
 		db, err := database.OpenPostgres(ctx, cfg.DatabaseURL)
 		if err != nil {
-			log.Fatalf("connect postgres: %v", err)
+			logger.Error("connect_postgres_failed", "error", err)
+			os.Exit(1)
 		}
 		defer db.Close()
 		if err := database.RunMigrations(ctx, db, cfg.MigrationsPath); err != nil {
-			log.Fatalf("run migrations: %v", err)
+			logger.Error("run_migrations_failed", "error", err)
+			os.Exit(1)
 		}
 		authRepository = repositories.NewPostgresAuthRepository(db)
 		advisorRepository = repositories.NewPostgresAdvisorRepository(db)
 		widgetRepository = repositories.NewPostgresWidgetRepository(db)
 		clientRepository = repositories.NewPostgresClientRepository(db)
 		analyticsRepository = repositories.NewPostgresAnalyticsRepository(db)
-		log.Printf("data mode: postgres")
+		logger.Info("data_mode_selected", "mode", "postgres")
 	} else {
-		log.Printf("data mode: mock")
+		logger.Info("data_mode_selected", "mode", "mock")
 	}
 
 	statusService := services.NewStatusService(statusRepository)
@@ -51,8 +62,29 @@ func main() {
 	analyticsService := services.NewAnalyticsService(analyticsRepository)
 	router := routes.NewRouter(cfg, statusService, authService, advisorService, widgetService, clientService, simulationService, analyticsService)
 
-	log.Printf("%s listening on %s", cfg.ServiceName, cfg.HTTPAddress)
-	if err := router.Run(cfg.HTTPAddress); err != nil {
-		log.Fatal(err)
+	server := &http.Server{
+		Addr:              cfg.HTTPAddress,
+		Handler:           router,
+		ReadHeaderTimeout: 5 * time.Second,
 	}
+
+	go func() {
+		logger.Info("server_started", "service", cfg.ServiceName, "address", cfg.HTTPAddress)
+		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatalf("server failed: %v", err)
+		}
+	}()
+
+	shutdownSignal := make(chan os.Signal, 1)
+	signal.Notify(shutdownSignal, syscall.SIGINT, syscall.SIGTERM)
+	<-shutdownSignal
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	logger.Info("server_shutdown_started")
+	if err := server.Shutdown(shutdownCtx); err != nil {
+		logger.Error("server_shutdown_failed", "error", err)
+		os.Exit(1)
+	}
+	logger.Info("server_shutdown_complete")
 }

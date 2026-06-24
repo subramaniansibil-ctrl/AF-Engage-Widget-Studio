@@ -20,7 +20,7 @@ func NewSimulationHandler(service services.SimulationService) *SimulationHandler
 func (h *SimulationHandler) TwoPot(c *gin.Context) {
 	var request models.TwoPotSimulationRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
-		utils.JSONError(c, http.StatusBadRequest, "invalid two-pot simulation request")
+		utils.JSONValidationError(c, err)
 		return
 	}
 
@@ -30,7 +30,7 @@ func (h *SimulationHandler) TwoPot(c *gin.Context) {
 func (h *SimulationHandler) Onefee(c *gin.Context) {
 	var request models.OnefeeSimulationRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
-		utils.JSONError(c, http.StatusBadRequest, "invalid onefee simulation request")
+		utils.JSONValidationError(c, err)
 		return
 	}
 
@@ -40,7 +40,7 @@ func (h *SimulationHandler) Onefee(c *gin.Context) {
 func (h *SimulationHandler) IncomeSustainability(c *gin.Context) {
 	var request models.IncomeSustainabilityRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
-		utils.JSONError(c, http.StatusBadRequest, "invalid income sustainability simulation request")
+		utils.JSONValidationError(c, err)
 		return
 	}
 

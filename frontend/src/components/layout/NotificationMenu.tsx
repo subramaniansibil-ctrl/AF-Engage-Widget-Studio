@@ -4,6 +4,7 @@ import {
   useGetNotificationsQuery,
   useMarkNotificationReadMutation,
 } from '../../features/analytics/analyticsApi';
+import { EmptyState } from '../ui/EmptyState';
 
 export function NotificationMenu() {
   const [isOpen, setIsOpen] = useState(false);
@@ -28,7 +29,7 @@ export function NotificationMenu() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 z-20 mt-2 w-[min(360px,calc(100vw-2rem))] rounded-lg border border-ink/10 bg-white p-3 shadow-panel">
+        <div className="absolute right-0 z-20 mt-2 w-[min(360px,calc(100vw-2rem))] rounded-lg border border-ink/10 bg-white p-3 shadow-panel dark:border-white/10 dark:bg-ink">
           <div className="mb-2 flex items-center justify-between gap-3">
             <p className="font-semibold">Notifications</p>
             <p className="text-xs text-ink/50">{unreadCount} unread</p>
@@ -56,9 +57,7 @@ export function NotificationMenu() {
               </button>
             ))}
             {!notifications.length && (
-              <p className="rounded-md border border-dashed border-ink/15 p-4 text-sm text-ink/60">
-                No notifications yet.
-              </p>
+              <EmptyState title="No notifications" description="New client and dashboard events will appear here." />
             )}
           </div>
         </div>

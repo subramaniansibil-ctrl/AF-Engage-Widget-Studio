@@ -2,6 +2,7 @@ import { lazy, Suspense, type ComponentType } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
 import { AdminRoute, AdvisorRoute, ClientRoute, ProtectedRoute } from '../components/routes/RouteGuards';
+import { DashboardSkeleton } from '../components/ui/Skeleton';
 
 const LoginPage = lazy(() =>
   import('../pages/LoginPage').then((module) => ({ default: module.LoginPage })),
@@ -39,7 +40,7 @@ const NotFoundPage = lazy(() =>
 
 function routeElement(Page: ComponentType) {
   return (
-    <Suspense fallback={<p className="text-sm text-ink/60">Loading workspace...</p>}>
+    <Suspense fallback={<DashboardSkeleton />}>
       <Page />
     </Suspense>
   );

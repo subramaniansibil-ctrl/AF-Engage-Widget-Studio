@@ -9,6 +9,8 @@ type Config struct {
 	DataMode       string
 	DatabaseURL    string
 	MigrationsPath string
+	CORSOrigins    string
+	RateLimitRPM   string
 }
 
 func Load() Config {
@@ -19,6 +21,8 @@ func Load() Config {
 		DataMode:       getEnv("APP_DATA_MODE", "mock"),
 		DatabaseURL:    getEnv("DATABASE_URL", "postgres://af_engage:af_engage_password@localhost:5432/af_engage?sslmode=disable"),
 		MigrationsPath: getEnv("MIGRATIONS_PATH", "migrations"),
+		CORSOrigins:    getEnv("CORS_ALLOWED_ORIGINS", "http://localhost:5173"),
+		RateLimitRPM:   getEnv("RATE_LIMIT_RPM", "120"),
 	}
 }
 

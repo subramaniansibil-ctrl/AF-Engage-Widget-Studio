@@ -5,6 +5,7 @@
     "dev:frontend": "npm --prefix frontend run dev",
     "dev:backend": "cd backend && go run ./cmd/server",
     "build": "npm --prefix frontend run build",
+    "test:frontend": "npm --prefix frontend test",
     "test:backend": "cd backend && go test ./..."
   }
 }
