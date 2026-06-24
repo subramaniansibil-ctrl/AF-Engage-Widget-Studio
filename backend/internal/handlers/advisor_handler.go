@@ -44,7 +44,7 @@ func (h *AdvisorHandler) ListClients(c *gin.Context) {
 }
 
 func (h *AdvisorHandler) GetClient(c *gin.Context) {
-	client, err := h.service.GetClientByID(c.Request.Context(), c.Param("id"))
+	client, err := h.service.GetClientByID(c.Request.Context(), c.Param("clientId"))
 	if err != nil {
 		if errors.Is(err, repositories.ErrClientNotFound) {
 			utils.JSONError(c, http.StatusNotFound, "client not found")

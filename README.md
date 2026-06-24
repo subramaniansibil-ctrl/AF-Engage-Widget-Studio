@@ -8,6 +8,8 @@ Phase 2 adds mock authentication, role-aware frontend routing, JWT-ready backend
 
 Phase 3 adds the Advisor Portal with dashboard metrics, client search/filtering, and client profile views backed by mock portfolio and retirement data.
 
+Phase 4 adds the reusable widget library, widget configuration, advisor assignment workflow, assigned widget lists, and client dashboard publishing.
+
 ## Tech Stack
 
 Frontend:
@@ -67,6 +69,12 @@ Infrastructure:
 - `GET /api/v1/advisor/dashboard`
 - `GET /api/v1/advisor/clients`
 - `GET /api/v1/advisor/clients/:id`
+- `GET /api/v1/widgets`
+- `GET /api/v1/widgets/:id`
+- `POST /api/v1/advisor/clients/:clientId/widgets/configure`
+- `POST /api/v1/advisor/clients/:clientId/widgets/assign`
+- `GET /api/v1/advisor/clients/:clientId/assigned-widgets`
+- `POST /api/v1/advisor/clients/:clientId/publish-dashboard`
 
 ## Mock Accounts
 

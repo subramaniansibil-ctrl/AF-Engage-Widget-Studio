@@ -1,8 +1,13 @@
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, PiggyBank, Target, WalletCards } from 'lucide-react';
+import { ArrowLeft, Boxes, PiggyBank, Send, Target, WalletCards } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import { useGetClientByIdQuery } from '../features/advisor/advisorApi';
+import {
+  DashboardAssignment,
+  useGetAssignedWidgetsQuery,
+  usePublishDashboardMutation,
+} from '../features/widgets/widgetsApi';
 
 const currency = new Intl.NumberFormat('en-US', {
   style: 'currency',
@@ -15,6 +20,8 @@ const allocationColors = ['#5a7f71', '#c7933d', '#dc6b57', '#17212f'];
 export function AdvisorClientDetailPage() {
   const { clientId = '' } = useParams();
   const { data: client, isLoading, isError } = useGetClientByIdQuery(clientId);
+  const { data: assignedWidgets = [] } = useGetAssignedWidgetsQuery(clientId, { skip: !clientId });
+  const [publishDashboard, { isLoading: isPublishing }] = usePublishDashboardMutation();
 
   if (isLoading) {
     return <p className="text-sm text-ink/60">Loading client profile...</p>;
@@ -110,11 +117,41 @@ export function AdvisorClientDetailPage() {
       </section>
 
       <section className="rounded-lg border border-ink/10 bg-white p-5 shadow-panel">
-        <h3 className="text-lg font-semibold">Recommended widgets</h3>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 className="text-lg font-semibold">Assigned widgets</h3>
+            <p className="mt-1 text-sm text-ink/60">Widgets currently staged for this client dashboard.</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              to={`/advisor/widgets/configure?clientId=${client.id}`}
+              className="inline-flex items-center gap-2 rounded-md border border-ink/10 px-3 py-2 text-sm font-semibold text-ink/75 transition hover:bg-ink/5"
+            >
+              <Boxes className="h-4 w-4" />
+              Assign widgets
+            </Link>
+            <button
+              type="button"
+              onClick={() => publishDashboard(client.id)}
+              disabled={!assignedWidgets.length || isPublishing}
+              className="inline-flex items-center gap-2 rounded-md bg-sage px-3 py-2 text-sm font-semibold text-white transition hover:bg-sage/90 disabled:cursor-not-allowed disabled:bg-sage/45"
+            >
+              <Send className="h-4 w-4" />
+              Publish dashboard
+            </button>
+          </div>
+        </div>
         <div className="mt-4 grid gap-3 md:grid-cols-3">
-          <WidgetRecommendation title="Retirement Readiness" />
-          <WidgetRecommendation title="Risk Comfort Check" />
-          <WidgetRecommendation title="Savings Pot Planner" />
+          {assignedWidgets.map((assignment) => (
+            <AssignedWidgetCard key={assignment.id} assignment={assignment} />
+          ))}
+          {!assignedWidgets.length && (
+            <>
+              <WidgetRecommendation title="Two-Pot Impact" />
+              <WidgetRecommendation title="Onefee Wealth Reclaim" />
+              <WidgetRecommendation title="Income Sustainability" />
+            </>
+          )}
         </div>
       </section>
     </div>
@@ -149,6 +186,25 @@ function WidgetRecommendation({ title }: { title: string }) {
     <div className="rounded-md border border-ink/10 p-4">
       <p className="font-semibold">{title}</p>
       <p className="mt-2 text-sm leading-6 text-ink/65">Suggested for this client profile and retirement journey.</p>
+    </div>
+  );
+}
+
+function AssignedWidgetCard({ assignment }: { assignment: DashboardAssignment }) {
+  return (
+    <div className="rounded-md border border-ink/10 p-4">
+      <div className="flex items-start justify-between gap-3">
+        <p className="font-semibold">{assignment.widgetName}</p>
+        <span className="rounded-md bg-ink/5 px-2 py-1 text-xs font-semibold text-ink/55">
+          {assignment.published ? 'Published' : 'Draft'}
+        </span>
+      </div>
+      <p className="mt-3 text-sm leading-6 text-ink/65">
+        Scenario: {assignment.configuration.options.scenario ?? assignment.configuration.options.withdrawalScenario ?? 'Default'}
+      </p>
+      <p className="mt-1 text-sm text-ink/55">
+        Projection: {assignment.configuration.options.projectionYears ?? 'Default'} years
+      </p>
     </div>
   );
 }

@@ -15,6 +15,12 @@ const AdvisorClientsPage = lazy(() =>
 const AdvisorClientDetailPage = lazy(() =>
   import('../pages/AdvisorClientDetailPage').then((module) => ({ default: module.AdvisorClientDetailPage })),
 );
+const WidgetLibraryPage = lazy(() =>
+  import('../pages/WidgetLibraryPage').then((module) => ({ default: module.WidgetLibraryPage })),
+);
+const WidgetConfigurationPage = lazy(() =>
+  import('../pages/WidgetConfigurationPage').then((module) => ({ default: module.WidgetConfigurationPage })),
+);
 const ClientDashboardPage = lazy(() =>
   import('../pages/ClientDashboardPage').then((module) => ({ default: module.ClientDashboardPage })),
 );
@@ -54,6 +60,8 @@ export const router = createBrowserRouter([
                   { path: 'advisor/dashboard', element: routeElement(AdvisorDashboardPage) },
                   { path: 'advisor/clients', element: routeElement(AdvisorClientsPage) },
                   { path: 'advisor/clients/:clientId', element: routeElement(AdvisorClientDetailPage) },
+                  { path: 'advisor/widgets', element: routeElement(WidgetLibraryPage) },
+                  { path: 'advisor/widgets/configure', element: routeElement(WidgetConfigurationPage) },
                 ],
               },
               {

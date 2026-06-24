@@ -9,7 +9,7 @@ import (
 	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/services"
 )
 
-func NewRouter(cfg config.Config, statusService services.StatusService, authService services.AuthService, advisorService services.AdvisorService) *gin.Engine {
+func NewRouter(cfg config.Config, statusService services.StatusService, authService services.AuthService, advisorService services.AdvisorService, widgetService services.WidgetService) *gin.Engine {
 	if cfg.Environment == "production" {
 		gin.SetMode(gin.ReleaseMode)
 	}
@@ -20,6 +20,7 @@ func NewRouter(cfg config.Config, statusService services.StatusService, authServ
 	statusHandler := handlers.NewStatusHandler(statusService)
 	authHandler := handlers.NewAuthHandler(authService)
 	advisorHandler := handlers.NewAdvisorHandler(advisorService)
+	widgetHandler := handlers.NewWidgetHandler(widgetService)
 	router.GET("/health", statusHandler.Health)
 
 	v1 := router.Group("/api/v1")
@@ -31,11 +32,20 @@ func NewRouter(cfg config.Config, statusService services.StatusService, authServ
 			auth.POST("/logout", authHandler.Logout)
 			auth.GET("/me", middleware.AuthMiddleware(authService), authHandler.Me)
 		}
+		widgets := v1.Group("/widgets", middleware.AuthMiddleware(authService), middleware.RoleMiddleware(models.RoleAdvisor, models.RoleAdmin))
+		{
+			widgets.GET("", widgetHandler.ListWidgets)
+			widgets.GET("/:id", widgetHandler.GetWidget)
+		}
 		advisor := v1.Group("/advisor", middleware.AuthMiddleware(authService), middleware.RoleMiddleware(models.RoleAdvisor, models.RoleAdmin))
 		{
 			advisor.GET("/dashboard", advisorHandler.Dashboard)
 			advisor.GET("/clients", advisorHandler.ListClients)
-			advisor.GET("/clients/:id", advisorHandler.GetClient)
+			advisor.GET("/clients/:clientId", advisorHandler.GetClient)
+			advisor.POST("/clients/:clientId/widgets/configure", widgetHandler.ConfigureWidget)
+			advisor.POST("/clients/:clientId/widgets/assign", widgetHandler.AssignWidget)
+			advisor.GET("/clients/:clientId/assigned-widgets", widgetHandler.ListAssignedWidgets)
+			advisor.POST("/clients/:clientId/publish-dashboard", widgetHandler.PublishDashboard)
 		}
 	}
 
