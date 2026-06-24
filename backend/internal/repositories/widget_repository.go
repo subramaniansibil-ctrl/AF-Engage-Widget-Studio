@@ -54,12 +54,24 @@ func NewMockWidgetRepository() WidgetRepository {
 			"advisorNote":     "Use this to stress-test retirement income assumptions.",
 		},
 	}
+	onefeeConfig := models.WidgetConfiguration{
+		ID:       "config-seeded-003",
+		WidgetID: "onefee-wealth-reclaim",
+		ClientID: "client-001",
+		Options: map[string]string{
+			"feeComparison":     "1.25% vs 0.75%",
+			"projectionYears":   "15",
+			"advisorNote":       "Compare long-term fee leakage against the Onefee illustration.",
+			"showCostBreakdown": "true",
+		},
+	}
 
 	return &mockWidgetRepository{
 		widgets: widgets,
 		configurations: map[string]models.WidgetConfiguration{
 			twoPotConfig.ID: twoPotConfig,
 			incomeConfig.ID: incomeConfig,
+			onefeeConfig.ID: onefeeConfig,
 		},
 		assignments: map[string][]models.DashboardAssignment{
 			"client-001": {
@@ -79,10 +91,18 @@ func NewMockWidgetRepository() WidgetRepository {
 					Configuration: incomeConfig,
 					Published:     true,
 				},
+				{
+					ID:            "assignment-seeded-003",
+					ClientID:      "client-001",
+					WidgetID:      "onefee-wealth-reclaim",
+					WidgetName:    "Onefee Wealth Reclaim",
+					Configuration: onefeeConfig,
+					Published:     true,
+				},
 			},
 		},
-		nextConfigID: 3,
-		nextAssignID: 3,
+		nextConfigID: 4,
+		nextAssignID: 4,
 	}
 }
 

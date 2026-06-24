@@ -21,7 +21,8 @@ func main() {
 	advisorService := services.NewAdvisorService(advisorRepository)
 	widgetService := services.NewWidgetService(widgetRepository)
 	clientService := services.NewClientService(advisorRepository, widgetRepository, clientRepository)
-	router := routes.NewRouter(cfg, statusService, authService, advisorService, widgetService, clientService)
+	simulationService := services.NewSimulationService()
+	router := routes.NewRouter(cfg, statusService, authService, advisorService, widgetService, clientService, simulationService)
 
 	log.Printf("%s listening on %s", cfg.ServiceName, cfg.HTTPAddress)
 	if err := router.Run(cfg.HTTPAddress); err != nil {

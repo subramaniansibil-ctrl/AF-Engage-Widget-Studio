@@ -1,4 +1,5 @@
 import { FormEvent, useState } from 'react';
+import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import { motion } from 'framer-motion';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../app/hooks';
@@ -20,6 +21,14 @@ function canRoleAccessPath(role: Role, path?: string) {
     return role === 'ADMIN';
   }
   return false;
+}
+
+function loginErrorMessage(error: unknown) {
+  const queryError = error as FetchBaseQueryError;
+  if (queryError?.status === 'FETCH_ERROR' || queryError?.status === 'TIMEOUT_ERROR') {
+    return 'Unable to reach the API. Please make sure the backend is running.';
+  }
+  return 'Invalid email or password.';
 }
 
 export function LoginPage() {
@@ -51,8 +60,8 @@ export function LoginPage() {
         canRoleAccessPath(response.user.role, from) ? from! : dashboardForRole(response.user.role),
         { replace: true },
       );
-    } catch {
-      setErrorMessage('Invalid email or password.');
+    } catch (error) {
+      setErrorMessage(loginErrorMessage(error));
     }
   }
 

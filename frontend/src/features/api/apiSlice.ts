@@ -47,6 +47,7 @@ export const apiSlice = createApi({
     'ClientDashboard',
     'ClientRecommendation',
     'ClientSimulation',
+    'SimulationCalculation',
   ],
   endpoints: (builder) => ({
     getStatus: builder.query<APIStatus, void>({
