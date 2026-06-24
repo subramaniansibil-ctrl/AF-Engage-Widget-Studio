@@ -46,10 +46,11 @@ func NewMockAuthRepository() AuthRepository {
 			},
 			"client@afengage.com": {
 				user: models.User{
-					ID:    "user_client_001",
-					Name:  "Client User",
-					Email: "client@afengage.com",
-					Role:  models.RoleClient,
+					ID:       "user_client_001",
+					Name:     "Avery Chen",
+					Email:    "client@afengage.com",
+					Role:     models.RoleClient,
+					ClientID: "client-001",
 				},
 				password: "password123",
 			},

@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { Boxes, LayoutDashboard, LogOut, Menu, Shield, UserRound, UsersRound } from 'lucide-react';
+import { Boxes, ClipboardList, LayoutDashboard, LogOut, Menu, Shield, UserRound, UsersRound } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { useGetStatusQuery, useLogoutMutation } from '../../features/api/apiSlice';
@@ -16,7 +16,8 @@ const navItems: NavItem[] = [
   { to: '/advisor/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['ADVISOR', 'ADMIN'] },
   { to: '/advisor/clients', label: 'Clients', icon: UsersRound, roles: ['ADVISOR', 'ADMIN'] },
   { to: '/advisor/widgets', label: 'Widgets', icon: Boxes, roles: ['ADVISOR', 'ADMIN'] },
-  { to: '/client/dashboard', label: 'Client', icon: UserRound, roles: ['CLIENT', 'ADMIN'] },
+  { to: '/client/dashboard', label: 'Overview', icon: UserRound, roles: ['CLIENT', 'ADMIN'] },
+  { to: '/client/widgets', label: 'My widgets', icon: ClipboardList, roles: ['CLIENT', 'ADMIN'] },
   { to: '/admin/dashboard', label: 'Admin', icon: Shield, roles: ['ADMIN'] },
 ];
 

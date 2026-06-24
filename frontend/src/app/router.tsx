@@ -24,6 +24,9 @@ const WidgetConfigurationPage = lazy(() =>
 const ClientDashboardPage = lazy(() =>
   import('../pages/ClientDashboardPage').then((module) => ({ default: module.ClientDashboardPage })),
 );
+const ClientWidgetsPage = lazy(() =>
+  import('../pages/ClientWidgetsPage').then((module) => ({ default: module.ClientWidgetsPage })),
+);
 const AdminDashboardPage = lazy(() =>
   import('../pages/AdminDashboardPage').then((module) => ({ default: module.AdminDashboardPage })),
 );
@@ -66,7 +69,10 @@ export const router = createBrowserRouter([
               },
               {
                 element: <ClientRoute />,
-                children: [{ path: 'client/dashboard', element: routeElement(ClientDashboardPage) }],
+                children: [
+                  { path: 'client/dashboard', element: routeElement(ClientDashboardPage) },
+                  { path: 'client/widgets', element: routeElement(ClientWidgetsPage) },
+                ],
               },
               {
                 element: <AdminRoute />,

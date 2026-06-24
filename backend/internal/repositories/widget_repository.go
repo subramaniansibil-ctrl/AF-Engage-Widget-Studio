@@ -33,12 +33,56 @@ type mockWidgetRepository struct {
 }
 
 func NewMockWidgetRepository() WidgetRepository {
+	widgets := mockWidgets()
+	twoPotConfig := models.WidgetConfiguration{
+		ID:       "config-seeded-001",
+		WidgetID: "two-pot-impact",
+		ClientID: "client-001",
+		Options: map[string]string{
+			"projectionYears": "20",
+			"scenario":        "No withdrawal",
+			"advisorNote":     "Review the long-term impact before accessing the savings pot.",
+		},
+	}
+	incomeConfig := models.WidgetConfiguration{
+		ID:       "config-seeded-002",
+		WidgetID: "income-sustainability",
+		ClientID: "client-001",
+		Options: map[string]string{
+			"projectionYears": "30",
+			"scenario":        "Balanced market",
+			"advisorNote":     "Use this to stress-test retirement income assumptions.",
+		},
+	}
+
 	return &mockWidgetRepository{
-		widgets:        mockWidgets(),
-		configurations: make(map[string]models.WidgetConfiguration),
-		assignments:    make(map[string][]models.DashboardAssignment),
-		nextConfigID:   1,
-		nextAssignID:   1,
+		widgets: widgets,
+		configurations: map[string]models.WidgetConfiguration{
+			twoPotConfig.ID: twoPotConfig,
+			incomeConfig.ID: incomeConfig,
+		},
+		assignments: map[string][]models.DashboardAssignment{
+			"client-001": {
+				{
+					ID:            "assignment-seeded-001",
+					ClientID:      "client-001",
+					WidgetID:      "two-pot-impact",
+					WidgetName:    "Two-Pot Impact",
+					Configuration: twoPotConfig,
+					Published:     true,
+				},
+				{
+					ID:            "assignment-seeded-002",
+					ClientID:      "client-001",
+					WidgetID:      "income-sustainability",
+					WidgetName:    "Income Sustainability",
+					Configuration: incomeConfig,
+					Published:     true,
+				},
+			},
+		},
+		nextConfigID: 3,
+		nextAssignID: 3,
 	}
 }
 

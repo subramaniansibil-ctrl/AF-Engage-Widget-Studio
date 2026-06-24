@@ -10,6 +10,8 @@ Phase 3 adds the Advisor Portal with dashboard metrics, client search/filtering,
 
 Phase 4 adds the reusable widget library, widget configuration, advisor assignment workflow, assigned widget lists, and client dashboard publishing.
 
+Phase 5 adds the Client Portal with personalized dashboards, published widget rendering, recommendations, and saved simulation history.
+
 ## Tech Stack
 
 Frontend:
@@ -75,6 +77,10 @@ Infrastructure:
 - `POST /api/v1/advisor/clients/:clientId/widgets/assign`
 - `GET /api/v1/advisor/clients/:clientId/assigned-widgets`
 - `POST /api/v1/advisor/clients/:clientId/publish-dashboard`
+- `GET /api/v1/client/dashboard`
+- `GET /api/v1/client/widgets`
+- `GET /api/v1/client/recommendations`
+- `POST /api/v1/client/simulations`
 
 ## Mock Accounts
 

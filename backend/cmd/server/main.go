@@ -15,11 +15,13 @@ func main() {
 	authRepository := repositories.NewMockAuthRepository()
 	advisorRepository := repositories.NewMockAdvisorRepository()
 	widgetRepository := repositories.NewMockWidgetRepository()
+	clientRepository := repositories.NewMockClientRepository()
 	statusService := services.NewStatusService(statusRepository)
 	authService := services.NewAuthService(authRepository)
 	advisorService := services.NewAdvisorService(advisorRepository)
 	widgetService := services.NewWidgetService(widgetRepository)
-	router := routes.NewRouter(cfg, statusService, authService, advisorService, widgetService)
+	clientService := services.NewClientService(advisorRepository, widgetRepository, clientRepository)
+	router := routes.NewRouter(cfg, statusService, authService, advisorService, widgetService, clientService)
 
 	log.Printf("%s listening on %s", cfg.ServiceName, cfg.HTTPAddress)
 	if err := router.Run(cfg.HTTPAddress); err != nil {

@@ -9,7 +9,7 @@ import (
 	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/services"
 )
 
-func NewRouter(cfg config.Config, statusService services.StatusService, authService services.AuthService, advisorService services.AdvisorService, widgetService services.WidgetService) *gin.Engine {
+func NewRouter(cfg config.Config, statusService services.StatusService, authService services.AuthService, advisorService services.AdvisorService, widgetService services.WidgetService, clientService services.ClientService) *gin.Engine {
 	if cfg.Environment == "production" {
 		gin.SetMode(gin.ReleaseMode)
 	}
@@ -21,6 +21,7 @@ func NewRouter(cfg config.Config, statusService services.StatusService, authServ
 	authHandler := handlers.NewAuthHandler(authService)
 	advisorHandler := handlers.NewAdvisorHandler(advisorService)
 	widgetHandler := handlers.NewWidgetHandler(widgetService)
+	clientHandler := handlers.NewClientHandler(clientService)
 	router.GET("/health", statusHandler.Health)
 
 	v1 := router.Group("/api/v1")
@@ -46,6 +47,13 @@ func NewRouter(cfg config.Config, statusService services.StatusService, authServ
 			advisor.POST("/clients/:clientId/widgets/assign", widgetHandler.AssignWidget)
 			advisor.GET("/clients/:clientId/assigned-widgets", widgetHandler.ListAssignedWidgets)
 			advisor.POST("/clients/:clientId/publish-dashboard", widgetHandler.PublishDashboard)
+		}
+		client := v1.Group("/client", middleware.AuthMiddleware(authService), middleware.RoleMiddleware(models.RoleClient, models.RoleAdmin))
+		{
+			client.GET("/dashboard", clientHandler.Dashboard)
+			client.GET("/widgets", clientHandler.Widgets)
+			client.GET("/recommendations", clientHandler.Recommendations)
+			client.POST("/simulations", clientHandler.SaveSimulation)
 		}
 	}
 
