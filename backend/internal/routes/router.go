@@ -9,7 +9,7 @@ import (
 	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/services"
 )
 
-func NewRouter(cfg config.Config, statusService services.StatusService, authService services.AuthService, advisorService services.AdvisorService, widgetService services.WidgetService, clientService services.ClientService, simulationService services.SimulationService) *gin.Engine {
+func NewRouter(cfg config.Config, statusService services.StatusService, authService services.AuthService, advisorService services.AdvisorService, widgetService services.WidgetService, clientService services.ClientService, simulationService services.SimulationService, analyticsService services.AnalyticsService) *gin.Engine {
 	if cfg.Environment == "production" {
 		gin.SetMode(gin.ReleaseMode)
 	}
@@ -23,6 +23,7 @@ func NewRouter(cfg config.Config, statusService services.StatusService, authServ
 	widgetHandler := handlers.NewWidgetHandler(widgetService)
 	clientHandler := handlers.NewClientHandler(clientService)
 	simulationHandler := handlers.NewSimulationHandler(simulationService)
+	analyticsHandler := handlers.NewAnalyticsHandler(analyticsService)
 	router.GET("/health", statusHandler.Health)
 
 	v1 := router.Group("/api/v1")
@@ -62,6 +63,17 @@ func NewRouter(cfg config.Config, statusService services.StatusService, authServ
 			simulations.POST("/onefee", simulationHandler.Onefee)
 			simulations.POST("/income-sustainability", simulationHandler.IncomeSustainability)
 		}
+		analytics := v1.Group("/analytics", middleware.AuthMiddleware(authService), middleware.RoleMiddleware(models.RoleAdvisor, models.RoleAdmin))
+		{
+			analytics.GET("/advisor", analyticsHandler.AdvisorAnalytics)
+			analytics.GET("/widgets", analyticsHandler.WidgetUsage)
+		}
+		notifications := v1.Group("/notifications", middleware.AuthMiddleware(authService))
+		{
+			notifications.GET("", analyticsHandler.Notifications)
+			notifications.PATCH("/:id/read", analyticsHandler.MarkNotificationRead)
+		}
+		v1.GET("/audit-logs", middleware.AuthMiddleware(authService), middleware.RoleMiddleware(models.RoleAdmin), analyticsHandler.AuditLogs)
 	}
 
 	return router

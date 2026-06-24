@@ -1,0 +1,119 @@
+package repositories
+
+import (
+	"context"
+	"errors"
+	"sync"
+	"time"
+
+	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/models"
+)
+
+var ErrNotificationNotFound = errors.New("notification not found")
+
+type AnalyticsRepository interface {
+	GetAdvisorAnalytics(ctx context.Context) (models.AnalyticsSummary, error)
+	GetWidgetUsage(ctx context.Context) ([]models.WidgetUsage, error)
+	ListNotifications(ctx context.Context) ([]models.Notification, error)
+	MarkNotificationRead(ctx context.Context, id string) (models.Notification, error)
+	ListAuditLogs(ctx context.Context) ([]models.AuditLog, error)
+}
+
+type mockAnalyticsRepository struct {
+	mu            sync.RWMutex
+	notifications []models.Notification
+	auditLogs     []models.AuditLog
+	widgetUsage   []models.WidgetUsage
+}
+
+func NewMockAnalyticsRepository() AnalyticsRepository {
+	now := time.Now().UTC()
+	widgetUsage := []models.WidgetUsage{
+		{WidgetID: "two-pot-impact", WidgetName: "Two-Pot Impact", AssignedCount: 14, PublishedCount: 11, SimulationCount: 38},
+		{WidgetID: "income-sustainability", WidgetName: "Income Sustainability", AssignedCount: 10, PublishedCount: 8, SimulationCount: 24},
+		{WidgetID: "onefee-wealth-reclaim", WidgetName: "Onefee Wealth Reclaim", AssignedCount: 9, PublishedCount: 7, SimulationCount: 19},
+	}
+
+	return &mockAnalyticsRepository{
+		widgetUsage: widgetUsage,
+		notifications: []models.Notification{
+			{ID: "notification-001", Title: "Dashboard published", Message: "Avery Chen's personalized dashboard is live.", Type: "success", Read: false, CreatedAt: now.Add(-25 * time.Minute)},
+			{ID: "notification-002", Title: "Simulation saved", Message: "Two-Pot Impact illustration was saved by a client.", Type: "info", Read: false, CreatedAt: now.Add(-2 * time.Hour)},
+			{ID: "notification-003", Title: "Review high-risk segment", Message: "Three clients have aggressive allocations near retirement.", Type: "warning", Read: true, CreatedAt: now.Add(-24 * time.Hour)},
+		},
+		auditLogs: []models.AuditLog{
+			{ID: "audit-001", Actor: "Advisor User", Action: "Published client dashboard", Entity: "client-001", CreatedAt: now.Add(-25 * time.Minute)},
+			{ID: "audit-002", Actor: "Avery Chen", Action: "Saved two-pot simulation", Entity: "two-pot-impact", CreatedAt: now.Add(-2 * time.Hour)},
+			{ID: "audit-003", Actor: "Admin User", Action: "Reviewed platform analytics", Entity: "analytics", CreatedAt: now.Add(-8 * time.Hour)},
+			{ID: "audit-004", Actor: "Advisor User", Action: "Assigned widget", Entity: "onefee-wealth-reclaim", CreatedAt: now.Add(-28 * time.Hour)},
+		},
+	}
+}
+
+func (r *mockAnalyticsRepository) GetAdvisorAnalytics(ctx context.Context) (models.AnalyticsSummary, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	return models.AnalyticsSummary{
+		TotalUsers:          23,
+		TotalClients:        20,
+		TotalWidgets:        3,
+		TotalSimulations:    totalSimulations(r.widgetUsage),
+		ClientEngagement:    76,
+		PublishedDashboards: 11,
+		MostUsedWidget:      mostUsedWidget(r.widgetUsage),
+		WidgetUsage:         append([]models.WidgetUsage(nil), r.widgetUsage...),
+	}, nil
+}
+
+func (r *mockAnalyticsRepository) GetWidgetUsage(ctx context.Context) ([]models.WidgetUsage, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	return append([]models.WidgetUsage(nil), r.widgetUsage...), nil
+}
+
+func (r *mockAnalyticsRepository) ListNotifications(ctx context.Context) ([]models.Notification, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	return append([]models.Notification(nil), r.notifications...), nil
+}
+
+func (r *mockAnalyticsRepository) MarkNotificationRead(ctx context.Context, id string) (models.Notification, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	for index := range r.notifications {
+		if r.notifications[index].ID == id {
+			r.notifications[index].Read = true
+			return r.notifications[index], nil
+		}
+	}
+	return models.Notification{}, ErrNotificationNotFound
+}
+
+func (r *mockAnalyticsRepository) ListAuditLogs(ctx context.Context) ([]models.AuditLog, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	return append([]models.AuditLog(nil), r.auditLogs...), nil
+}
+
+func totalSimulations(usage []models.WidgetUsage) int {
+	total := 0
+	for _, item := range usage {
+		total += item.SimulationCount
+	}
+	return total
+}
+
+func mostUsedWidget(usage []models.WidgetUsage) string {
+	var top models.WidgetUsage
+	for _, item := range usage {
+		if item.SimulationCount > top.SimulationCount {
+			top = item
+		}
+	}
+	return top.WidgetName
+}
