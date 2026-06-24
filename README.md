@@ -12,6 +12,8 @@ Phase 4 adds the reusable widget library, widget configuration, advisor assignme
 
 Phase 5 adds the Client Portal with personalized dashboards, published widget rendering, recommendations, and saved simulation history.
 
+Phase 8 adds PostgreSQL-ready persistence, SQL migrations, seed data, and `APP_DATA_MODE` switching between mock and Postgres repositories.
+
 ## Tech Stack
 
 Frontend:
@@ -36,6 +38,7 @@ Infrastructure:
 
 - Docker
 - Docker Compose
+- PostgreSQL
 - Nginx for serving the production frontend image
 
 ## Folder Structure
@@ -45,6 +48,7 @@ Infrastructure:
 ├── backend
 │   ├── cmd/server/main.go
 │   ├── internal/config
+│   ├── internal/database
 │   ├── internal/handlers
 │   ├── internal/middleware
 │   ├── internal/models
@@ -52,6 +56,7 @@ Infrastructure:
 │   ├── internal/routes
 │   ├── internal/services
 │   └── internal/utils
+│   └── migrations
 ├── frontend
 │   ├── src/app
 │   ├── src/components
@@ -81,6 +86,11 @@ Infrastructure:
 - `GET /api/v1/client/widgets`
 - `GET /api/v1/client/recommendations`
 - `POST /api/v1/client/simulations`
+- `GET /api/v1/analytics/advisor`
+- `GET /api/v1/analytics/widgets`
+- `GET /api/v1/notifications`
+- `PATCH /api/v1/notifications/:id/read`
+- `GET /api/v1/audit-logs`
 
 ## Mock Accounts
 
@@ -107,6 +117,23 @@ cd backend
 go run ./cmd/server
 ```
 
+The backend defaults to mock repositories:
+
+```bash
+APP_DATA_MODE=mock go run ./cmd/server
+```
+
+Run with PostgreSQL repositories:
+
+```bash
+APP_DATA_MODE=postgres \
+DATABASE_URL="postgres://af_engage:af_engage_password@localhost:5433/af_engage?sslmode=disable" \
+MIGRATIONS_PATH=migrations \
+go run ./cmd/server
+```
+
+Migrations run automatically in Postgres mode and seed demo users, clients, widgets, dashboard assignments, notifications, audit logs, and simulation history.
+
 Default local URLs:
 
 - Frontend: `http://localhost:5173`
@@ -119,6 +146,18 @@ Build and run both services:
 
 ```bash
 docker compose up --build
+```
+
+Docker Compose starts:
+
+- `postgres` on `localhost:5433`
+- `backend` on `localhost:8080`
+- `frontend` on `localhost:5173`
+
+By default Compose runs the backend in Postgres mode. To use mock repositories while still starting the Compose stack:
+
+```bash
+APP_DATA_MODE=mock docker compose up --build
 ```
 
 Docker URLs:
@@ -135,4 +174,5 @@ npm audit
 
 cd ../backend
 go test ./...
+APP_DATA_MODE=mock go run ./cmd/server
 ```

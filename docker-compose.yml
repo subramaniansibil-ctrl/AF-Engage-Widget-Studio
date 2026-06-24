@@ -1,10 +1,32 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: af_engage
+      POSTGRES_USER: af_engage
+      POSTGRES_PASSWORD: af_engage_password
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U af_engage -d af_engage"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   backend:
     build:
       context: ./backend
     environment:
       APP_ENV: development
       HTTP_ADDRESS: :8080
+      APP_DATA_MODE: ${APP_DATA_MODE:-postgres}
+      DATABASE_URL: postgres://af_engage:af_engage_password@postgres:5432/af_engage?sslmode=disable
+      MIGRATIONS_PATH: /app/migrations
+    depends_on:
+      postgres:
+        condition: service_healthy
     ports:
       - "8080:8080"
 
@@ -15,3 +37,6 @@ services:
       - backend
     ports:
       - "5173:80"
+
+volumes:
+  postgres-data:
