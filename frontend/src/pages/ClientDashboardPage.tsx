@@ -1,6 +1,7 @@
 import { Activity, ArrowRight, ClipboardList, PiggyBank, PlayCircle, Sparkles, Target, WalletCards } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import { KpiCard } from '../components/ui/KpiCard';
 import {
   useGetClientDashboardQuery,
   useSaveSimulationMutation,
@@ -93,20 +94,21 @@ export function ClientDashboardPage() {
       </section>
 
       <section className="grid gap-4 md:grid-cols-3">
-        <SummaryCard
+        <KpiCard
           label="Portfolio value"
           value={currency.format(dashboard.portfolioSummary.totalValue)}
-          icon={<WalletCards className="h-5 w-5" />}
+          icon={<WalletCards className="h-4 w-4" />}
+          tone="success"
         />
-        <SummaryCard
+        <KpiCard
           label="Savings pot"
           value={currency.format(dashboard.portfolioSummary.savingsPotBalance)}
-          icon={<PiggyBank className="h-5 w-5" />}
+          icon={<PiggyBank className="h-4 w-4" />}
         />
-        <SummaryCard
+        <KpiCard
           label="Monthly contribution"
           value={currency.format(dashboard.portfolioSummary.monthlyContribution)}
-          icon={<Target className="h-5 w-5" />}
+          icon={<Target className="h-4 w-4" />}
         />
       </section>
 
@@ -168,20 +170,6 @@ export function ClientDashboardPage() {
           )}
         </div>
       </section>
-    </div>
-  );
-}
-
-function SummaryCard({ label, value, icon }: { label: string; value: string; icon: ReactNode }) {
-  return (
-    <div className="rounded-lg border border-ink/10 bg-white p-5 shadow-panel">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-sm text-ink/60">{label}</p>
-          <p className="mt-2 text-2xl font-bold">{value}</p>
-        </div>
-        <div className="rounded-md bg-sage/10 p-2 text-sage">{icon}</div>
-      </div>
     </div>
   );
 }

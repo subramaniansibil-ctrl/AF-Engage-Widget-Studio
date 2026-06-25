@@ -1,6 +1,6 @@
 import { Boxes, FileClock, MousePointerClick, UsersRound } from 'lucide-react';
-import type { ReactNode } from 'react';
 import { useGetAdvisorAnalyticsQuery, useGetAuditLogsQuery } from '../features/analytics/analyticsApi';
+import { KpiCard } from '../components/ui/KpiCard';
 
 export function AdminDashboardPage() {
   const { data: analytics, isLoading: isLoadingAnalytics } = useGetAdvisorAnalyticsQuery();
@@ -17,10 +17,10 @@ export function AdminDashboardPage() {
       </section>
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <AdminMetric label="Total users" value={valueOrLoading(analytics?.totalUsers, isLoadingAnalytics)} icon={<UsersRound className="h-5 w-5" />} />
-        <AdminMetric label="Total clients" value={valueOrLoading(analytics?.totalClients, isLoadingAnalytics)} icon={<UsersRound className="h-5 w-5" />} />
-        <AdminMetric label="Total widgets" value={valueOrLoading(analytics?.totalWidgets, isLoadingAnalytics)} icon={<Boxes className="h-5 w-5" />} />
-        <AdminMetric label="Total simulations" value={valueOrLoading(analytics?.totalSimulations, isLoadingAnalytics)} icon={<MousePointerClick className="h-5 w-5" />} />
+        <KpiCard label="Total users" value={valueOrLoading(analytics?.totalUsers, isLoadingAnalytics)} icon={<UsersRound className="h-4 w-4" />} />
+        <KpiCard label="Total clients" value={valueOrLoading(analytics?.totalClients, isLoadingAnalytics)} icon={<UsersRound className="h-4 w-4" />} />
+        <KpiCard label="Total widgets" value={valueOrLoading(analytics?.totalWidgets, isLoadingAnalytics)} icon={<Boxes className="h-4 w-4" />} tone="success" />
+        <KpiCard label="Total simulations" value={valueOrLoading(analytics?.totalSimulations, isLoadingAnalytics)} icon={<MousePointerClick className="h-4 w-4" />} />
       </section>
 
       <section className="rounded-lg border border-ink/10 bg-white p-5 shadow-panel">
@@ -56,20 +56,6 @@ export function AdminDashboardPage() {
           {isLoadingLogs && <p className="py-5 text-sm text-ink/60">Loading audit logs...</p>}
         </div>
       </section>
-    </div>
-  );
-}
-
-function AdminMetric({ label, value, icon }: { label: string; value: string; icon: ReactNode }) {
-  return (
-    <div className="rounded-lg border border-ink/10 bg-white p-5 shadow-panel">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-sm text-ink/60">{label}</p>
-          <p className="mt-2 text-2xl font-bold">{value}</p>
-        </div>
-        <div className="rounded-md bg-sage/10 p-2 text-sage">{icon}</div>
-      </div>
     </div>
   );
 }

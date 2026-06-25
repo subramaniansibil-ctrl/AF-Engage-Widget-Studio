@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { Boxes, ChartNoAxesCombined, ClipboardList, LayoutDashboard, LogOut, Menu, Shield, UserRound, UsersRound } from 'lucide-react';
+import { Boxes, ChartNoAxesCombined, ClipboardList, LayoutDashboard, LogOut, Menu, Shield, Sparkles, UserRound, UsersRound } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { useGetStatusQuery, useLogoutMutation } from '../../features/api/apiSlice';
@@ -34,6 +34,12 @@ export function AppLayout() {
   const [logoutRequest, { isLoading: isLoggingOut }] = useLogoutMutation();
 
   const visibleNavItems = navItems.filter((item) => role && item.roles.includes(role));
+  const userInitials = (user?.name ?? 'AF')
+    .split(' ')
+    .map((part) => part.charAt(0))
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
 
   async function handleLogout() {
     try {
@@ -45,71 +51,124 @@ export function AppLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-mist text-ink dark:bg-ink dark:text-white">
-      <div className="grid min-h-screen lg:grid-cols-[260px_1fr]">
+    <div className="af-page-shell min-h-screen text-ink dark:text-white">
+      <div className="min-h-screen">
         <aside
           className={[
-            'border-b border-ink/10 bg-white px-5 py-5 transition dark:border-white/10 dark:bg-ink',
+            'fixed inset-y-0 left-0 z-40 w-[248px] border-r border-white/15 bg-[linear-gradient(180deg,#03111f_0%,#071f35_54%,#063342_100%)] p-3 text-white shadow-[22px_0_70px_rgba(7,31,53,0.18)] transition',
             mobileSidebarOpen ? 'block' : 'hidden',
-            'lg:block lg:border-b-0 lg:border-r',
+            'lg:block',
           ].join(' ')}
         >
-          <div className="mb-8">
-            <p className="text-sm font-semibold text-sage">AF Engage</p>
-            <h1 className="mt-1 text-xl font-bold">Widget Studio</h1>
+          <div className="flex h-full flex-col rounded-lg border border-white/10 bg-white/[0.045] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.10)] backdrop-blur-2xl">
+            <div className="mb-5 flex items-center gap-3 rounded-md border border-white/10 bg-white/[0.06] p-2.5">
+              <div className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-sage text-sm font-black text-ink shadow-[0_10px_28px_rgba(0,168,120,0.28)]">
+                AF
+              </div>
+              <div className="min-w-0">
+                <p className="text-[11px] font-bold uppercase text-sage">AF Engage</p>
+                <h1 className="truncate text-sm font-bold tracking-normal">Widget Studio</h1>
+              </div>
+            </div>
+
+            <div className="mb-2 flex items-center justify-between px-2">
+              <p className="text-[10px] font-bold uppercase text-white/38">Workspace</p>
+              <Sparkles className="h-3.5 w-3.5 text-gold" aria-hidden="true" />
+            </div>
+
+            <nav className="flex gap-1.5 overflow-x-auto lg:flex-col lg:overflow-visible">
+              {visibleNavItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    className={({ isActive }) =>
+                      [
+                        'group relative flex min-h-10 items-center gap-2.5 rounded-md px-2 py-1.5 text-sm font-medium transition duration-200',
+                        isActive
+                          ? 'bg-white/[0.12] text-white shadow-[0_12px_34px_rgba(0,0,0,0.16),inset_0_1px_0_rgba(255,255,255,0.10)]'
+                          : 'text-white/62 hover:bg-white/[0.075] hover:text-white',
+                      ].join(' ')
+                    }
+                    onClick={() => dispatch(setMobileSidebarOpen(false))}
+                  >
+                    {({ isActive }) => (
+                      <>
+                        <span
+                          className={[
+                            'absolute left-0 top-2 h-6 w-0.5 rounded-r-full transition',
+                            isActive ? 'bg-sage opacity-100' : 'bg-transparent opacity-0',
+                          ].join(' ')}
+                        />
+                        <span
+                          className={[
+                            'grid h-7 w-7 shrink-0 place-items-center rounded-md border transition',
+                            isActive
+                              ? 'border-sage/35 bg-sage/18 text-sage'
+                              : 'border-white/10 bg-white/[0.04] text-white/54 group-hover:border-white/16 group-hover:text-white',
+                          ].join(' ')}
+                        >
+                          <Icon aria-hidden="true" className="h-3.5 w-3.5" />
+                        </span>
+                        <span className="truncate">{item.label}</span>
+                      </>
+                    )}
+                  </NavLink>
+                );
+              })}
+            </nav>
+
+            <div className="mt-auto space-y-2 pt-4">
+              <div className="rounded-md border border-white/10 bg-white/[0.06] p-2.5">
+                <div className="flex items-center gap-2.5">
+                  <div className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-white/12 text-xs font-bold text-white">
+                    {userInitials}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-semibold">{user?.name ?? 'Workspace user'}</p>
+                    <p className="text-[11px] font-medium uppercase text-white/42">{user?.role ?? 'Signed out'}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center justify-between rounded-md border border-white/10 bg-black/10 px-2.5 py-2 text-[11px] font-semibold text-white/58">
+                <span>API</span>
+                <span className="inline-flex items-center gap-1.5 text-sage">
+                  <span className="h-1.5 w-1.5 rounded-full bg-sage" />
+                  {status?.environment ?? 'checking'}
+                </span>
+              </div>
+            </div>
           </div>
-          <nav className="flex gap-2 overflow-x-auto lg:flex-col lg:overflow-visible">
-            {visibleNavItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  className={({ isActive }) =>
-                    [
-                      'flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition',
-                      isActive
-                        ? 'bg-ink text-white'
-                        : 'text-ink/70 hover:bg-ink/5 hover:text-ink',
-                    ].join(' ')
-                  }
-                  onClick={() => dispatch(setMobileSidebarOpen(false))}
-                >
-                  <Icon aria-hidden="true" className="h-4 w-4 shrink-0" />
-                  <span>{item.label}</span>
-                </NavLink>
-              );
-            })}
-          </nav>
         </aside>
-        <div className="flex min-w-0 flex-col">
-          <header className="border-b border-ink/10 bg-white px-6 py-4 dark:border-white/10 dark:bg-ink">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
+        <div className="flex min-w-0 flex-col lg:pl-[248px]">
+          <header className="border-b border-white/45 bg-white/45 px-4 py-3 shadow-sm backdrop-blur-2xl dark:border-white/10 dark:bg-white/5 sm:px-5">
+            <div className="flex flex-wrap items-center justify-between gap-2.5">
+              <div className="flex items-center gap-2.5">
                 <button
                   type="button"
                   onClick={() => dispatch(setMobileSidebarOpen(!mobileSidebarOpen))}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-ink/10 text-ink dark:border-white/10 dark:text-white lg:hidden"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-ink/10 bg-white/35 text-ink backdrop-blur transition hover:bg-white/65 dark:border-white/10 dark:text-white lg:hidden"
                   aria-label="Open navigation"
                 >
                   <Menu className="h-5 w-5" />
                 </button>
                 <div>
-                  <p className="text-sm text-ink/60">{user?.role ?? 'Workspace'}</p>
-                  <p className="font-semibold">{user?.name ?? 'AF Engage Widget Studio'}</p>
+                  <p className="text-xs font-medium uppercase text-ink/50">{user?.role ?? 'Workspace'}</p>
+                  <p className="text-sm font-semibold">{user?.name ?? 'AF Engage Widget Studio'}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <NotificationMenu />
                 <ThemeToggle />
-                <div className="hidden rounded-md border border-ink/10 px-3 py-2 text-sm text-ink/70 dark:border-white/10 dark:text-white/70 sm:block">
+                <div className="hidden h-9 items-center rounded-md border border-ink/10 bg-white/35 px-2.5 text-xs font-medium text-ink/70 backdrop-blur dark:border-white/10 dark:text-white/70 sm:flex">
                   API {status?.environment ?? 'checking'}
                 </div>
                 <button
                   type="button"
                   onClick={handleLogout}
                   disabled={isLoggingOut}
-                  className="inline-flex items-center gap-2 rounded-md border border-ink/10 px-3 py-2 text-sm font-medium text-ink/70 transition hover:bg-ink/5 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:text-white/70 dark:hover:bg-white/10 dark:hover:text-white"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-md border border-ink/10 bg-white/35 px-2.5 text-xs font-semibold text-ink/70 backdrop-blur transition hover:bg-white/65 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:text-white/70 dark:hover:bg-white/10 dark:hover:text-white"
                 >
                   <LogOut className="h-4 w-4" />
                   <span>Logout</span>
@@ -118,7 +177,7 @@ export function AppLayout() {
             </div>
           </header>
           <motion.main
-            className="min-w-0 flex-1 p-6"
+            className="min-w-0 flex-1 p-4 sm:p-5"
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.24 }}

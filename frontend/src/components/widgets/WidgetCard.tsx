@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { KpiCard } from '../ui/KpiCard';
 
 interface WidgetCardProps {
   title: string;
@@ -9,27 +10,21 @@ interface WidgetCardProps {
 
 export function WidgetCard({ title, description, status = 'Illustration', children }: WidgetCardProps) {
   return (
-    <article className="rounded-lg border border-ink/10 bg-white p-5 shadow-panel">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+    <article className="af-glass rounded-md p-4 transition duration-200 hover:-translate-y-0.5 hover:shadow-glass">
+      <div className="flex flex-wrap items-start justify-between gap-2.5">
         <div>
-          <p className="text-sm font-semibold text-sage">{status}</p>
-          <h3 className="mt-1 text-xl font-bold">{title}</h3>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-ink/65">{description}</p>
+          <p className="text-xs font-semibold uppercase text-sage">{status}</p>
+          <h3 className="mt-1 text-lg font-bold">{title}</h3>
+          <p className="mt-1.5 max-w-3xl text-sm leading-5 text-ink/65">{description}</p>
         </div>
       </div>
-      <div className="mt-5">{children}</div>
+      <div className="mt-4">{children}</div>
     </article>
   );
 }
 
 export function WidgetMetric({ label, value, helper }: { label: string; value: string; helper?: string }) {
-  return (
-    <div className="rounded-md border border-ink/10 bg-mist/60 p-4">
-      <p className="text-xs font-medium uppercase tracking-wide text-ink/50">{label}</p>
-      <p className="mt-2 text-xl font-bold text-ink">{value}</p>
-      {helper && <p className="mt-1 text-xs text-ink/55">{helper}</p>}
-    </div>
-  );
+  return <KpiCard label={label} value={value} helper={helper} compact />;
 }
 
 export function SliderField({
@@ -52,8 +47,8 @@ export function SliderField({
   onChange: (value: number) => void;
 }) {
   return (
-    <label className="block rounded-md border border-ink/10 p-4">
-      <div className="flex items-center justify-between gap-3">
+    <label className="block rounded-md border border-ink/10 bg-white/30 p-3 backdrop-blur-xl dark:bg-white/5">
+      <div className="flex items-center justify-between gap-2">
         <span className="text-sm font-semibold text-ink/75">{label}</span>
         <span className="text-sm font-bold text-ink">
           {prefix}
@@ -68,7 +63,7 @@ export function SliderField({
         step={step}
         value={value}
         onChange={(event) => onChange(Number(event.target.value))}
-        className="mt-4 w-full accent-sage"
+        className="mt-3 w-full accent-sage"
       />
     </label>
   );

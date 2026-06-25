@@ -1,8 +1,8 @@
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, Boxes, PiggyBank, Send, Target, WalletCards } from 'lucide-react';
-import type { ReactNode } from 'react';
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import { useGetClientByIdQuery } from '../features/advisor/advisorApi';
+import { KpiCard } from '../components/ui/KpiCard';
 import {
   DashboardAssignment,
   useGetAssignedWidgetsQuery,
@@ -61,9 +61,9 @@ export function AdvisorClientDetailPage() {
       </section>
 
       <section className="grid gap-4 md:grid-cols-3">
-        <SummaryCard label="Portfolio value" value={currency.format(client.portfolio.totalValue)} icon={<WalletCards className="h-5 w-5" />} />
-        <SummaryCard label="Savings pot" value={currency.format(client.portfolio.savingsPotBalance)} icon={<PiggyBank className="h-5 w-5" />} />
-        <SummaryCard label="Retirement pot" value={currency.format(client.portfolio.retirementPotBalance)} icon={<Target className="h-5 w-5" />} />
+        <KpiCard label="Portfolio value" value={currency.format(client.portfolio.totalValue)} icon={<WalletCards className="h-4 w-4" />} tone="success" />
+        <KpiCard label="Savings pot" value={currency.format(client.portfolio.savingsPotBalance)} icon={<PiggyBank className="h-4 w-4" />} />
+        <KpiCard label="Retirement pot" value={currency.format(client.portfolio.retirementPotBalance)} icon={<Target className="h-4 w-4" />} />
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1fr_380px]">
@@ -154,20 +154,6 @@ export function AdvisorClientDetailPage() {
           )}
         </div>
       </section>
-    </div>
-  );
-}
-
-function SummaryCard({ label, value, icon }: { label: string; value: string; icon: ReactNode }) {
-  return (
-    <div className="rounded-lg border border-ink/10 bg-white p-5 shadow-panel">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-sm text-ink/60">{label}</p>
-          <p className="mt-2 text-2xl font-bold">{value}</p>
-        </div>
-        <div className="rounded-md bg-sage/10 p-2 text-sage">{icon}</div>
-      </div>
     </div>
   );
 }

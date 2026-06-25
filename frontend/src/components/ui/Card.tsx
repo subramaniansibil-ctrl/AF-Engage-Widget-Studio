@@ -8,7 +8,7 @@ export function Card({ children, className = '', ...props }: CardProps) {
   return (
     <div
       className={[
-        'rounded-lg border border-ink/10 bg-white shadow-panel dark:border-white/10 dark:bg-white/5 dark:shadow-none',
+        'af-glass rounded-md transition duration-200 hover:-translate-y-0.5 hover:shadow-glass',
         className,
       ].join(' ')}
       {...props}

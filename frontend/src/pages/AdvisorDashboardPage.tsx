@@ -1,11 +1,11 @@
 import { AlertTriangle, Gauge, LayoutDashboard, UsersRound, WalletCards } from 'lucide-react';
-import type { ReactNode } from 'react';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Link } from 'react-router-dom';
 import { useGetAdvisorDashboardQuery } from '../features/advisor/advisorApi';
 import { Card } from '../components/ui/Card';
 import { DashboardSkeleton } from '../components/ui/Skeleton';
 import { EmptyState } from '../components/ui/EmptyState';
+import { KpiCard } from '../components/ui/KpiCard';
 
 const currency = new Intl.NumberFormat('en-US', {
   style: 'currency',
@@ -43,14 +43,15 @@ export function AdvisorDashboardPage() {
       </section>
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <DashboardCard label="Total clients" value={metric(stats?.totalClients)} icon={<UsersRound className="h-5 w-5" />} />
-        <DashboardCard
+        <KpiCard label="Total clients" value={metric(stats?.totalClients)} icon={<UsersRound className="h-4 w-4" />} />
+        <KpiCard
           label="Assets under advice"
           value={stats ? currency.format(stats.totalAssetsUnderAdvice) : '...'}
-          icon={<WalletCards className="h-5 w-5" />}
+          icon={<WalletCards className="h-4 w-4" />}
+          tone="success"
         />
-        <DashboardCard label="High-risk clients" value={metric(stats?.highRiskClients)} icon={<AlertTriangle className="h-5 w-5" />} />
-        <DashboardCard label="Active dashboards" value={metric(stats?.activeDashboards)} icon={<LayoutDashboard className="h-5 w-5" />} />
+        <KpiCard label="High-risk clients" value={metric(stats?.highRiskClients)} icon={<AlertTriangle className="h-4 w-4" />} tone="warning" />
+        <KpiCard label="Active dashboards" value={metric(stats?.activeDashboards)} icon={<LayoutDashboard className="h-4 w-4" />} />
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1fr_360px]">
@@ -81,36 +82,13 @@ export function AdvisorDashboardPage() {
 
         <Card className="p-5">
           <h3 className="text-lg font-semibold">Advisor focus</h3>
-          <div className="mt-5 space-y-4">
-            <FocusItem label="Review high-growth allocations" value={stats?.highRiskClients ?? 0} />
-            <FocusItem label="Refresh active dashboards" value={stats?.activeDashboards ?? 0} />
-            <FocusItem label="Schedule retirement readiness reviews" value={isLoading ? 0 : 6} />
+          <div className="mt-5 space-y-3">
+            <KpiCard label="Review high-growth allocations" value={String(stats?.highRiskClients ?? 0)} compact tone="warning" />
+            <KpiCard label="Refresh active dashboards" value={String(stats?.activeDashboards ?? 0)} compact />
+            <KpiCard label="Schedule retirement readiness reviews" value={String(isLoading ? 0 : 6)} compact tone="success" />
           </div>
         </Card>
       </section>
-    </div>
-  );
-}
-
-function DashboardCard({ label, value, icon }: { label: string; value: string; icon: ReactNode }) {
-  return (
-    <Card className="p-5">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-sm text-ink/60">{label}</p>
-          <p className="mt-2 text-2xl font-bold">{value}</p>
-        </div>
-        <div className="rounded-md bg-sage/10 p-2 text-sage">{icon}</div>
-      </div>
-    </Card>
-  );
-}
-
-function FocusItem({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-md border border-ink/10 p-3">
-      <p className="text-sm text-ink/60">{label}</p>
-      <p className="mt-1 text-xl font-semibold">{value}</p>
     </div>
   );
 }
