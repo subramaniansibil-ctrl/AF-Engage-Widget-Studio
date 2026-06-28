@@ -43,6 +43,7 @@ admin@afengage.com / password123 / ADMIN
 - `POST /api/v1/advisor/clients/:clientId/widgets/configure`
 - `POST /api/v1/advisor/clients/:clientId/widgets/assign`
 - `GET /api/v1/advisor/clients/:clientId/assigned-widgets`
+- `DELETE /api/v1/advisor/clients/:clientId/assigned-widgets/:assignmentId`
 - `POST /api/v1/advisor/clients/:clientId/publish-dashboard`
 
 ## Widget APIs

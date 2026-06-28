@@ -69,6 +69,10 @@ func (h *WidgetHandler) AssignWidget(c *gin.Context) {
 
 	assignment, err := h.service.AssignWidget(c.Request.Context(), c.Param("clientId"), request)
 	if err != nil {
+		if errors.Is(err, repositories.ErrWidgetAlreadyAssigned) {
+			utils.JSONError(c, http.StatusConflict, "widget is already assigned to this client")
+			return
+		}
 		if errors.Is(err, repositories.ErrWidgetNotFound) || errors.Is(err, repositories.ErrConfigurationNotFound) {
 			utils.JSONError(c, http.StatusNotFound, "widget or configuration not found")
 			return
@@ -77,6 +81,19 @@ func (h *WidgetHandler) AssignWidget(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, assignment)
+}
+
+func (h *WidgetHandler) RemoveAssignedWidget(c *gin.Context) {
+	err := h.service.RemoveAssignedWidget(c.Request.Context(), c.Param("clientId"), c.Param("assignmentId"))
+	if err != nil {
+		if errors.Is(err, repositories.ErrAssignmentNotFound) {
+			utils.JSONError(c, http.StatusNotFound, "assigned widget not found")
+			return
+		}
+		utils.JSONError(c, http.StatusInternalServerError, "failed to remove assigned widget")
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true})
 }
 
 func (h *WidgetHandler) ListAssignedWidgets(c *gin.Context) {

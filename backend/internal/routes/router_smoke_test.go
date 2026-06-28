@@ -3,6 +3,7 @@ package routes
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -61,5 +62,51 @@ func TestAPISmokeHealthLoginAndAdvisorDashboard(t *testing.T) {
 	router.ServeHTTP(dashboardRecorder, dashboardRequest)
 	if dashboardRecorder.Code != http.StatusOK {
 		t.Fatalf("expected advisor dashboard 200, got %d: %s", dashboardRecorder.Code, dashboardRecorder.Body.String())
+	}
+
+	assignmentBody, _ := json.Marshal(models.AssignWidgetRequest{WidgetID: "two-pot-impact"})
+	assignRequest := httptest.NewRequest(http.MethodPost, "/api/v1/advisor/clients/client-003/widgets/assign", bytes.NewReader(assignmentBody))
+	assignRequest.Header.Set("Authorization", "Bearer "+loginResponse.Token)
+	assignRequest.Header.Set("Content-Type", "application/json")
+	assignRecorder := httptest.NewRecorder()
+	router.ServeHTTP(assignRecorder, assignRequest)
+	if assignRecorder.Code != http.StatusOK {
+		t.Fatalf("expected assignment 200, got %d: %s", assignRecorder.Code, assignRecorder.Body.String())
+	}
+	var assignment models.DashboardAssignment
+	if err := json.Unmarshal(assignRecorder.Body.Bytes(), &assignment); err != nil {
+		t.Fatalf("decode assignment response: %v", err)
+	}
+
+	duplicateRequest := httptest.NewRequest(http.MethodPost, "/api/v1/advisor/clients/client-003/widgets/assign", bytes.NewReader(assignmentBody))
+	duplicateRequest.Header.Set("Authorization", "Bearer "+loginResponse.Token)
+	duplicateRequest.Header.Set("Content-Type", "application/json")
+	duplicateRecorder := httptest.NewRecorder()
+	router.ServeHTTP(duplicateRecorder, duplicateRequest)
+	if duplicateRecorder.Code != http.StatusConflict {
+		t.Fatalf("expected duplicate assignment 409, got %d: %s", duplicateRecorder.Code, duplicateRecorder.Body.String())
+	}
+
+	deleteRequest := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/advisor/clients/client-003/assigned-widgets/%s", assignment.ID), nil)
+	deleteRequest.Header.Set("Authorization", "Bearer "+loginResponse.Token)
+	deleteRecorder := httptest.NewRecorder()
+	router.ServeHTTP(deleteRecorder, deleteRequest)
+	if deleteRecorder.Code != http.StatusOK {
+		t.Fatalf("expected delete assignment 200, got %d: %s", deleteRecorder.Code, deleteRecorder.Body.String())
+	}
+
+	listRequest := httptest.NewRequest(http.MethodGet, "/api/v1/advisor/clients/client-003/assigned-widgets", nil)
+	listRequest.Header.Set("Authorization", "Bearer "+loginResponse.Token)
+	listRecorder := httptest.NewRecorder()
+	router.ServeHTTP(listRecorder, listRequest)
+	if listRecorder.Code != http.StatusOK {
+		t.Fatalf("expected assigned widget list 200, got %d: %s", listRecorder.Code, listRecorder.Body.String())
+	}
+	var assignments []models.DashboardAssignment
+	if err := json.Unmarshal(listRecorder.Body.Bytes(), &assignments); err != nil {
+		t.Fatalf("decode assigned widget list: %v", err)
+	}
+	if len(assignments) != 0 {
+		t.Fatalf("expected deleted widget to be absent, got %d assignments", len(assignments))
 	}
 }

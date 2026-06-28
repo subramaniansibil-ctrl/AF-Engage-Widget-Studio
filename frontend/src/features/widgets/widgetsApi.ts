@@ -44,6 +44,11 @@ export interface PublishDashboardResponse {
   assignedWidgets: DashboardAssignment[];
 }
 
+export interface RemoveAssignedWidgetRequest {
+  clientId: string;
+  assignmentId: string;
+}
+
 export const widgetsApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     getWidgets: builder.query<Widget[], void>({
@@ -74,6 +79,26 @@ export const widgetsApi = apiSlice.injectEndpoints({
       transformResponse: (response: DashboardAssignment[] | null) => response ?? [],
       providesTags: (_result, _error, clientId) => [{ type: 'AssignedWidget', id: clientId }],
     }),
+    removeAssignedWidget: builder.mutation<{ success: boolean }, RemoveAssignedWidgetRequest>({
+      query: ({ clientId, assignmentId }) => ({
+        url: `/advisor/clients/${clientId}/assigned-widgets/${assignmentId}`,
+        method: 'DELETE',
+      }),
+      async onQueryStarted({ clientId, assignmentId }, { dispatch, queryFulfilled }) {
+        const patch = dispatch(widgetsApi.util.updateQueryData('getAssignedWidgets', clientId, (draft) => {
+          const index = draft.findIndex((assignment) => assignment.id === assignmentId);
+          if (index >= 0) {
+            draft.splice(index, 1);
+          }
+        }));
+        try {
+          await queryFulfilled;
+        } catch {
+          patch.undo();
+        }
+      },
+      invalidatesTags: (_result, _error, { clientId }) => [{ type: 'AssignedWidget', id: clientId }],
+    }),
     publishDashboard: builder.mutation<PublishDashboardResponse, string>({
       query: (clientId) => ({
         url: `/advisor/clients/${clientId}/publish-dashboard`,
@@ -91,4 +116,5 @@ export const {
   useGetWidgetByIdQuery,
   useGetWidgetsQuery,
   usePublishDashboardMutation,
+  useRemoveAssignedWidgetMutation,
 } = widgetsApi;
