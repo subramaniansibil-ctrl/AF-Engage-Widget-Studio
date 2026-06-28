@@ -44,13 +44,14 @@ func NewRouter(cfg config.Config, statusService services.StatusService, authServ
 		}
 		advisor := v1.Group("/advisor", middleware.AuthMiddleware(authService), middleware.RoleMiddleware(models.RoleAdvisor, models.RoleAdmin))
 		{
-			advisor.GET("/dashboard", advisorHandler.Dashboard)                                   // GET /api/v1/advisor/dashboard returns advisor KPI cards and widget usage.
-			advisor.GET("/clients", advisorHandler.ListClients)                                   // GET /api/v1/advisor/clients lists clients with search/filter support.
-			advisor.GET("/clients/:clientId", advisorHandler.GetClient)                           // GET /api/v1/advisor/clients/:clientId returns a complete client profile.
-			advisor.POST("/clients/:clientId/widgets/configure", widgetHandler.ConfigureWidget)   // POST /api/v1/advisor/clients/:clientId/widgets/configure saves widget options.
-			advisor.POST("/clients/:clientId/widgets/assign", widgetHandler.AssignWidget)         // POST /api/v1/advisor/clients/:clientId/widgets/assign assigns a widget to a client.
-			advisor.GET("/clients/:clientId/assigned-widgets", widgetHandler.ListAssignedWidgets) // GET /api/v1/advisor/clients/:clientId/assigned-widgets lists assigned widgets.
-			advisor.POST("/clients/:clientId/publish-dashboard", widgetHandler.PublishDashboard)  // POST /api/v1/advisor/clients/:clientId/publish-dashboard publishes assignments.
+			advisor.GET("/dashboard", advisorHandler.Dashboard)                                                     // GET /api/v1/advisor/dashboard returns advisor KPI cards and widget usage.
+			advisor.GET("/clients", advisorHandler.ListClients)                                                     // GET /api/v1/advisor/clients lists clients with search/filter support.
+			advisor.GET("/clients/:clientId", advisorHandler.GetClient)                                             // GET /api/v1/advisor/clients/:clientId returns a complete client profile.
+			advisor.POST("/clients/:clientId/widgets/configure", widgetHandler.ConfigureWidget)                     // POST /api/v1/advisor/clients/:clientId/widgets/configure saves widget options.
+			advisor.POST("/clients/:clientId/widgets/assign", widgetHandler.AssignWidget)                           // POST /api/v1/advisor/clients/:clientId/widgets/assign assigns a widget to a client.
+			advisor.GET("/clients/:clientId/assigned-widgets", widgetHandler.ListAssignedWidgets)                   // GET /api/v1/advisor/clients/:clientId/assigned-widgets lists assigned widgets.
+			advisor.DELETE("/clients/:clientId/assigned-widgets/:assignmentId", widgetHandler.RemoveAssignedWidget) // DELETE removes one assigned widget from a client.
+			advisor.POST("/clients/:clientId/publish-dashboard", widgetHandler.PublishDashboard)                    // POST /api/v1/advisor/clients/:clientId/publish-dashboard publishes assignments.
 		}
 		client := v1.Group("/client", middleware.AuthMiddleware(authService), middleware.RoleMiddleware(models.RoleClient, models.RoleAdmin))
 		{

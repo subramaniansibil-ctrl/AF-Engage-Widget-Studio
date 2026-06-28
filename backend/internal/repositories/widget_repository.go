@@ -12,6 +12,8 @@ import (
 var (
 	ErrWidgetNotFound        = errors.New("widget not found")
 	ErrConfigurationNotFound = errors.New("widget configuration not found")
+	ErrWidgetAlreadyAssigned = errors.New("widget already assigned to client")
+	ErrAssignmentNotFound    = errors.New("dashboard assignment not found")
 )
 
 type WidgetRepository interface {
@@ -20,6 +22,7 @@ type WidgetRepository interface {
 	ConfigureWidget(ctx context.Context, clientID string, request models.ConfigureWidgetRequest) (models.WidgetConfiguration, error)
 	AssignWidget(ctx context.Context, clientID string, request models.AssignWidgetRequest) (models.DashboardAssignment, error)
 	ListAssignedWidgets(ctx context.Context, clientID string) ([]models.DashboardAssignment, error)
+	RemoveAssignedWidget(ctx context.Context, clientID string, assignmentID string) error
 	PublishDashboard(ctx context.Context, clientID string) ([]models.DashboardAssignment, error)
 }
 
@@ -154,6 +157,11 @@ func (r *mockWidgetRepository) AssignWidget(ctx context.Context, clientID string
 	if err != nil {
 		return models.DashboardAssignment{}, err
 	}
+	for _, assignment := range r.assignments[clientID] {
+		if assignment.WidgetID == request.WidgetID {
+			return models.DashboardAssignment{}, ErrWidgetAlreadyAssigned
+		}
+	}
 
 	configuration, ok := r.configurations[request.ConfigurationID]
 	if request.ConfigurationID == "" || !ok {
@@ -193,6 +201,20 @@ func (r *mockWidgetRepository) ListAssignedWidgets(ctx context.Context, clientID
 	}
 
 	return append([]models.DashboardAssignment(nil), assignments...), nil
+}
+
+func (r *mockWidgetRepository) RemoveAssignedWidget(ctx context.Context, clientID string, assignmentID string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	assignments := r.assignments[clientID]
+	for index, assignment := range assignments {
+		if assignment.ID == assignmentID {
+			r.assignments[clientID] = append(assignments[:index], assignments[index+1:]...)
+			return nil
+		}
+	}
+	return ErrAssignmentNotFound
 }
 
 func (r *mockWidgetRepository) PublishDashboard(ctx context.Context, clientID string) ([]models.DashboardAssignment, error) {

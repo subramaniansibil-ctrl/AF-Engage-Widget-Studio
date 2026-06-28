@@ -4,9 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/models"
 )
 
@@ -84,6 +86,17 @@ func (r *postgresWidgetRepository) AssignWidget(ctx context.Context, clientID st
 	if err != nil {
 		return models.DashboardAssignment{}, err
 	}
+	var alreadyAssigned bool
+	if err := r.db.QueryRowContext(ctx, `
+		SELECT EXISTS (
+			SELECT 1 FROM dashboard_assignments WHERE client_id = $1 AND widget_id = $2
+		)
+	`, clientID, request.WidgetID).Scan(&alreadyAssigned); err != nil {
+		return models.DashboardAssignment{}, err
+	}
+	if alreadyAssigned {
+		return models.DashboardAssignment{}, ErrWidgetAlreadyAssigned
+	}
 	configurationID := request.ConfigurationID
 	if configurationID == "" {
 		config, err := r.ConfigureWidget(ctx, clientID, models.ConfigureWidgetRequest{WidgetID: request.WidgetID})
@@ -112,6 +125,10 @@ func (r *postgresWidgetRepository) AssignWidget(ctx context.Context, clientID st
 		INSERT INTO dashboard_assignments (id, client_id, widget_id, configuration_id, published)
 		VALUES ($1, $2, $3, $4, $5)
 	`, assignment.ID, assignment.ClientID, assignment.WidgetID, assignment.Configuration.ID, assignment.Published)
+	var pgError *pgconn.PgError
+	if errors.As(err, &pgError) && pgError.Code == "23505" {
+		return models.DashboardAssignment{}, ErrWidgetAlreadyAssigned
+	}
 	return assignment, err
 }
 
@@ -139,6 +156,24 @@ func (r *postgresWidgetRepository) ListAssignedWidgets(ctx context.Context, clie
 		assignments = append(assignments, assignment)
 	}
 	return assignments, rows.Err()
+}
+
+func (r *postgresWidgetRepository) RemoveAssignedWidget(ctx context.Context, clientID string, assignmentID string) error {
+	result, err := r.db.ExecContext(ctx, `
+		DELETE FROM dashboard_assignments
+		WHERE id = $1 AND client_id = $2
+	`, assignmentID, clientID)
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return ErrAssignmentNotFound
+	}
+	return nil
 }
 
 func (r *postgresWidgetRepository) PublishDashboard(ctx context.Context, clientID string) ([]models.DashboardAssignment, error) {
