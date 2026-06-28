@@ -27,7 +27,9 @@ func main() {
 	statusRepository := repositories.NewStatusRepository(cfg)
 
 	authRepository := repositories.AuthRepository(repositories.NewMockAuthRepository())
-	advisorRepository := repositories.AdvisorRepository(repositories.NewMockAdvisorRepository())
+	mockAdvisorRepository := repositories.NewMockAdvisorRepository()
+	advisorRepository := repositories.AdvisorRepository(mockAdvisorRepository)
+	clientManagementRepository := repositories.ClientManagementRepository(mockAdvisorRepository)
 	widgetRepository := repositories.WidgetRepository(repositories.NewMockWidgetRepository())
 	clientRepository := repositories.ClientRepository(repositories.NewMockClientRepository())
 	analyticsRepository := repositories.AnalyticsRepository(repositories.NewMockAnalyticsRepository())
@@ -44,7 +46,9 @@ func main() {
 			os.Exit(1)
 		}
 		authRepository = repositories.NewPostgresAuthRepository(db)
-		advisorRepository = repositories.NewPostgresAdvisorRepository(db)
+		postgresAdvisorRepository := repositories.NewPostgresAdvisorRepository(db)
+		advisorRepository = postgresAdvisorRepository
+		clientManagementRepository = postgresAdvisorRepository
 		widgetRepository = repositories.NewPostgresWidgetRepository(db)
 		clientRepository = repositories.NewPostgresClientRepository(db)
 		analyticsRepository = repositories.NewPostgresAnalyticsRepository(db)
@@ -60,7 +64,8 @@ func main() {
 	clientService := services.NewClientService(advisorRepository, widgetRepository, clientRepository)
 	simulationService := services.NewSimulationService()
 	analyticsService := services.NewAnalyticsService(analyticsRepository)
-	router := routes.NewRouter(cfg, statusService, authService, advisorService, widgetService, clientService, simulationService, analyticsService)
+	clientManagementService := services.NewClientManagementService(clientManagementRepository)
+	router := routes.NewRouter(cfg, statusService, authService, advisorService, widgetService, clientService, simulationService, analyticsService, clientManagementService)
 
 	server := &http.Server{
 		Addr:              cfg.HTTPAddress,

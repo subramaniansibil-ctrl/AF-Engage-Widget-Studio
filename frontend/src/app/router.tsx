@@ -34,6 +34,9 @@ const ClientWidgetsPage = lazy(() =>
 const AdminDashboardPage = lazy(() =>
   import('../pages/AdminDashboardPage').then((module) => ({ default: module.AdminDashboardPage })),
 );
+const AdminClientsPage = lazy(() =>
+  import('../pages/AdminClientsPage').then((module) => ({ default: module.AdminClientsPage })),
+);
 const NotFoundPage = lazy(() =>
   import('../pages/NotFoundPage').then((module) => ({ default: module.NotFoundPage })),
 );
@@ -81,7 +84,10 @@ export const router = createBrowserRouter([
               },
               {
                 element: <AdminRoute />,
-                children: [{ path: 'admin/dashboard', element: routeElement(AdminDashboardPage) }],
+                children: [
+                  { path: 'admin/dashboard', element: routeElement(AdminDashboardPage) },
+                  { path: 'admin/clients', element: routeElement(AdminClientsPage) },
+                ],
               },
             ],
           },

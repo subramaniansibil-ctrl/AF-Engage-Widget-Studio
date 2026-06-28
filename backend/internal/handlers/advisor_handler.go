@@ -34,6 +34,11 @@ func (h *AdvisorHandler) ListClients(c *gin.Context) {
 		RiskProfile:     models.RiskProfile(c.Query("riskProfile")),
 		RetirementStage: models.RetirementStage(c.Query("retirementStage")),
 	}
+	if value, exists := c.Get("user"); exists {
+		if user, ok := value.(models.User); ok && user.Role == models.RoleAdvisor {
+			filters.AssignedAdvisor = user.Name
+		}
+	}
 
 	clients, err := h.service.ListClients(c.Request.Context(), filters)
 	if err != nil {
@@ -52,6 +57,12 @@ func (h *AdvisorHandler) GetClient(c *gin.Context) {
 		}
 		utils.JSONError(c, http.StatusInternalServerError, "failed to load client")
 		return
+	}
+	if value, exists := c.Get("user"); exists {
+		if user, ok := value.(models.User); ok && user.Role == models.RoleAdvisor && client.AssignedAdvisor != user.Name {
+			utils.JSONError(c, http.StatusForbidden, "client is not assigned to this advisor")
+			return
+		}
 	}
 	c.JSON(http.StatusOK, client)
 }

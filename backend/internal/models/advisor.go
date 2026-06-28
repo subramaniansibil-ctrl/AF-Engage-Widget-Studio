@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type RiskProfile string
 
 const (
@@ -42,10 +44,68 @@ type Client struct {
 	Name            string          `json:"name"`
 	Age             int             `json:"age"`
 	Email           string          `json:"email"`
+	MobileNumber    string          `json:"mobileNumber,omitempty"`
+	AssignedAdvisor string          `json:"assignedAdvisor,omitempty"`
+	Status          ClientStatus    `json:"status,omitempty"`
+	DateOfBirth     string          `json:"dateOfBirth,omitempty"`
 	RiskProfile     RiskProfile     `json:"riskProfile"`
 	RetirementStage RetirementStage `json:"retirementStage"`
+	InvestmentGoal  string          `json:"investmentGoal,omitempty"`
+	PortfolioID     string          `json:"portfolioId,omitempty"`
+	Notes           string          `json:"notes,omitempty"`
+	CreatedAt       time.Time       `json:"createdAt,omitempty"`
 	Portfolio       Portfolio       `json:"portfolio"`
 	RetirementGoal  RetirementGoal  `json:"retirementGoal"`
+}
+
+type ClientStatus string
+
+const (
+	ClientStatusActive   ClientStatus = "ACTIVE"
+	ClientStatusInactive ClientStatus = "INACTIVE"
+)
+
+type ClientManagementFilters struct {
+	Search          string
+	Status          ClientStatus
+	AssignedAdvisor string
+	RecentlyCreated bool
+}
+
+type ClientUpsertRequest struct {
+	ID              string       `json:"id" binding:"required,min=2,max=64"`
+	Name            string       `json:"name" binding:"required,min=2,max=120"`
+	Email           string       `json:"email" binding:"required,email"`
+	MobileNumber    string       `json:"mobileNumber" binding:"required,min=7,max=30"`
+	AssignedAdvisor string       `json:"assignedAdvisor" binding:"required,min=2,max=120"`
+	Status          ClientStatus `json:"status" binding:"required,oneof=ACTIVE INACTIVE"`
+	DateOfBirth     string       `json:"dateOfBirth"`
+	RiskProfile     RiskProfile  `json:"riskProfile" binding:"omitempty,oneof=CONSERVATIVE MODERATE GROWTH AGGRESSIVE"`
+	InvestmentGoal  string       `json:"investmentGoal" binding:"max=240"`
+	PortfolioID     string       `json:"portfolioId" binding:"max=80"`
+	Notes           string       `json:"notes" binding:"max=1000"`
+}
+
+type BulkClientRow struct {
+	RowNumber int                 `json:"rowNumber" binding:"required,gte=2"`
+	Client    ClientUpsertRequest `json:"client" binding:"required"`
+}
+
+type BulkClientImportRequest struct {
+	Rows []BulkClientRow `json:"rows" binding:"required,min=1"`
+}
+
+type ClientImportError struct {
+	RowNumber int    `json:"rowNumber"`
+	Field     string `json:"field"`
+	Message   string `json:"message"`
+}
+
+type BulkClientImportResponse struct {
+	Imported int                 `json:"imported"`
+	Failed   int                 `json:"failed"`
+	Clients  []Client            `json:"clients"`
+	Errors   []ClientImportError `json:"errors"`
 }
 
 type WidgetUsageSummary struct {
