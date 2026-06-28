@@ -1,7 +1,7 @@
 import { Activity, ChartNoAxesCombined, LayoutDashboard, MousePointerClick, Trophy } from 'lucide-react';
-import type { ReactNode } from 'react';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useGetAdvisorAnalyticsQuery } from '../features/analytics/analyticsApi';
+import { KpiCard } from '../components/ui/KpiCard';
 
 export function AdvisorAnalyticsPage() {
   const { data: analytics, isLoading } = useGetAdvisorAnalyticsQuery();
@@ -21,11 +21,11 @@ export function AdvisorAnalyticsPage() {
       </section>
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-        <MetricCard label="Client engagement" value={`${analytics?.clientEngagement ?? 0}%`} icon={<Activity className="h-5 w-5" />} />
-        <MetricCard label="Published dashboards" value={String(analytics?.publishedDashboards ?? 0)} icon={<LayoutDashboard className="h-5 w-5" />} />
-        <MetricCard label="Most used widget" value={analytics?.mostUsedWidget ?? '...'} icon={<Trophy className="h-5 w-5" />} compact />
-        <MetricCard label="Simulations" value={String(analytics?.totalSimulations ?? 0)} icon={<MousePointerClick className="h-5 w-5" />} />
-        <MetricCard label="Active widgets" value={String(analytics?.totalWidgets ?? 0)} icon={<ChartNoAxesCombined className="h-5 w-5" />} />
+        <KpiCard label="Client engagement" value={`${analytics?.clientEngagement ?? 0}%`} icon={<Activity className="h-4 w-4" />} tone="success" />
+        <KpiCard label="Published dashboards" value={String(analytics?.publishedDashboards ?? 0)} icon={<LayoutDashboard className="h-4 w-4" />} />
+        <KpiCard label="Most used widget" value={analytics?.mostUsedWidget ?? '...'} icon={<Trophy className="h-4 w-4" />} compact tone="warning" />
+        <KpiCard label="Simulations" value={String(analytics?.totalSimulations ?? 0)} icon={<MousePointerClick className="h-4 w-4" />} />
+        <KpiCard label="Active widgets" value={String(analytics?.totalWidgets ?? 0)} icon={<ChartNoAxesCombined className="h-4 w-4" />} />
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1fr_360px]">
@@ -61,20 +61,6 @@ export function AdvisorAnalyticsPage() {
           </div>
         </div>
       </section>
-    </div>
-  );
-}
-
-function MetricCard({ label, value, icon, compact = false }: { label: string; value: string; icon: ReactNode; compact?: boolean }) {
-  return (
-    <div className="rounded-lg border border-ink/10 bg-white p-5 shadow-panel">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-sm text-ink/60">{label}</p>
-          <p className={['mt-2 font-bold', compact ? 'text-lg leading-6' : 'text-2xl'].join(' ')}>{value}</p>
-        </div>
-        <div className="rounded-md bg-sage/10 p-2 text-sage">{icon}</div>
-      </div>
     </div>
   );
 }

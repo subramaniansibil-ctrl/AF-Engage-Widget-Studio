@@ -78,8 +78,8 @@ export function LoginPage() {
   }
 
   return (
-    <main className="grid min-h-screen bg-mist text-ink dark:bg-ink dark:text-white lg:grid-cols-[1.05fr_0.95fr]">
-      <section className="hidden min-h-screen bg-[radial-gradient(circle_at_20%_20%,rgba(90,127,113,0.24),transparent_35%),linear-gradient(135deg,#17212f,#26384a)] px-10 py-10 text-white lg:flex lg:flex-col lg:justify-between">
+    <main className="af-page-shell grid min-h-screen text-ink dark:text-white lg:grid-cols-[1.05fr_0.95fr]">
+      <section className="hidden min-h-screen bg-[radial-gradient(circle_at_18%_18%,rgba(0,168,120,0.28),transparent_34%),radial-gradient(circle_at_86%_8%,rgba(0,106,142,0.32),transparent_30%),linear-gradient(135deg,#03111f,#071f35_55%,#064254)] px-10 py-10 text-white lg:flex lg:flex-col lg:justify-between">
         <div>
           <p className="text-sm font-semibold text-sage">AF Engage</p>
           <h1 className="mt-2 text-4xl font-bold">Widget Studio</h1>
@@ -91,16 +91,16 @@ export function LoginPage() {
             Advisors configure reusable simulation widgets, publish client dashboards, and track engagement from one polished portal.
           </p>
         </div>
-        <div className="grid grid-cols-3 gap-3 text-sm text-white/70">
-          <span className="rounded-md border border-white/10 bg-white/5 px-3 py-2">Advisor portal</span>
-          <span className="rounded-md border border-white/10 bg-white/5 px-3 py-2">Client widgets</span>
-          <span className="rounded-md border border-white/10 bg-white/5 px-3 py-2">Postgres ready</span>
+        <div className="grid grid-cols-3 gap-3 text-sm text-white/75">
+          <span className="rounded-md border border-white/15 bg-white/10 px-3 py-2 backdrop-blur-xl">Advisor portal</span>
+          <span className="rounded-md border border-white/15 bg-white/10 px-3 py-2 backdrop-blur-xl">Client widgets</span>
+          <span className="rounded-md border border-white/15 bg-white/10 px-3 py-2 backdrop-blur-xl">Postgres ready</span>
         </div>
       </section>
       <section className="grid min-h-screen place-items-center px-6 py-10">
       <motion.form
         onSubmit={handleSubmit}
-        className="w-full max-w-md rounded-lg border border-ink/10 bg-white p-8 shadow-panel dark:border-white/10 dark:bg-white/5"
+        className="af-glass w-full max-w-md rounded-lg p-8"
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.24 }}
@@ -118,7 +118,7 @@ export function LoginPage() {
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className="mt-2 w-full rounded-md border border-ink/15 bg-white px-3 py-3 text-sm outline-none transition focus:border-sage focus:ring-2 focus:ring-sage/20 dark:border-white/15 dark:bg-white/10"
+              className="af-focus-ring mt-2 w-full rounded-md border border-ink/15 bg-white/55 px-3 py-3 text-sm dark:border-white/15 dark:bg-white/10"
               autoComplete="email"
               required
             />
@@ -129,7 +129,7 @@ export function LoginPage() {
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="mt-2 w-full rounded-md border border-ink/15 bg-white px-3 py-3 text-sm outline-none transition focus:border-sage focus:ring-2 focus:ring-sage/20 dark:border-white/15 dark:bg-white/10"
+              className="af-focus-ring mt-2 w-full rounded-md border border-ink/15 bg-white/55 px-3 py-3 text-sm dark:border-white/15 dark:bg-white/10"
               autoComplete="current-password"
               required
             />
@@ -150,7 +150,7 @@ export function LoginPage() {
           {isLoading ? 'Signing in...' : 'Sign in'}
         </Button>
 
-        <div className="mt-6 rounded-md bg-ink/5 p-3 text-xs leading-5 text-ink/65 dark:bg-white/10 dark:text-white/65">
+        <div className="mt-6 rounded-md border border-ink/10 bg-white/35 p-3 text-xs leading-5 text-ink/65 backdrop-blur-xl dark:border-white/10 dark:bg-white/10 dark:text-white/65">
           <p>advisor@afengage.com / password123</p>
           <p>client@afengage.com / password123</p>
           <p>admin@afengage.com / password123</p>
