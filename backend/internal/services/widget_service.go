@@ -13,6 +13,7 @@ type WidgetService interface {
 	ConfigureWidget(ctx context.Context, clientID string, request models.ConfigureWidgetRequest) (models.WidgetConfiguration, error)
 	AssignWidget(ctx context.Context, clientID string, request models.AssignWidgetRequest) (models.DashboardAssignment, error)
 	ListAssignedWidgets(ctx context.Context, clientID string) ([]models.DashboardAssignment, error)
+	UpdateAssignedWidget(ctx context.Context, clientID string, assignmentID string, request models.UpdateAssignedWidgetRequest) (models.DashboardAssignment, error)
 	RemoveAssignedWidget(ctx context.Context, clientID string, assignmentID string) error
 	PublishDashboard(ctx context.Context, clientID string) ([]models.DashboardAssignment, error)
 }
@@ -43,6 +44,10 @@ func (s *widgetService) AssignWidget(ctx context.Context, clientID string, reque
 
 func (s *widgetService) ListAssignedWidgets(ctx context.Context, clientID string) ([]models.DashboardAssignment, error) {
 	return s.repository.ListAssignedWidgets(ctx, clientID)
+}
+
+func (s *widgetService) UpdateAssignedWidget(ctx context.Context, clientID string, assignmentID string, request models.UpdateAssignedWidgetRequest) (models.DashboardAssignment, error) {
+	return s.repository.UpdateAssignedWidget(ctx, clientID, assignmentID, request)
 }
 
 func (s *widgetService) RemoveAssignedWidget(ctx context.Context, clientID string, assignmentID string) error {

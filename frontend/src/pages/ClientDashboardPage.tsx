@@ -1,13 +1,13 @@
-import { Activity, ArrowRight, ClipboardList, PiggyBank, PlayCircle, Sparkles, Target, WalletCards } from 'lucide-react';
+import { Activity, ArrowRight, Eye, PiggyBank, Target, WalletCards } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { KpiCard } from '../components/ui/KpiCard';
 import {
   useGetClientDashboardQuery,
-  useSaveSimulationMutation,
   type Simulation,
 } from '../features/client/clientApi';
 import type { DashboardAssignment } from '../features/widgets/widgetsApi';
+import { WidgetBrandIcon } from '../components/widgets/WidgetBrandIcon';
 
 const currency = new Intl.NumberFormat('en-US', {
   style: 'currency',
@@ -17,7 +17,6 @@ const currency = new Intl.NumberFormat('en-US', {
 
 export function ClientDashboardPage() {
   const { data: dashboard, isLoading, isError } = useGetClientDashboardQuery();
-  const [saveSimulation, { isLoading: isSavingSimulation }] = useSaveSimulationMutation();
 
   if (isLoading) {
     return <p className="text-sm text-ink/60">Loading your dashboard...</p>;
@@ -32,23 +31,6 @@ export function ClientDashboardPage() {
     );
   }
 
-  const primaryWidget = dashboard.assignedWidgets[0];
-
-  async function runSampleSimulation() {
-    if (!primaryWidget) {
-      return;
-    }
-
-    await saveSimulation({
-      widgetId: primaryWidget.widgetId,
-      inputs: {
-        monthlyContribution: String(dashboard?.portfolioSummary.monthlyContribution ?? 0),
-        readinessScore: String(dashboard?.retirementReadinessScore ?? 0),
-      },
-      result: 'Advisor-ready scenario saved from the client dashboard.',
-    }).unwrap();
-  }
-
   return (
     <div className="space-y-6">
       <section className="grid gap-5 rounded-lg border border-ink/10 bg-white p-6 shadow-panel lg:grid-cols-[1fr_320px]">
@@ -58,24 +40,6 @@ export function ClientDashboardPage() {
           <p className="mt-3 max-w-2xl text-sm leading-6 text-ink/65">
             Your advisor has prepared a personalized view of your portfolio, retirement goal, and planning widgets.
           </p>
-          <div className="mt-5 flex flex-wrap gap-3">
-            <Link
-              to="/client/widgets"
-              className="inline-flex items-center gap-2 rounded-md bg-ink px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-ink/90"
-            >
-              View my widgets
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-            <button
-              type="button"
-              onClick={runSampleSimulation}
-              disabled={!primaryWidget || isSavingSimulation}
-              className="inline-flex items-center gap-2 rounded-md border border-ink/10 px-4 py-2.5 text-sm font-semibold text-ink/75 transition hover:bg-ink/5 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <PlayCircle className="h-4 w-4" />
-              Save simulation
-            </button>
-          </div>
         </div>
         <div className="rounded-md bg-sage/10 p-5">
           <p className="text-sm font-semibold text-sage">Retirement readiness</p>
@@ -114,25 +78,13 @@ export function ClientDashboardPage() {
 
       <section className="grid gap-6 xl:grid-cols-[1fr_360px]">
         <div className="rounded-lg border border-ink/10 bg-white p-5 shadow-panel">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h3 className="text-lg font-semibold">Assigned widgets</h3>
-              <p className="mt-1 text-sm text-ink/60">Only widgets published by your advisor appear here.</p>
-            </div>
-            <Link to="/client/widgets" className="text-sm font-semibold text-sage">
-              Open all
-            </Link>
-          </div>
+          <div><h3 className="text-lg font-semibold">Assigned widgets</h3><p className="mt-1 text-sm text-ink/60 dark:text-white/60">Select a widget to view the values prepared by your advisor.</p></div>
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             {dashboard.assignedWidgets.map((assignment) => (
-              <WidgetCard key={assignment.id} assignment={assignment} />
+              <ClientAssignedWidgetCard key={assignment.id} assignment={assignment} />
             ))}
             {!dashboard.assignedWidgets.length && (
-              <EmptyState
-                icon={<Sparkles className="h-5 w-5" />}
-                title="No widgets assigned yet"
-                copy="Your advisor will publish personalized planning tools here."
-              />
+              <div className="md:col-span-2"><EmptyState title="No widgets have been assigned yet." copy="Please contact your advisor." /></div>
             )}
           </div>
         </div>
@@ -174,22 +126,13 @@ export function ClientDashboardPage() {
   );
 }
 
-function WidgetCard({ assignment }: { assignment: DashboardAssignment }) {
-  const scenario = assignment.configuration.options.scenario ?? assignment.configuration.options.withdrawalScenario ?? 'Advisor default';
+export function ClientAssignedWidgetCard({ assignment }: { assignment: DashboardAssignment }) {
   return (
-    <article className="rounded-md border border-ink/10 p-4">
-      <div className="flex items-start gap-3">
-        <div className="rounded-md bg-ink/5 p-2 text-sage">
-          <ClipboardList className="h-5 w-5" />
-        </div>
-        <div>
-          <p className="font-semibold">{assignment.widgetName}</p>
-          <p className="mt-2 text-sm leading-6 text-ink/65">Scenario: {scenario}</p>
-          <p className="mt-1 text-sm text-ink/55">
-            Projection: {assignment.configuration.options.projectionYears ?? 'Default'} years
-          </p>
-        </div>
-      </div>
+    <article className="rounded-md border border-ink/10 bg-white/55 p-4 transition hover:border-sage/35 hover:shadow-sm dark:border-white/10 dark:bg-white/5">
+      <div className="flex items-start gap-3"><WidgetBrandIcon widgetId={assignment.widgetId} icon={assignment.widgetIcon} /><div className="min-w-0"><p className="text-xs font-semibold text-sage">{assignment.widgetCategory || 'Financial planning'}</p><h4 className="mt-1 truncate font-semibold">{assignment.widgetName}</h4></div></div>
+      <p className="mt-3 line-clamp-2 min-h-10 text-sm leading-5 text-ink/60 dark:text-white/60">{assignment.widgetDescription || 'A personalized planning illustration prepared by your advisor.'}</p>
+      <p className="mt-3 text-xs text-ink/45 dark:text-white/45">Last updated {formatDate(assignment.updatedAt || assignment.createdAt)}</p>
+      <Link to={`/client/widgets/${assignment.widgetId}`} className="mt-4 inline-flex min-h-9 items-center gap-2 rounded-md bg-ink px-3 py-2 text-xs font-semibold text-white dark:bg-sage dark:text-ink"><Eye className="h-3.5 w-3.5" />View widget<ArrowRight className="h-3.5 w-3.5" /></Link>
     </article>
   );
 }
@@ -206,14 +149,20 @@ function SimulationCard({ simulation }: { simulation: Simulation }) {
   );
 }
 
-function EmptyState({ icon, title, copy }: { icon: ReactNode; title: string; copy: string }) {
+function EmptyState({ icon, title, copy }: { icon?: ReactNode; title: string; copy: string }) {
   return (
     <div className="rounded-md border border-dashed border-ink/15 p-4">
-      <div className="text-sage">{icon}</div>
-      <p className="mt-3 font-semibold">{title}</p>
+      {icon && <div className="text-sage">{icon}</div>}
+      <p className={icon ? 'mt-3 font-semibold' : 'font-semibold'}>{title}</p>
       <p className="mt-2 text-sm leading-6 text-ink/60">{copy}</p>
     </div>
   );
+}
+
+function formatDate(value: string | undefined) {
+  if (!value) return 'recently';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? 'recently' : date.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 function formatWidgetId(value: string) {

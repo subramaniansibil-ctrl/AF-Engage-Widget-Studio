@@ -65,6 +65,80 @@ func TestAPISmokeHealthLoginAndAdvisorDashboard(t *testing.T) {
 		t.Fatalf("expected advisor dashboard 200, got %d: %s", dashboardRecorder.Code, dashboardRecorder.Body.String())
 	}
 
+	clientToken := loginToken(t, router, "client@afengage.com")
+	clientWidgetRequest := httptest.NewRequest(http.MethodGet, "/api/v1/client/widgets/two-pot-impact", nil)
+	clientWidgetRequest.Header.Set("Authorization", "Bearer "+clientToken)
+	clientWidgetRecorder := httptest.NewRecorder()
+	router.ServeHTTP(clientWidgetRecorder, clientWidgetRequest)
+	if clientWidgetRecorder.Code != http.StatusOK {
+		t.Fatalf("expected assigned client widget 200, got %d: %s", clientWidgetRecorder.Code, clientWidgetRecorder.Body.String())
+	}
+	var clientWidget models.DashboardAssignment
+	if err := json.Unmarshal(clientWidgetRecorder.Body.Bytes(), &clientWidget); err != nil {
+		t.Fatalf("decode client widget: %v", err)
+	}
+	if clientWidget.WidgetID != "two-pot-impact" || clientWidget.Configuration.Options["projectionYears"] != "20" || clientWidget.WidgetCategory == "" {
+		t.Fatalf("expected published advisor configuration and metadata, got %+v", clientWidget)
+	}
+
+	missingWidgetRequest := httptest.NewRequest(http.MethodGet, "/api/v1/client/widgets/not-assigned", nil)
+	missingWidgetRequest.Header.Set("Authorization", "Bearer "+clientToken)
+	missingWidgetRecorder := httptest.NewRecorder()
+	router.ServeHTTP(missingWidgetRecorder, missingWidgetRequest)
+	if missingWidgetRecorder.Code != http.StatusNotFound {
+		t.Fatalf("expected unassigned widget 404, got %d", missingWidgetRecorder.Code)
+	}
+
+	simulationBody, _ := json.Marshal(models.SimulationRequest{Name: "Early Retirement", WidgetID: "two-pot-impact", WidgetName: "Two-Pot Impact", Inputs: map[string]string{"retirementAge": "60"}, Results: map[string]string{"projectedRetirementValue": "$1,200,000"}, Result: "Goal completion 82%."})
+	simulationRequest := httptest.NewRequest(http.MethodPost, "/api/v1/client/simulations", bytes.NewReader(simulationBody))
+	simulationRequest.Header.Set("Authorization", "Bearer "+clientToken)
+	simulationRequest.Header.Set("Content-Type", "application/json")
+	simulationRecorder := httptest.NewRecorder()
+	router.ServeHTTP(simulationRecorder, simulationRequest)
+	if simulationRecorder.Code != http.StatusOK {
+		t.Fatalf("expected simulation save 200, got %d: %s", simulationRecorder.Code, simulationRecorder.Body.String())
+	}
+	var savedSimulation models.Simulation
+	if err := json.Unmarshal(simulationRecorder.Body.Bytes(), &savedSimulation); err != nil {
+		t.Fatalf("decode saved simulation: %v", err)
+	}
+
+	updateSimulationBody, _ := json.Marshal(models.SimulationUpdateRequest{Name: "Early Retirement 2035", Inputs: savedSimulation.Inputs, Results: savedSimulation.Results, Result: savedSimulation.Result})
+	updateSimulationRequest := httptest.NewRequest(http.MethodPut, "/api/v1/client/simulations/"+savedSimulation.ID, bytes.NewReader(updateSimulationBody))
+	updateSimulationRequest.Header.Set("Authorization", "Bearer "+clientToken)
+	updateSimulationRequest.Header.Set("Content-Type", "application/json")
+	updateSimulationRecorder := httptest.NewRecorder()
+	router.ServeHTTP(updateSimulationRecorder, updateSimulationRequest)
+	if updateSimulationRecorder.Code != http.StatusOK {
+		t.Fatalf("expected simulation update 200, got %d", updateSimulationRecorder.Code)
+	}
+
+	duplicateBody, _ := json.Marshal(models.DuplicateSimulationRequest{Name: "Early Retirement Copy"})
+	duplicateRequestSimulation := httptest.NewRequest(http.MethodPost, "/api/v1/client/simulations/"+savedSimulation.ID+"/duplicate", bytes.NewReader(duplicateBody))
+	duplicateRequestSimulation.Header.Set("Authorization", "Bearer "+clientToken)
+	duplicateRequestSimulation.Header.Set("Content-Type", "application/json")
+	duplicateRecorderSimulation := httptest.NewRecorder()
+	router.ServeHTTP(duplicateRecorderSimulation, duplicateRequestSimulation)
+	if duplicateRecorderSimulation.Code != http.StatusCreated {
+		t.Fatalf("expected simulation duplicate 201, got %d", duplicateRecorderSimulation.Code)
+	}
+
+	listSimulationRequest := httptest.NewRequest(http.MethodGet, "/api/v1/client/simulations?widgetId=two-pot-impact", nil)
+	listSimulationRequest.Header.Set("Authorization", "Bearer "+clientToken)
+	listSimulationRecorder := httptest.NewRecorder()
+	router.ServeHTTP(listSimulationRecorder, listSimulationRequest)
+	if listSimulationRecorder.Code != http.StatusOK {
+		t.Fatalf("expected simulation list 200, got %d", listSimulationRecorder.Code)
+	}
+
+	deleteSimulationRequest := httptest.NewRequest(http.MethodDelete, "/api/v1/client/simulations/"+savedSimulation.ID, nil)
+	deleteSimulationRequest.Header.Set("Authorization", "Bearer "+clientToken)
+	deleteSimulationRecorder := httptest.NewRecorder()
+	router.ServeHTTP(deleteSimulationRecorder, deleteSimulationRequest)
+	if deleteSimulationRecorder.Code != http.StatusOK {
+		t.Fatalf("expected simulation delete 200, got %d", deleteSimulationRecorder.Code)
+	}
+
 	assignmentBody, _ := json.Marshal(models.AssignWidgetRequest{WidgetID: "two-pot-impact"})
 	assignRequest := httptest.NewRequest(http.MethodPost, "/api/v1/advisor/clients/client-003/widgets/assign", bytes.NewReader(assignmentBody))
 	assignRequest.Header.Set("Authorization", "Bearer "+loginResponse.Token)
@@ -77,6 +151,23 @@ func TestAPISmokeHealthLoginAndAdvisorDashboard(t *testing.T) {
 	var assignment models.DashboardAssignment
 	if err := json.Unmarshal(assignRecorder.Body.Bytes(), &assignment); err != nil {
 		t.Fatalf("decode assignment response: %v", err)
+	}
+
+	updateBody, _ := json.Marshal(models.UpdateAssignedWidgetRequest{Options: map[string]string{"projectionYears": "27"}})
+	updateRequest := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/api/v1/advisor/clients/client-003/assigned-widgets/%s", assignment.ID), bytes.NewReader(updateBody))
+	updateRequest.Header.Set("Authorization", "Bearer "+loginResponse.Token)
+	updateRequest.Header.Set("Content-Type", "application/json")
+	updateRecorder := httptest.NewRecorder()
+	router.ServeHTTP(updateRecorder, updateRequest)
+	if updateRecorder.Code != http.StatusOK {
+		t.Fatalf("expected assignment update 200, got %d: %s", updateRecorder.Code, updateRecorder.Body.String())
+	}
+	var updatedAssignment models.DashboardAssignment
+	if err := json.Unmarshal(updateRecorder.Body.Bytes(), &updatedAssignment); err != nil {
+		t.Fatalf("decode updated assignment: %v", err)
+	}
+	if updatedAssignment.Configuration.Options["projectionYears"] != "27" || updatedAssignment.UpdatedAt.IsZero() {
+		t.Fatalf("expected updated options and timestamp, got %+v", updatedAssignment)
 	}
 
 	duplicateRequest := httptest.NewRequest(http.MethodPost, "/api/v1/advisor/clients/client-003/widgets/assign", bytes.NewReader(assignmentBody))

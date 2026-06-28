@@ -43,6 +43,7 @@ admin@afengage.com / password123 / ADMIN
 - `POST /api/v1/advisor/clients/:clientId/widgets/configure`
 - `POST /api/v1/advisor/clients/:clientId/widgets/assign`
 - `GET /api/v1/advisor/clients/:clientId/assigned-widgets`
+- `PUT /api/v1/advisor/clients/:clientId/assigned-widgets/:assignmentId` updates the existing widget configuration.
 - `DELETE /api/v1/advisor/clients/:clientId/assigned-widgets/:assignmentId`
 - `POST /api/v1/advisor/clients/:clientId/publish-dashboard`
 
@@ -55,8 +56,13 @@ admin@afengage.com / password123 / ADMIN
 
 - `GET /api/v1/client/dashboard`
 - `GET /api/v1/client/widgets`
+- `GET /api/v1/client/widgets/:widgetId` returns one published widget assigned to the authenticated client.
 - `GET /api/v1/client/recommendations`
 - `POST /api/v1/client/simulations`
+- `GET /api/v1/client/simulations?widgetId=` lists saved scenarios for the authenticated client.
+- `PUT /api/v1/client/simulations/:simulationId` renames or updates a client-owned scenario.
+- `POST /api/v1/client/simulations/:simulationId/duplicate` duplicates a scenario.
+- `DELETE /api/v1/client/simulations/:simulationId` deletes a scenario.
 
 ## Simulation APIs
 

@@ -105,6 +105,24 @@ func (h *WidgetHandler) ListAssignedWidgets(c *gin.Context) {
 	c.JSON(http.StatusOK, assignments)
 }
 
+func (h *WidgetHandler) UpdateAssignedWidget(c *gin.Context) {
+	var request models.UpdateAssignedWidgetRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		utils.JSONValidationError(c, err)
+		return
+	}
+	assignment, err := h.service.UpdateAssignedWidget(c.Request.Context(), c.Param("clientId"), c.Param("assignmentId"), request)
+	if err != nil {
+		if errors.Is(err, repositories.ErrAssignmentNotFound) {
+			utils.JSONError(c, http.StatusNotFound, "assigned widget not found")
+			return
+		}
+		utils.JSONError(c, http.StatusInternalServerError, "failed to update assigned widget")
+		return
+	}
+	c.JSON(http.StatusOK, assignment)
+}
+
 func (h *WidgetHandler) PublishDashboard(c *gin.Context) {
 	assignments, err := h.service.PublishDashboard(c.Request.Context(), c.Param("clientId"))
 	if err != nil {

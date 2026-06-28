@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type WidgetStatus string
 
 const (
@@ -26,12 +28,17 @@ type WidgetConfiguration struct {
 }
 
 type DashboardAssignment struct {
-	ID            string              `json:"id"`
-	ClientID      string              `json:"clientId"`
-	WidgetID      string              `json:"widgetId"`
-	WidgetName    string              `json:"widgetName"`
-	Configuration WidgetConfiguration `json:"configuration"`
-	Published     bool                `json:"published"`
+	ID                string              `json:"id"`
+	ClientID          string              `json:"clientId"`
+	WidgetID          string              `json:"widgetId"`
+	WidgetName        string              `json:"widgetName"`
+	WidgetDescription string              `json:"widgetDescription"`
+	WidgetCategory    string              `json:"widgetCategory"`
+	WidgetIcon        string              `json:"widgetIcon"`
+	Configuration     WidgetConfiguration `json:"configuration"`
+	Published         bool                `json:"published"`
+	CreatedAt         time.Time           `json:"createdAt"`
+	UpdatedAt         time.Time           `json:"updatedAt"`
 }
 
 type ConfigureWidgetRequest struct {
@@ -42,4 +49,8 @@ type ConfigureWidgetRequest struct {
 type AssignWidgetRequest struct {
 	WidgetID        string `json:"widgetId" binding:"required"`
 	ConfigurationID string `json:"configurationId"`
+}
+
+type UpdateAssignedWidgetRequest struct {
+	Options map[string]string `json:"options" binding:"required"`
 }

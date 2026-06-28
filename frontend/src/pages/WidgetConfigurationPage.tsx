@@ -4,19 +4,22 @@ import {
   ChevronLeft,
   ChevronRight,
   Eye,
+  Pencil,
+  Save,
   Search,
-  Settings2,
   Trash2,
   UserRound,
   X,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppDispatch } from '../app/hooks';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Skeleton } from '../components/ui/Skeleton';
+import { WidgetBrandIcon } from '../components/widgets/WidgetBrandIcon';
+import { WidgetLivePreview } from '../components/widgets/WidgetLivePreview';
 import { useGetClientsQuery, type Client } from '../features/advisor/advisorApi';
 import { addToast } from '../features/ui/uiSlice';
 import { filterWidgetCatalog, type WidgetCatalogFilter } from '../features/widgets/widgetCatalog';
@@ -29,6 +32,7 @@ import {
   useGetAssignedWidgetsQuery,
   useGetWidgetsQuery,
   useRemoveAssignedWidgetMutation,
+  useUpdateAssignedWidgetMutation,
 } from '../features/widgets/widgetsApi';
 
 type WidgetOptions = Record<string, Record<string, string>>;
@@ -126,9 +130,14 @@ function recentWidgetIdsFromStorage() {
 
 export function WidgetConfigurationPage() {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const initialWidgetId = searchParams.get('widgetId') ?? '';
   const initialClientId = searchParams.get('clientId') ?? '';
+  const assignmentId = searchParams.get('assignmentId') ?? '';
+  const isEditMode = searchParams.get('mode') === 'edit' && Boolean(initialClientId && initialWidgetId && assignmentId);
+  const requestedReturnTo = searchParams.get('returnTo') ?? '';
+  const returnTo = requestedReturnTo.startsWith('/advisor/clients/') ? requestedReturnTo : `/advisor/clients/${initialClientId}`;
   const { data: clients = [], isLoading: clientsLoading } = useGetClientsQuery();
   const { data: widgets = [], isLoading: widgetsLoading } = useGetWidgetsQuery();
   const [clientId, setClientId] = useState(initialClientId);
@@ -147,6 +156,7 @@ export function WidgetConfigurationPage() {
   const [configureWidget] = useConfigureWidgetMutation();
   const [assignWidget] = useAssignWidgetMutation();
   const [removeAssignedWidget, { isLoading: isRemoving }] = useRemoveAssignedWidgetMutation();
+  const [updateAssignedWidget, { isLoading: isUpdating }] = useUpdateAssignedWidgetMutation();
   const {
     data: assignedWidgets = [],
     isFetching: assignedWidgetsLoading,
@@ -155,6 +165,14 @@ export function WidgetConfigurationPage() {
   const selectedClient = useMemo(
     () => clients.find((client) => client.id === clientId),
     [clientId, clients],
+  );
+  const editAssignment = useMemo(
+    () => assignedWidgets.find((assignment) => assignment.id === assignmentId),
+    [assignedWidgets, assignmentId],
+  );
+  const editWidget = useMemo(
+    () => widgets.find((widget) => widget.id === initialWidgetId),
+    [initialWidgetId, widgets],
   );
   const selectedWidgets = useMemo(
     () => clientId ? widgets.filter((widget) => selectedWidgetIds.includes(widget.id)) : [],
@@ -215,11 +233,16 @@ export function WidgetConfigurationPage() {
   }, [selectedWidgetIds, widgets]);
 
   useEffect(() => {
-    if (!clientId || !assignedWidgets.length) {
+    if (!isEditMode || !editAssignment) return;
+    setWidgetOptions((current) => ({ ...current, [editAssignment.widgetId]: { ...editAssignment.configuration.options } }));
+  }, [editAssignment, isEditMode]);
+
+  useEffect(() => {
+    if (!clientId || !assignedWidgets.length || isEditMode) {
       return;
     }
     setSelectedWidgetIds((current) => current.filter((widgetId) => !assignedWidgetIds.has(widgetId)));
-  }, [assignedWidgetIds, assignedWidgets.length, clientId]);
+  }, [assignedWidgetIds, assignedWidgets.length, clientId, isEditMode]);
 
   useEffect(() => {
     setPage(1);
@@ -329,6 +352,41 @@ export function WidgetConfigurationPage() {
     } finally {
       setIsSaving(false);
     }
+  }
+
+  async function handleSaveEdit() {
+    if (!editAssignment || !editWidget) return;
+    try {
+      await updateAssignedWidget({ clientId, assignmentId: editAssignment.id, options: widgetOptions[editWidget.id] ?? editAssignment.configuration.options }).unwrap();
+      dispatch(addToast({ title: 'Widget updated', description: `${editWidget.name} was updated for ${selectedClient?.name ?? 'the client'}.`, variant: 'success' }));
+      navigate(returnTo);
+    } catch {
+      dispatch(addToast({ title: 'Update failed', description: 'The widget configuration could not be saved. Please try again.', variant: 'error' }));
+    }
+  }
+
+  if (isEditMode) {
+    if (clientsLoading || widgetsLoading || assignedWidgetsLoading) {
+      return <div className="space-y-4"><Skeleton className="h-8 w-72" /><Skeleton className="h-96" /></div>;
+    }
+    if (!selectedClient || !editWidget || !editAssignment) {
+      return <EmptyState title="Assigned widget not found" description="This widget may have been removed from the client dashboard." action={<Link to={returnTo} className="text-sm font-semibold text-sage">Return to client</Link>} />;
+    }
+    const editValues = widgetOptions[editWidget.id] ?? editAssignment.configuration.options;
+    return (
+      <div className="space-y-5">
+        <Link to={returnTo} className="inline-flex items-center gap-2 text-sm font-semibold text-sage"><ChevronLeft className="h-4 w-4" />Back to {selectedClient.name}</Link>
+        <section><p className="text-sm font-semibold text-sage">Edit assigned widget</p><h2 className="mt-1 text-2xl font-bold sm:text-3xl">{editWidget.name}</h2><p className="mt-2 text-sm text-ink/60 dark:text-white/60">Update the values for {selectedClient.name} and review the client experience before saving.</p></section>
+        <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(360px,0.85fr)]">
+          <Card className="p-5">
+            <div className="flex items-center gap-3"><WidgetBrandIcon widgetId={editWidget.id} icon={editWidget.icon} /><div><p className="text-xs font-semibold text-sage">{editWidget.category}</p><h3 className="font-semibold">Widget configuration</h3></div></div>
+            <div className="mt-5"><WidgetConfigurationForm widget={editWidget} values={editValues} onChange={(key, value) => updateOption(editWidget.id, key, value)} expanded hideInlinePreview /></div>
+          </Card>
+          <div className="xl:sticky xl:top-5"><div className="mb-3 flex items-center gap-2"><Eye className="h-4 w-4 text-sage" /><h3 className="text-sm font-semibold">Live client preview</h3></div><WidgetLivePreview widgetId={editWidget.id} name={editWidget.name} category={editWidget.category} values={editValues} clientName={selectedClient.name} /></div>
+        </div>
+        <div className="flex flex-wrap justify-end gap-2 rounded-md border border-ink/10 bg-white/55 p-4 dark:border-white/10 dark:bg-white/5"><Button variant="secondary" onClick={() => navigate(returnTo)}>Cancel</Button><Button onClick={handleSaveEdit} disabled={isUpdating}><Save className="h-4 w-4" />{isUpdating ? 'Saving changes…' : 'Save changes'}</Button></div>
+      </div>
+    );
   }
 
   return (
@@ -517,9 +575,10 @@ function AssignedWidgetsPanel({ assignments, loading, pendingRemoval, isRemoving
                   <p className="font-semibold">{assignment.widgetName}</p>
                   <p className="mt-1 text-sm text-ink/55">{assignment.published ? 'Published to client' : 'Draft assignment'}</p>
                 </div>
-                <button type="button" onClick={() => onRequestRemove(assignment)} className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-coral/20 text-coral transition hover:bg-coral/10" aria-label={`Remove ${assignment.widgetName}`} title="Remove assigned widget">
-                  <Trash2 className="h-4 w-4" />
-                </button>
+                <div className="flex gap-2">
+                  <Link to={`/advisor/widgets/configure?${new URLSearchParams({ clientId: assignment.clientId, widgetId: assignment.widgetId, assignmentId: assignment.id, mode: 'edit', returnTo: `/advisor/clients/${assignment.clientId}` }).toString()}`} className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-ink/10 text-ink/60 transition hover:border-sage/30 hover:text-sage" aria-label={`Edit ${assignment.widgetName}`} title="Edit assigned widget"><Pencil className="h-4 w-4" /></Link>
+                  <button type="button" onClick={() => onRequestRemove(assignment)} className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-coral/20 text-coral transition hover:bg-coral/10" aria-label={`Remove ${assignment.widgetName}`} title="Remove assigned widget"><Trash2 className="h-4 w-4" /></button>
+                </div>
               </div>
               {pendingRemoval?.id === assignment.id && (
                 <div className="mt-4 flex flex-col gap-3 rounded-md border border-coral/25 bg-coral/10 p-3 sm:flex-row sm:items-center sm:justify-between">
@@ -556,7 +615,7 @@ function CatalogWidgetCard({ widget, selected, assigned, recommended, onToggle }
       assigned ? 'opacity-60' : 'hover:border-sage/40',
     ].join(' ')}>
       <div className="flex items-start justify-between gap-3">
-        <span className="rounded-md bg-sage/10 p-2 text-sage"><Settings2 className="h-4 w-4" /></span>
+        <WidgetBrandIcon widgetId={widget.id} icon={widget.icon} />
         <button type="button" onClick={onToggle} disabled={assigned} aria-label={assigned ? `${widget.name} already assigned` : `${selected ? 'Deselect' : 'Select'} ${widget.name}`} className={[
           'grid h-7 w-7 place-items-center rounded border transition',
           selected ? 'border-sage bg-sage text-white' : 'border-ink/20 bg-white dark:bg-transparent',
@@ -615,7 +674,7 @@ function PreviewPanel({ clientName, entries }: { clientName: string; entries: Ar
             <Eye className="h-4 w-4 text-sage" />
           </div>
           <div className="grid max-h-[520px] gap-3 overflow-y-auto p-4 md:grid-cols-2">
-            {entries.map((entry, index) => <WidgetPreview key={`${entry.status}-${entry.widget.id}-${index}`} widget={entry.widget} values={entry.values} status={entry.status} />)}
+            {entries.map((entry, index) => <WidgetLivePreview key={`${entry.status}-${entry.widget.id}-${index}`} widgetId={entry.widget.id} name={entry.widget.name} category={entry.widget.category} values={entry.values} clientName={clientName} compact />)}
             {!entries.length && <div className="md:col-span-2"><EmptyState title="Dashboard preview is empty" description="Assigned and selected widgets will appear here." /></div>}
           </div>
         </div>
@@ -633,10 +692,10 @@ function StepHeading({ number, title, description }: { number: string; title: st
   );
 }
 
-function WidgetConfigurationForm({ widget, values, onChange }: { widget: Widget; values: Record<string, string>; onChange: (key: string, value: string) => void }) {
+function WidgetConfigurationForm({ widget, values, onChange, expanded = false, hideInlinePreview = false }: { widget: Widget; values: Record<string, string>; onChange: (key: string, value: string) => void; expanded?: boolean; hideInlinePreview?: boolean }) {
   const fields = configurationFields[widget.id] ?? [];
   return (
-    <details className="rounded-lg border border-ink/10 p-4">
+    <details open={expanded || undefined} className="rounded-lg border border-ink/10 p-4">
       <summary className="cursor-pointer list-none font-semibold">Configure {widget.name}</summary>
       <p className="mt-2 text-xs text-ink/50">Default values are ready to use. Advanced options remain hidden.</p>
       <div className="mt-4 grid gap-4 md:grid-cols-2">
@@ -656,21 +715,7 @@ function WidgetConfigurationForm({ widget, values, onChange }: { widget: Widget;
           </label>
         ))}
       </div>
+      {!hideInlinePreview && <div className="mt-4 border-t border-ink/8 pt-4"><p className="mb-2 text-xs font-semibold text-ink/50">Live preview</p><WidgetLivePreview widgetId={widget.id} name={widget.name} category={widget.category} values={values} compact /></div>}
     </details>
-  );
-}
-
-function WidgetPreview({ widget, values, status }: { widget: Widget; values: Record<string, string>; status: string }) {
-  const fields = configurationFields[widget.id] ?? [];
-  return (
-    <article className="rounded-md border border-ink/10 p-4">
-      <div className="flex items-center justify-between gap-2"><p className="text-xs font-semibold text-sage">{widget.category}</p><span className="rounded bg-ink/5 px-1.5 py-0.5 text-xs text-ink/55 dark:bg-white/10">{status}</span></div>
-      <h4 className="mt-1 font-semibold">{widget.name}</h4>
-      <div className="mt-3 grid grid-cols-2 gap-2">
-        {fields.slice(0, 2).map((field) => (
-          <div key={field.key} className="rounded-md bg-ink/5 p-2 dark:bg-white/5"><p className="text-xs text-ink/45">{field.label}</p><p className="mt-1 truncate text-xs font-semibold">{values[field.key] || 'Default'}</p></div>
-        ))}
-      </div>
-    </article>
   );
 }

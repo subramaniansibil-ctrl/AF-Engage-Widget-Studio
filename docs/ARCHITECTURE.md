@@ -14,6 +14,8 @@ AF Engage Widget Studio is a full-stack demo platform for advisor-authored, clie
 
 The frontend keeps API contracts in TypeScript interfaces and does not use Zod. Protected route wrappers enforce role-based access before rendering portal layouts.
 
+Advisor widget management uses a dedicated paginated client-widgets route. Shared branding and live-preview components keep the library, assignment workflow, edit view, and client-facing representation visually consistent.
+
 ## Backend
 
 - Go and Gin
