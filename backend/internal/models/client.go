@@ -10,18 +10,36 @@ type ClientRecommendation struct {
 }
 
 type SimulationRequest struct {
-	WidgetID string            `json:"widgetId" binding:"required"`
-	Inputs   map[string]string `json:"inputs"`
-	Result   string            `json:"result"`
+	Name       string            `json:"name" binding:"required,min=2,max=120"`
+	WidgetID   string            `json:"widgetId" binding:"required"`
+	WidgetName string            `json:"widgetName" binding:"required"`
+	Inputs     map[string]string `json:"inputs"`
+	Results    map[string]string `json:"results"`
+	Result     string            `json:"result"`
+}
+
+type SimulationUpdateRequest struct {
+	Name    string            `json:"name" binding:"required,min=2,max=120"`
+	Inputs  map[string]string `json:"inputs"`
+	Results map[string]string `json:"results"`
+	Result  string            `json:"result"`
+}
+
+type DuplicateSimulationRequest struct {
+	Name string `json:"name" binding:"omitempty,min=2,max=120"`
 }
 
 type Simulation struct {
-	ID        string            `json:"id"`
-	ClientID  string            `json:"clientId"`
-	WidgetID  string            `json:"widgetId"`
-	Inputs    map[string]string `json:"inputs"`
-	Result    string            `json:"result"`
-	CreatedAt time.Time         `json:"createdAt"`
+	ID         string            `json:"id"`
+	ClientID   string            `json:"clientId"`
+	WidgetID   string            `json:"widgetId"`
+	Name       string            `json:"name"`
+	WidgetName string            `json:"widgetName"`
+	Inputs     map[string]string `json:"inputs"`
+	Results    map[string]string `json:"results"`
+	Result     string            `json:"result"`
+	CreatedAt  time.Time         `json:"createdAt"`
+	UpdatedAt  time.Time         `json:"updatedAt"`
 }
 
 type ClientDashboardResponse struct {

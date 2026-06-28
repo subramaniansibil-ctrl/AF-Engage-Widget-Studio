@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, Boxes, PiggyBank, Send, Target, WalletCards } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Boxes, PiggyBank, Send, Target, WalletCards } from 'lucide-react';
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import { useGetClientByIdQuery } from '../features/advisor/advisorApi';
 import { KpiCard } from '../components/ui/KpiCard';
@@ -8,6 +8,8 @@ import {
   useGetAssignedWidgetsQuery,
   usePublishDashboardMutation,
 } from '../features/widgets/widgetsApi';
+import { WidgetBrandIcon } from '../components/widgets/WidgetBrandIcon';
+import { EmptyState } from '../components/ui/EmptyState';
 
 const currency = new Intl.NumberFormat('en-US', {
   style: 'currency',
@@ -123,6 +125,11 @@ export function AdvisorClientDetailPage() {
             <p className="mt-1 text-sm text-ink/60">Widgets currently staged for this client dashboard.</p>
           </div>
           <div className="flex flex-wrap gap-2">
+            {!!assignedWidgets.length && (
+              <Link to={`/advisor/clients/${client.id}/widgets`} className="inline-flex items-center gap-2 rounded-md border border-ink/10 px-3 py-2 text-sm font-semibold text-ink/75 transition hover:bg-ink/5 dark:border-white/10 dark:text-white/75 dark:hover:bg-white/10">
+                Manage all <ArrowRight className="h-4 w-4" />
+              </Link>
+            )}
             <Link
               to={`/advisor/widgets/configure?clientId=${client.id}`}
               className="inline-flex items-center gap-2 rounded-md border border-ink/10 px-3 py-2 text-sm font-semibold text-ink/75 transition hover:bg-ink/5"
@@ -142,15 +149,11 @@ export function AdvisorClientDetailPage() {
           </div>
         </div>
         <div className="mt-4 grid gap-3 md:grid-cols-3">
-          {assignedWidgets.map((assignment) => (
+          {assignedWidgets.slice(0, 3).map((assignment) => (
             <AssignedWidgetCard key={assignment.id} assignment={assignment} />
           ))}
           {!assignedWidgets.length && (
-            <>
-              <WidgetRecommendation title="Two-Pot Impact" />
-              <WidgetRecommendation title="Onefee Wealth Reclaim" />
-              <WidgetRecommendation title="Income Sustainability" />
-            </>
+            <div className="md:col-span-3"><EmptyState title="No widgets assigned" description="Assign the first widget to build this client's personalized dashboard." action={<Link className="text-sm font-semibold text-sage" to={`/advisor/widgets/configure?clientId=${client.id}`}>Browse widgets</Link>} /></div>
           )}
         </div>
       </section>
@@ -167,31 +170,19 @@ function Badge({ label, value }: { label: string; value: string }) {
   );
 }
 
-function WidgetRecommendation({ title }: { title: string }) {
-  return (
-    <div className="rounded-md border border-ink/10 p-4">
-      <p className="font-semibold">{title}</p>
-      <p className="mt-2 text-sm leading-6 text-ink/65">Suggested for this client profile and retirement journey.</p>
-    </div>
-  );
-}
-
 function AssignedWidgetCard({ assignment }: { assignment: DashboardAssignment }) {
+  const params = new URLSearchParams({ clientId: assignment.clientId, widgetId: assignment.widgetId, assignmentId: assignment.id, mode: 'edit', returnTo: `/advisor/clients/${assignment.clientId}` });
   return (
-    <div className="rounded-md border border-ink/10 p-4">
-      <div className="flex items-start justify-between gap-3">
-        <p className="font-semibold">{assignment.widgetName}</p>
-        <span className="rounded-md bg-ink/5 px-2 py-1 text-xs font-semibold text-ink/55">
-          {assignment.published ? 'Published' : 'Draft'}
-        </span>
-      </div>
+    <Link to={`/advisor/widgets/configure?${params.toString()}`} className="group rounded-md border border-ink/10 p-4 transition hover:border-sage/40 hover:bg-sage/[0.035] dark:border-white/10">
+      <div className="flex items-center gap-3"><WidgetBrandIcon widgetId={assignment.widgetId} /><p className="font-semibold">{assignment.widgetName}</p></div>
       <p className="mt-3 text-sm leading-6 text-ink/65">
         Scenario: {assignment.configuration.options.scenario ?? assignment.configuration.options.withdrawalScenario ?? 'Default'}
       </p>
       <p className="mt-1 text-sm text-ink/55">
         Projection: {assignment.configuration.options.projectionYears ?? 'Default'} years
       </p>
-    </div>
+      <p className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-sage">Edit configuration <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" /></p>
+    </Link>
   );
 }
 

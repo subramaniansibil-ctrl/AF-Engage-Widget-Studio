@@ -34,6 +34,9 @@ describe('widget assignment flow', () => {
       clientId,
       widgetId,
       widgetName: widgetId,
+      widgetDescription: '',
+      widgetCategory: '',
+      widgetIcon: '',
       published: false,
       configuration: {
         id: configurationId ?? '',

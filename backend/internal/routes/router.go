@@ -51,6 +51,7 @@ func NewRouter(cfg config.Config, statusService services.StatusService, authServ
 			advisor.POST("/clients/:clientId/widgets/configure", widgetHandler.ConfigureWidget)                     // POST /api/v1/advisor/clients/:clientId/widgets/configure saves widget options.
 			advisor.POST("/clients/:clientId/widgets/assign", widgetHandler.AssignWidget)                           // POST /api/v1/advisor/clients/:clientId/widgets/assign assigns a widget to a client.
 			advisor.GET("/clients/:clientId/assigned-widgets", widgetHandler.ListAssignedWidgets)                   // GET /api/v1/advisor/clients/:clientId/assigned-widgets lists assigned widgets.
+			advisor.PUT("/clients/:clientId/assigned-widgets/:assignmentId", widgetHandler.UpdateAssignedWidget)    // PUT updates one assigned widget configuration.
 			advisor.DELETE("/clients/:clientId/assigned-widgets/:assignmentId", widgetHandler.RemoveAssignedWidget) // DELETE removes one assigned widget from a client.
 			advisor.POST("/clients/:clientId/publish-dashboard", widgetHandler.PublishDashboard)                    // POST /api/v1/advisor/clients/:clientId/publish-dashboard publishes assignments.
 		}
@@ -58,8 +59,13 @@ func NewRouter(cfg config.Config, statusService services.StatusService, authServ
 		{
 			client.GET("/dashboard", clientHandler.Dashboard)             // GET /api/v1/client/dashboard returns the personalized client portal payload.
 			client.GET("/widgets", clientHandler.Widgets)                 // GET /api/v1/client/widgets returns only assigned client widgets.
+			client.GET("/widgets/:widgetId", clientHandler.Widget)        // GET returns one published widget assigned to the authenticated client.
 			client.GET("/recommendations", clientHandler.Recommendations) // GET /api/v1/client/recommendations returns client-ready guidance prompts.
 			client.POST("/simulations", clientHandler.SaveSimulation)     // POST /api/v1/client/simulations saves widget simulation history.
+			client.GET("/simulations", clientHandler.Simulations)         // GET lists client-owned simulations, optionally filtered by widget.
+			client.PUT("/simulations/:simulationId", clientHandler.UpdateSimulation)
+			client.POST("/simulations/:simulationId/duplicate", clientHandler.DuplicateSimulation)
+			client.DELETE("/simulations/:simulationId", clientHandler.DeleteSimulation)
 		}
 		simulations := v1.Group("/simulations", middleware.AuthMiddleware(authService), middleware.RoleMiddleware(models.RoleAdvisor, models.RoleClient, models.RoleAdmin))
 		{

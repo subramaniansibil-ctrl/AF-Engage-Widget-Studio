@@ -16,6 +16,9 @@ const AdvisorClientsPage = lazy(() =>
 const AdvisorClientDetailPage = lazy(() =>
   import('../pages/AdvisorClientDetailPage').then((module) => ({ default: module.AdvisorClientDetailPage })),
 );
+const AdvisorClientWidgetsPage = lazy(() =>
+  import('../pages/AdvisorClientWidgetsPage').then((module) => ({ default: module.AdvisorClientWidgetsPage })),
+);
 const WidgetLibraryPage = lazy(() =>
   import('../pages/WidgetLibraryPage').then((module) => ({ default: module.WidgetLibraryPage })),
 );
@@ -28,8 +31,8 @@ const AdvisorAnalyticsPage = lazy(() =>
 const ClientDashboardPage = lazy(() =>
   import('../pages/ClientDashboardPage').then((module) => ({ default: module.ClientDashboardPage })),
 );
-const ClientWidgetsPage = lazy(() =>
-  import('../pages/ClientWidgetsPage').then((module) => ({ default: module.ClientWidgetsPage })),
+const ClientWidgetDetailPage = lazy(() =>
+  import('../pages/ClientWidgetDetailPage').then((module) => ({ default: module.ClientWidgetDetailPage })),
 );
 const AdminDashboardPage = lazy(() =>
   import('../pages/AdminDashboardPage').then((module) => ({ default: module.AdminDashboardPage })),
@@ -70,6 +73,7 @@ export const router = createBrowserRouter([
                   { path: 'advisor/dashboard', element: routeElement(AdvisorDashboardPage) },
                   { path: 'advisor/clients', element: routeElement(AdvisorClientsPage) },
                   { path: 'advisor/clients/:clientId', element: routeElement(AdvisorClientDetailPage) },
+                  { path: 'advisor/clients/:clientId/widgets', element: routeElement(AdvisorClientWidgetsPage) },
                   { path: 'advisor/widgets', element: routeElement(WidgetLibraryPage) },
                   { path: 'advisor/widgets/configure', element: routeElement(WidgetConfigurationPage) },
                   { path: 'advisor/analytics', element: routeElement(AdvisorAnalyticsPage) },
@@ -79,7 +83,8 @@ export const router = createBrowserRouter([
                 element: <ClientRoute />,
                 children: [
                   { path: 'client/dashboard', element: routeElement(ClientDashboardPage) },
-                  { path: 'client/widgets', element: routeElement(ClientWidgetsPage) },
+                  { path: 'client/widgets', element: <Navigate to="/client/dashboard" replace /> },
+                  { path: 'client/widgets/:widgetId', element: routeElement(ClientWidgetDetailPage) },
                 ],
               },
               {

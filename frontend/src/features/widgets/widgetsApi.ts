@@ -23,8 +23,13 @@ export interface DashboardAssignment {
   clientId: string;
   widgetId: string;
   widgetName: string;
+  widgetDescription: string;
+  widgetCategory: string;
+  widgetIcon: string;
   configuration: WidgetConfiguration;
   published: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface ConfigureWidgetRequest {
@@ -47,6 +52,12 @@ export interface PublishDashboardResponse {
 export interface RemoveAssignedWidgetRequest {
   clientId: string;
   assignmentId: string;
+}
+
+export interface UpdateAssignedWidgetRequest {
+  clientId: string;
+  assignmentId: string;
+  options: Record<string, string>;
 }
 
 export const widgetsApi = apiSlice.injectEndpoints({
@@ -99,6 +110,17 @@ export const widgetsApi = apiSlice.injectEndpoints({
       },
       invalidatesTags: (_result, _error, { clientId }) => [{ type: 'AssignedWidget', id: clientId }],
     }),
+    updateAssignedWidget: builder.mutation<DashboardAssignment, UpdateAssignedWidgetRequest>({
+      query: ({ clientId, assignmentId, options }) => ({
+        url: `/advisor/clients/${clientId}/assigned-widgets/${assignmentId}`,
+        method: 'PUT',
+        body: { options },
+      }),
+      invalidatesTags: (_result, _error, { clientId }) => [
+        { type: 'AssignedWidget', id: clientId },
+        'ClientDashboard',
+      ],
+    }),
     publishDashboard: builder.mutation<PublishDashboardResponse, string>({
       query: (clientId) => ({
         url: `/advisor/clients/${clientId}/publish-dashboard`,
@@ -117,4 +139,5 @@ export const {
   useGetWidgetsQuery,
   usePublishDashboardMutation,
   useRemoveAssignedWidgetMutation,
+  useUpdateAssignedWidgetMutation,
 } = widgetsApi;

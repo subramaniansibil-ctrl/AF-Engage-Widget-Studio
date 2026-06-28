@@ -120,11 +120,13 @@ func (r *postgresWidgetRepository) AssignWidget(ctx context.Context, clientID st
 		WidgetName:    widget.Name,
 		Configuration: configuration,
 		Published:     false,
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
 	}
 	_, err = r.db.ExecContext(ctx, `
-		INSERT INTO dashboard_assignments (id, client_id, widget_id, configuration_id, published)
-		VALUES ($1, $2, $3, $4, $5)
-	`, assignment.ID, assignment.ClientID, assignment.WidgetID, assignment.Configuration.ID, assignment.Published)
+		INSERT INTO dashboard_assignments (id, client_id, widget_id, configuration_id, published, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6)
+	`, assignment.ID, assignment.ClientID, assignment.WidgetID, assignment.Configuration.ID, assignment.Published, assignment.UpdatedAt)
 	var pgError *pgconn.PgError
 	if errors.As(err, &pgError) && pgError.Code == "23505" {
 		return models.DashboardAssignment{}, ErrWidgetAlreadyAssigned
@@ -134,13 +136,14 @@ func (r *postgresWidgetRepository) AssignWidget(ctx context.Context, clientID st
 
 func (r *postgresWidgetRepository) ListAssignedWidgets(ctx context.Context, clientID string) ([]models.DashboardAssignment, error) {
 	rows, err := r.db.QueryContext(ctx, `
-		SELECT da.id, da.client_id, da.widget_id, w.name, da.published,
+		SELECT da.id, da.client_id, da.widget_id, w.name, w.description, w.category, w.icon,
+			da.published, da.created_at, da.updated_at,
 			wc.id, wc.widget_id, wc.client_id, wc.options
 		FROM dashboard_assignments da
 		JOIN widgets w ON w.id = da.widget_id
 		JOIN widget_configurations wc ON wc.id = da.configuration_id
 		WHERE da.client_id = $1
-		ORDER BY da.created_at, w.name
+		ORDER BY da.updated_at DESC, w.name
 	`, clientID)
 	if err != nil {
 		return nil, err
@@ -156,6 +159,52 @@ func (r *postgresWidgetRepository) ListAssignedWidgets(ctx context.Context, clie
 		assignments = append(assignments, assignment)
 	}
 	return assignments, rows.Err()
+}
+
+func (r *postgresWidgetRepository) UpdateAssignedWidget(ctx context.Context, clientID string, assignmentID string, request models.UpdateAssignedWidgetRequest) (models.DashboardAssignment, error) {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return models.DashboardAssignment{}, err
+	}
+	defer tx.Rollback()
+
+	var configurationID string
+	var optionsJSON []byte
+	err = tx.QueryRowContext(ctx, `
+		SELECT wc.id, wc.options
+		FROM dashboard_assignments da
+		JOIN widget_configurations wc ON wc.id = da.configuration_id
+		WHERE da.id = $1 AND da.client_id = $2
+		FOR UPDATE
+	`, assignmentID, clientID).Scan(&configurationID, &optionsJSON)
+	if errors.Is(err, sql.ErrNoRows) {
+		return models.DashboardAssignment{}, ErrAssignmentNotFound
+	}
+	if err != nil {
+		return models.DashboardAssignment{}, err
+	}
+
+	options := map[string]string{}
+	if err := json.Unmarshal(optionsJSON, &options); err != nil {
+		return models.DashboardAssignment{}, err
+	}
+	for key, value := range request.Options {
+		options[key] = value
+	}
+	updatedOptions, err := json.Marshal(options)
+	if err != nil {
+		return models.DashboardAssignment{}, err
+	}
+	if _, err := tx.ExecContext(ctx, `UPDATE widget_configurations SET options = $1, updated_at = NOW() WHERE id = $2`, updatedOptions, configurationID); err != nil {
+		return models.DashboardAssignment{}, err
+	}
+	if _, err := tx.ExecContext(ctx, `UPDATE dashboard_assignments SET updated_at = NOW() WHERE id = $1 AND client_id = $2`, assignmentID, clientID); err != nil {
+		return models.DashboardAssignment{}, err
+	}
+	if err := tx.Commit(); err != nil {
+		return models.DashboardAssignment{}, err
+	}
+	return r.getAssignment(ctx, clientID, assignmentID)
 }
 
 func (r *postgresWidgetRepository) RemoveAssignedWidget(ctx context.Context, clientID string, assignmentID string) error {
@@ -177,10 +226,26 @@ func (r *postgresWidgetRepository) RemoveAssignedWidget(ctx context.Context, cli
 }
 
 func (r *postgresWidgetRepository) PublishDashboard(ctx context.Context, clientID string) ([]models.DashboardAssignment, error) {
-	if _, err := r.db.ExecContext(ctx, `UPDATE dashboard_assignments SET published = TRUE WHERE client_id = $1`, clientID); err != nil {
+	if _, err := r.db.ExecContext(ctx, `UPDATE dashboard_assignments SET published = TRUE, updated_at = NOW() WHERE client_id = $1`, clientID); err != nil {
 		return nil, err
 	}
 	return r.ListAssignedWidgets(ctx, clientID)
+}
+
+func (r *postgresWidgetRepository) getAssignment(ctx context.Context, clientID string, assignmentID string) (models.DashboardAssignment, error) {
+	assignment, err := scanAssignment(r.db.QueryRowContext(ctx, `
+		SELECT da.id, da.client_id, da.widget_id, w.name, w.description, w.category, w.icon,
+			da.published, da.created_at, da.updated_at,
+			wc.id, wc.widget_id, wc.client_id, wc.options
+		FROM dashboard_assignments da
+		JOIN widgets w ON w.id = da.widget_id
+		JOIN widget_configurations wc ON wc.id = da.configuration_id
+		WHERE da.client_id = $1 AND da.id = $2
+	`, clientID, assignmentID))
+	if errors.Is(err, sql.ErrNoRows) {
+		return models.DashboardAssignment{}, ErrAssignmentNotFound
+	}
+	return assignment, err
 }
 
 func (r *postgresWidgetRepository) getConfiguration(ctx context.Context, id string) (models.WidgetConfiguration, error) {
@@ -230,7 +295,12 @@ func scanAssignment(row scanner) (models.DashboardAssignment, error) {
 		&assignment.ClientID,
 		&assignment.WidgetID,
 		&assignment.WidgetName,
+		&assignment.WidgetDescription,
+		&assignment.WidgetCategory,
+		&assignment.WidgetIcon,
 		&assignment.Published,
+		&assignment.CreatedAt,
+		&assignment.UpdatedAt,
 		&assignment.Configuration.ID,
 		&assignment.Configuration.WidgetID,
 		&assignment.Configuration.ClientID,
