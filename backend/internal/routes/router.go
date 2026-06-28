@@ -11,7 +11,7 @@ import (
 	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/services"
 )
 
-func NewRouter(cfg config.Config, statusService services.StatusService, authService services.AuthService, advisorService services.AdvisorService, widgetService services.WidgetService, clientService services.ClientService, simulationService services.SimulationService, analyticsService services.AnalyticsService) *gin.Engine {
+func NewRouter(cfg config.Config, statusService services.StatusService, authService services.AuthService, advisorService services.AdvisorService, widgetService services.WidgetService, clientService services.ClientService, simulationService services.SimulationService, analyticsService services.AnalyticsService, clientManagementService services.ClientManagementService) *gin.Engine {
 	if cfg.Environment == "production" {
 		gin.SetMode(gin.ReleaseMode)
 	}
@@ -26,6 +26,7 @@ func NewRouter(cfg config.Config, statusService services.StatusService, authServ
 	clientHandler := handlers.NewClientHandler(clientService)
 	simulationHandler := handlers.NewSimulationHandler(simulationService)
 	analyticsHandler := handlers.NewAnalyticsHandler(analyticsService)
+	clientManagementHandler := handlers.NewClientManagementHandler(clientManagementService)
 	router.GET("/health", statusHandler.Health) // GET /health returns service liveness and version metadata.
 
 	v1 := router.Group("/api/v1")
@@ -70,6 +71,15 @@ func NewRouter(cfg config.Config, statusService services.StatusService, authServ
 		{
 			analytics.GET("/advisor", analyticsHandler.AdvisorAnalytics) // GET /api/v1/analytics/advisor returns advisor engagement analytics.
 			analytics.GET("/widgets", analyticsHandler.WidgetUsage)      // GET /api/v1/analytics/widgets returns widget usage analytics.
+		}
+		adminClients := v1.Group("/admin/clients", middleware.AuthMiddleware(authService), middleware.RoleMiddleware(models.RoleAdmin))
+		{
+			adminClients.GET("", clientManagementHandler.List)                    // GET lists clients for administration with search and filters.
+			adminClients.GET("/:clientId", clientManagementHandler.Get)           // GET returns one managed client.
+			adminClients.POST("", clientManagementHandler.Create)                 // POST creates a client.
+			adminClients.PUT("/:clientId", clientManagementHandler.Update)        // PUT updates an existing client.
+			adminClients.DELETE("/:clientId", clientManagementHandler.Deactivate) // DELETE deactivates a client without removing history.
+			adminClients.POST("/bulk", clientManagementHandler.BulkImport)        // POST validates and imports client rows.
 		}
 		notifications := v1.Group("/notifications", middleware.AuthMiddleware(authService))
 		{

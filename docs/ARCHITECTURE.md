@@ -33,6 +33,8 @@ The backend is JWT-ready. Current authentication uses mock bearer tokens so the 
 
 `APP_DATA_MODE=postgres` connects to PostgreSQL, runs SQL migrations, and seeds demo users, clients, widgets, dashboard assignments, notifications, audit logs, and simulation history.
 
+Client management uses one shared advisor repository in each mode. Admin mutations therefore appear immediately in advisor queries, while repository filters exclude inactive clients and restrict advisor lists to their assigned advisor name.
+
 ## Runtime Concerns
 
 - Structured JSON logs via Go `slog`
@@ -51,6 +53,7 @@ The backend is JWT-ready. Current authentication uses mock bearer tokens so the 
 5. Publish the client dashboard.
 6. Sign in as the client to view assigned widgets and run simulations.
 7. Use analytics, notifications, and admin views for the hackathon story.
+8. Sign in as an admin to create, update, deactivate, or bulk import client records.
 
 ## Screenshot Placeholders
 

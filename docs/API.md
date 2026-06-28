@@ -74,6 +74,19 @@ Simulation responses include an illustration disclaimer. Outputs are mock calcul
 - `PATCH /api/v1/notifications/:id/read`
 - `GET /api/v1/audit-logs`
 
+### Admin Client Management
+
+All client-management routes require the `ADMIN` role.
+
+- `GET /api/v1/admin/clients?search=&status=&assignedAdvisor=&recent=`
+- `GET /api/v1/admin/clients/:clientId`
+- `POST /api/v1/admin/clients`
+- `PUT /api/v1/admin/clients/:clientId`
+- `DELETE /api/v1/admin/clients/:clientId` deactivates the record and preserves its history.
+- `POST /api/v1/admin/clients/bulk` imports valid rows and returns row/field errors for rejected rows.
+
+Client ID and email address are unique. Bulk import is intentionally partial: invalid or duplicate rows are not saved, while valid rows in the same request are imported.
+
 ## Error Format
 
 ```json

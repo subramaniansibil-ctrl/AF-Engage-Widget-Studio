@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/models"
 )
@@ -14,6 +16,7 @@ type ClientFilters struct {
 	Search          string
 	RiskProfile     models.RiskProfile
 	RetirementStage models.RetirementStage
+	AssignedAdvisor string
 }
 
 type AdvisorRepository interface {
@@ -23,17 +26,25 @@ type AdvisorRepository interface {
 }
 
 type mockAdvisorRepository struct {
+	mu      sync.RWMutex
 	clients []models.Client
 }
 
-func NewMockAdvisorRepository() AdvisorRepository {
+func NewMockAdvisorRepository() *mockAdvisorRepository {
 	return &mockAdvisorRepository{clients: mockClients()}
 }
 
 func (r *mockAdvisorRepository) GetDashboardStats(ctx context.Context) (models.AdvisorDashboardStats, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 	totalAssets := int64(0)
 	highRiskClients := 0
+	activeClients := 0
 	for _, client := range r.clients {
+		if client.Status == models.ClientStatusInactive {
+			continue
+		}
+		activeClients++
 		totalAssets += client.Portfolio.TotalValue
 		if client.RiskProfile == models.RiskAggressive || client.RiskProfile == models.RiskGrowth {
 			highRiskClients++
@@ -41,7 +52,7 @@ func (r *mockAdvisorRepository) GetDashboardStats(ctx context.Context) (models.A
 	}
 
 	return models.AdvisorDashboardStats{
-		TotalClients:           len(r.clients),
+		TotalClients:           activeClients,
 		TotalAssetsUnderAdvice: totalAssets,
 		HighRiskClients:        highRiskClients,
 		ActiveDashboards:       16,
@@ -55,10 +66,15 @@ func (r *mockAdvisorRepository) GetDashboardStats(ctx context.Context) (models.A
 }
 
 func (r *mockAdvisorRepository) ListClients(ctx context.Context, filters ClientFilters) ([]models.Client, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 	results := make([]models.Client, 0, len(r.clients))
 	search := strings.ToLower(strings.TrimSpace(filters.Search))
 
 	for _, client := range r.clients {
+		if client.Status == models.ClientStatusInactive {
+			continue
+		}
 		if search != "" && !strings.Contains(strings.ToLower(client.Name), search) && !strings.Contains(strings.ToLower(client.Email), search) {
 			continue
 		}
@@ -68,6 +84,9 @@ func (r *mockAdvisorRepository) ListClients(ctx context.Context, filters ClientF
 		if filters.RetirementStage != "" && client.RetirementStage != filters.RetirementStage {
 			continue
 		}
+		if filters.AssignedAdvisor != "" && client.AssignedAdvisor != filters.AssignedAdvisor {
+			continue
+		}
 		results = append(results, client)
 	}
 
@@ -75,6 +94,8 @@ func (r *mockAdvisorRepository) ListClients(ctx context.Context, filters ClientF
 }
 
 func (r *mockAdvisorRepository) GetClientByID(ctx context.Context, id string) (models.Client, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
 	for _, client := range r.clients {
 		if client.ID == id {
 			return client, nil
@@ -128,7 +149,13 @@ func client(id string, name string, age int, email string, risk models.RiskProfi
 		Name:            name,
 		Age:             age,
 		Email:           email,
+		MobileNumber:    "+1 555 0100",
+		AssignedAdvisor: "Advisor User",
+		Status:          models.ClientStatusActive,
 		RiskProfile:     risk,
+		InvestmentGoal:  "Long-term retirement security",
+		PortfolioID:     "portfolio-" + id,
+		CreatedAt:       time.Now().Add(-48 * time.Hour),
 		RetirementStage: stage,
 		Portfolio: models.Portfolio{
 			TotalValue:           total,

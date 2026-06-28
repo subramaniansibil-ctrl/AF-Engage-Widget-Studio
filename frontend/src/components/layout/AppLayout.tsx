@@ -17,12 +17,13 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { to: '/advisor/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['ADVISOR', 'ADMIN'] },
-  { to: '/advisor/clients', label: 'Clients', icon: UsersRound, roles: ['ADVISOR', 'ADMIN'] },
+  { to: '/advisor/clients', label: 'Clients', icon: UsersRound, roles: ['ADVISOR'] },
   { to: '/advisor/widgets', label: 'Widgets', icon: Boxes, roles: ['ADVISOR', 'ADMIN'] },
   { to: '/advisor/analytics', label: 'Analytics', icon: ChartNoAxesCombined, roles: ['ADVISOR', 'ADMIN'] },
   { to: '/client/dashboard', label: 'Overview', icon: UserRound, roles: ['CLIENT', 'ADMIN'] },
   { to: '/client/widgets', label: 'My widgets', icon: ClipboardList, roles: ['CLIENT', 'ADMIN'] },
   { to: '/admin/dashboard', label: 'Admin', icon: Shield, roles: ['ADMIN'] },
+  { to: '/admin/clients', label: 'Client management', icon: UsersRound, roles: ['ADMIN'] },
 ];
 
 export function AppLayout() {

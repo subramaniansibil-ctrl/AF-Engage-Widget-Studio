@@ -36,6 +36,7 @@ func TestAPISmokeHealthLoginAndAdvisorDashboard(t *testing.T) {
 		services.NewClientService(advisorRepository, widgetRepository, clientRepository),
 		services.NewSimulationService(),
 		services.NewAnalyticsService(repositories.NewMockAnalyticsRepository()),
+		services.NewClientManagementService(advisorRepository),
 	)
 
 	healthRecorder := httptest.NewRecorder()
@@ -109,4 +110,58 @@ func TestAPISmokeHealthLoginAndAdvisorDashboard(t *testing.T) {
 	if len(assignments) != 0 {
 		t.Fatalf("expected deleted widget to be absent, got %d assignments", len(assignments))
 	}
+}
+
+func TestAdminClientManagementPermissionsAndDuplicates(t *testing.T) {
+	cfg := config.Config{Environment: "test", ServiceName: "af-engage-api-test", CORSOrigins: "http://localhost:5173", RateLimitRPM: "1000"}
+	authRepository := repositories.NewMockAuthRepository()
+	advisorRepository := repositories.NewMockAdvisorRepository()
+	widgetRepository := repositories.NewMockWidgetRepository()
+	router := NewRouter(cfg, services.NewStatusService(repositories.NewStatusRepository(cfg)), services.NewAuthService(authRepository), services.NewAdvisorService(advisorRepository), services.NewWidgetService(widgetRepository), services.NewClientService(advisorRepository, widgetRepository, repositories.NewMockClientRepository()), services.NewSimulationService(), services.NewAnalyticsService(repositories.NewMockAnalyticsRepository()), services.NewClientManagementService(advisorRepository))
+
+	advisorToken := loginToken(t, router, "advisor@afengage.com")
+	forbiddenRequest := httptest.NewRequest(http.MethodGet, "/api/v1/admin/clients", nil)
+	forbiddenRequest.Header.Set("Authorization", "Bearer "+advisorToken)
+	forbiddenRecorder := httptest.NewRecorder()
+	router.ServeHTTP(forbiddenRecorder, forbiddenRequest)
+	if forbiddenRecorder.Code != http.StatusForbidden {
+		t.Fatalf("expected advisor to receive 403, got %d", forbiddenRecorder.Code)
+	}
+
+	adminToken := loginToken(t, router, "admin@afengage.com")
+	clientBody, _ := json.Marshal(models.ClientUpsertRequest{ID: "client-admin-001", Name: "Admin Created", Email: "created@example.com", MobileNumber: "+27 82 555 0199", AssignedAdvisor: "Advisor User", Status: models.ClientStatusActive})
+	createRequest := httptest.NewRequest(http.MethodPost, "/api/v1/admin/clients", bytes.NewReader(clientBody))
+	createRequest.Header.Set("Authorization", "Bearer "+adminToken)
+	createRequest.Header.Set("Content-Type", "application/json")
+	createRecorder := httptest.NewRecorder()
+	router.ServeHTTP(createRecorder, createRequest)
+	if createRecorder.Code != http.StatusCreated {
+		t.Fatalf("expected client create 201, got %d: %s", createRecorder.Code, createRecorder.Body.String())
+	}
+
+	duplicateRequest := httptest.NewRequest(http.MethodPost, "/api/v1/admin/clients", bytes.NewReader(clientBody))
+	duplicateRequest.Header.Set("Authorization", "Bearer "+adminToken)
+	duplicateRequest.Header.Set("Content-Type", "application/json")
+	duplicateRecorder := httptest.NewRecorder()
+	router.ServeHTTP(duplicateRecorder, duplicateRequest)
+	if duplicateRecorder.Code != http.StatusConflict {
+		t.Fatalf("expected duplicate client 409, got %d: %s", duplicateRecorder.Code, duplicateRecorder.Body.String())
+	}
+}
+
+func loginToken(t *testing.T, router http.Handler, email string) string {
+	t.Helper()
+	body, _ := json.Marshal(models.LoginRequest{Email: email, Password: "password123"})
+	request := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", bytes.NewReader(body))
+	request.Header.Set("Content-Type", "application/json")
+	recorder := httptest.NewRecorder()
+	router.ServeHTTP(recorder, request)
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("login failed for %s: %s", email, recorder.Body.String())
+	}
+	var response models.LoginResponse
+	if err := json.Unmarshal(recorder.Body.Bytes(), &response); err != nil {
+		t.Fatalf("decode login response: %v", err)
+	}
+	return response.Token
 }

@@ -13,7 +13,7 @@ type postgresAdvisorRepository struct {
 	db *sql.DB
 }
 
-func NewPostgresAdvisorRepository(db *sql.DB) AdvisorRepository {
+func NewPostgresAdvisorRepository(db *sql.DB) *postgresAdvisorRepository {
 	return &postgresAdvisorRepository{db: db}
 }
 
@@ -27,6 +27,7 @@ func (r *postgresAdvisorRepository) GetDashboardStats(ctx context.Context) (mode
 			(SELECT COUNT(DISTINCT client_id) FROM dashboard_assignments WHERE published = TRUE)
 		FROM clients c
 		LEFT JOIN portfolios p ON p.client_id = c.id
+		WHERE c.status = 'ACTIVE'
 	`).Scan(&stats.TotalClients, &stats.TotalAssetsUnderAdvice, &stats.HighRiskClients, &stats.ActiveDashboards)
 	if err != nil {
 		return models.AdvisorDashboardStats{}, err
@@ -56,12 +57,14 @@ func (r *postgresAdvisorRepository) GetDashboardStats(ctx context.Context) (mode
 
 func (r *postgresAdvisorRepository) ListClients(ctx context.Context, filters ClientFilters) ([]models.Client, error) {
 	query := `
-		SELECT c.id, c.name, c.age, c.email, c.risk_profile, c.retirement_stage,
+		SELECT c.id, c.name, c.age, c.email, c.mobile_number, c.assigned_advisor, c.status,
+			COALESCE(TO_CHAR(c.date_of_birth, 'YYYY-MM-DD'), ''), c.risk_profile, c.retirement_stage,
+			c.investment_goal, COALESCE(NULLIF(c.portfolio_reference, ''), p.id), c.notes, c.created_at,
 			p.id, p.total_value, p.savings_pot_balance, p.retirement_pot_balance, p.monthly_contribution,
 			p.retirement_goal_target_amount, p.retirement_goal_target_age, p.retirement_goal_progress
 		FROM clients c
 		JOIN portfolios p ON p.client_id = c.id
-		WHERE 1=1
+		WHERE c.status = 'ACTIVE'
 	`
 	args := []any{}
 	if search := strings.TrimSpace(filters.Search); search != "" {
@@ -75,6 +78,10 @@ func (r *postgresAdvisorRepository) ListClients(ctx context.Context, filters Cli
 	if filters.RetirementStage != "" {
 		args = append(args, filters.RetirementStage)
 		query += " AND c.retirement_stage = $" + argNumber(len(args))
+	}
+	if filters.AssignedAdvisor != "" {
+		args = append(args, filters.AssignedAdvisor)
+		query += " AND c.assigned_advisor = $" + argNumber(len(args))
 	}
 	query += " ORDER BY c.name"
 
@@ -102,12 +109,14 @@ func (r *postgresAdvisorRepository) ListClients(ctx context.Context, filters Cli
 
 func (r *postgresAdvisorRepository) GetClientByID(ctx context.Context, id string) (models.Client, error) {
 	row := r.db.QueryRowContext(ctx, `
-		SELECT c.id, c.name, c.age, c.email, c.risk_profile, c.retirement_stage,
+		SELECT c.id, c.name, c.age, c.email, c.mobile_number, c.assigned_advisor, c.status,
+			COALESCE(TO_CHAR(c.date_of_birth, 'YYYY-MM-DD'), ''), c.risk_profile, c.retirement_stage,
+			c.investment_goal, COALESCE(NULLIF(c.portfolio_reference, ''), p.id), c.notes, c.created_at,
 			p.id, p.total_value, p.savings_pot_balance, p.retirement_pot_balance, p.monthly_contribution,
 			p.retirement_goal_target_amount, p.retirement_goal_target_age, p.retirement_goal_progress
 		FROM clients c
 		JOIN portfolios p ON p.client_id = c.id
-		WHERE c.id = $1
+		WHERE c.id = $1 AND c.status = 'ACTIVE'
 	`, id)
 	client, portfolioID, err := scanClient(row)
 	if err == sql.ErrNoRows {
@@ -136,8 +145,16 @@ func scanClient(row scanner) (models.Client, string, error) {
 		&client.Name,
 		&client.Age,
 		&client.Email,
+		&client.MobileNumber,
+		&client.AssignedAdvisor,
+		&client.Status,
+		&client.DateOfBirth,
 		&client.RiskProfile,
 		&client.RetirementStage,
+		&client.InvestmentGoal,
+		&client.PortfolioID,
+		&client.Notes,
+		&client.CreatedAt,
 		&portfolioID,
 		&client.Portfolio.TotalValue,
 		&client.Portfolio.SavingsPotBalance,

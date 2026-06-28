@@ -16,6 +16,8 @@ Phase 8 adds PostgreSQL-ready persistence, SQL migrations, seed data, and `APP_D
 
 Phase 9 makes the app demo-ready with loading skeletons, error boundaries, toast notifications, dark mode, structured backend logging, validation, CORS/rate limiting, graceful shutdown, tests, and expanded documentation.
 
+Client Management adds an admin-only client directory with manual create/edit/deactivate workflows, CSV bulk import, duplicate protection, and advisor assignment visibility rules.
+
 ## Tech Stack
 
 Frontend:
@@ -166,6 +168,7 @@ APP_DATA_MODE=mock go run ./cmd/server
 ## Demo Notes
 
 - Demo credentials are listed above and seeded in both mock and Postgres modes.
+- Admins manage client records at `/admin/clients`; advisors only see active clients assigned to their account.
 - The UI supports light/dark mode, responsive advisor/client/admin portals, loading skeletons, empty states, error boundaries, and toast feedback.
 - Screenshots can be added under `docs/screenshots/` for the final hackathon deck.
 
