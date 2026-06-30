@@ -161,7 +161,7 @@ export function AdvisorClientDetailPage() {
   );
 }
 
-function Badge({ label, value }: { label: string; value: string }) {
+function Badge({ label, value }: Readonly<{ label: string; value: string }>) {
   return (
     <div className="rounded-md border border-ink/10 px-3 py-2">
       <p className="text-xs text-ink/55">{label}</p>
@@ -170,7 +170,7 @@ function Badge({ label, value }: { label: string; value: string }) {
   );
 }
 
-function AssignedWidgetCard({ assignment }: { assignment: DashboardAssignment }) {
+function AssignedWidgetCard({ assignment }: Readonly<{ assignment: DashboardAssignment }>) {
   const params = new URLSearchParams({ clientId: assignment.clientId, widgetId: assignment.widgetId, assignmentId: assignment.id, mode: 'edit', returnTo: `/advisor/clients/${assignment.clientId}` });
   const simulationUrl = `/advisor/clients/${assignment.clientId}/widgets/${assignment.widgetId}/simulations`;
   return (

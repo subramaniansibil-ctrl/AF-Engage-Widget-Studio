@@ -91,11 +91,6 @@ export function LoginPage() {
             Advisors configure reusable simulation widgets, publish client dashboards, and track engagement from one polished portal.
           </p>
         </div>
-        <div className="grid grid-cols-3 gap-3 text-sm text-white/75">
-          <span className="rounded-md border border-white/15 bg-white/10 px-3 py-2 backdrop-blur-xl">Advisor portal</span>
-          <span className="rounded-md border border-white/15 bg-white/10 px-3 py-2 backdrop-blur-xl">Client widgets</span>
-          <span className="rounded-md border border-white/15 bg-white/10 px-3 py-2 backdrop-blur-xl">Postgres ready</span>
-        </div>
       </section>
       <section className="grid min-h-screen place-items-center px-6 py-10">
       <motion.form
@@ -150,11 +145,6 @@ export function LoginPage() {
           {isLoading ? 'Signing in...' : 'Sign in'}
         </Button>
 
-        <div className="mt-6 rounded-md border border-ink/10 bg-white/35 p-3 text-xs leading-5 text-ink/65 backdrop-blur-xl dark:border-white/10 dark:bg-white/10 dark:text-white/65">
-          <p>advisor@afengage.com / password123</p>
-          <p>client@afengage.com / password123</p>
-          <p>admin@afengage.com / password123</p>
-        </div>
       </motion.form>
       </section>
     </main>

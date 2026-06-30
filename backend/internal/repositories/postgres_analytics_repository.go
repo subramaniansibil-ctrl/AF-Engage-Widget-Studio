@@ -7,6 +7,14 @@ import (
 	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/models"
 )
 
+type widgetUsageRow struct {
+	WidgetID        string
+	WidgetName      string
+	AssignedCount   int
+	PublishedCount  int
+	SimulationCount int
+}
+
 type postgresAnalyticsRepository struct {
 	db *sql.DB
 }
@@ -43,29 +51,53 @@ func (r *postgresAnalyticsRepository) GetAdvisorAnalytics(ctx context.Context) (
 func (r *postgresAnalyticsRepository) GetWidgetUsage(ctx context.Context) ([]models.WidgetUsage, error) {
 	rows, err := r.db.QueryContext(ctx, `
 		SELECT w.id, w.name,
-			COUNT(da.id),
-			COUNT(da.id) FILTER (WHERE da.published = TRUE),
-			COUNT(sh.id)
+			COALESCE(assigned_counts.assigned_count, 0),
+			COALESCE(assigned_counts.published_count, 0),
+			COALESCE(simulation_counts.simulation_count, 0)
 		FROM widgets w
-		LEFT JOIN dashboard_assignments da ON da.widget_id = w.id
-		LEFT JOIN simulation_history sh ON sh.widget_id = w.id
-		GROUP BY w.id, w.name
-		ORDER BY COUNT(sh.id) DESC, w.name
+		LEFT JOIN (
+			SELECT widget_id, COUNT(*) AS assigned_count, COUNT(*) FILTER (WHERE published = TRUE) AS published_count
+			FROM dashboard_assignments
+			GROUP BY widget_id
+		) assigned_counts ON assigned_counts.widget_id = w.id
+		LEFT JOIN (
+			SELECT widget_id, COUNT(*) AS simulation_count
+			FROM simulation_history
+			GROUP BY widget_id
+		) simulation_counts ON simulation_counts.widget_id = w.id
+		ORDER BY COALESCE(simulation_counts.simulation_count, 0) DESC, w.name
 	`)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	usage := []models.WidgetUsage{}
+	usageRows := []widgetUsageRow{}
 	for rows.Next() {
-		var item models.WidgetUsage
+		var item widgetUsageRow
 		if err := rows.Scan(&item.WidgetID, &item.WidgetName, &item.AssignedCount, &item.PublishedCount, &item.SimulationCount); err != nil {
 			return nil, err
 		}
-		usage = append(usage, item)
+		usageRows = append(usageRows, item)
 	}
-	return usage, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return widgetUsageRowsToModels(usageRows), nil
+}
+
+func widgetUsageRowsToModels(rows []widgetUsageRow) []models.WidgetUsage {
+	usage := make([]models.WidgetUsage, 0, len(rows))
+	for _, row := range rows {
+		usage = append(usage, models.WidgetUsage{
+			WidgetID:        row.WidgetID,
+			WidgetName:      row.WidgetName,
+			AssignedCount:   row.AssignedCount,
+			PublishedCount:  row.PublishedCount,
+			SimulationCount: row.SimulationCount,
+		})
+	}
+	return usage
 }
 
 func (r *postgresAnalyticsRepository) ListNotifications(ctx context.Context) ([]models.Notification, error) {
