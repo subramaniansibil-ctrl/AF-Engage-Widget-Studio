@@ -76,6 +76,7 @@ export const widgetsApi = apiSlice.injectEndpoints({
         method: 'POST',
         body: { widgetId, options },
       }),
+      invalidatesTags: ['Analytics'],
     }),
     assignWidget: builder.mutation<DashboardAssignment, AssignWidgetRequest>({
       query: ({ clientId, widgetId, configurationId }) => ({
@@ -83,7 +84,11 @@ export const widgetsApi = apiSlice.injectEndpoints({
         method: 'POST',
         body: { widgetId, configurationId },
       }),
-      invalidatesTags: (_result, _error, { clientId }) => [{ type: 'AssignedWidget', id: clientId }],
+      invalidatesTags: (_result, _error, { clientId }) => [
+        { type: 'AssignedWidget', id: clientId },
+        'Analytics',
+        'AdvisorDashboard',
+      ],
     }),
     getAssignedWidgets: builder.query<DashboardAssignment[], string>({
       query: (clientId) => `/advisor/clients/${clientId}/assigned-widgets`,
@@ -108,7 +113,11 @@ export const widgetsApi = apiSlice.injectEndpoints({
           patch.undo();
         }
       },
-      invalidatesTags: (_result, _error, { clientId }) => [{ type: 'AssignedWidget', id: clientId }],
+      invalidatesTags: (_result, _error, { clientId }) => [
+        { type: 'AssignedWidget', id: clientId },
+        'Analytics',
+        'AdvisorDashboard',
+      ],
     }),
     updateAssignedWidget: builder.mutation<DashboardAssignment, UpdateAssignedWidgetRequest>({
       query: ({ clientId, assignmentId, options }) => ({
@@ -119,6 +128,8 @@ export const widgetsApi = apiSlice.injectEndpoints({
       invalidatesTags: (_result, _error, { clientId }) => [
         { type: 'AssignedWidget', id: clientId },
         'ClientDashboard',
+        'Analytics',
+        'AdvisorDashboard',
       ],
     }),
     publishDashboard: builder.mutation<PublishDashboardResponse, string>({
@@ -126,7 +137,11 @@ export const widgetsApi = apiSlice.injectEndpoints({
         url: `/advisor/clients/${clientId}/publish-dashboard`,
         method: 'POST',
       }),
-      invalidatesTags: (_result, _error, clientId) => [{ type: 'AssignedWidget', id: clientId }],
+      invalidatesTags: (_result, _error, clientId) => [
+        { type: 'AssignedWidget', id: clientId },
+        'Analytics',
+        'AdvisorDashboard',
+      ],
     }),
   }),
 });

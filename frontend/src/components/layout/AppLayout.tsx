@@ -2,9 +2,8 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { Boxes, ChartNoAxesCombined, LayoutDashboard, LogOut, Menu, Shield, Sparkles, UserRound, UsersRound } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
-import { useGetStatusQuery, useLogoutMutation } from '../../features/api/apiSlice';
+import { useLogoutMutation } from '../../features/api/apiSlice';
 import { logout, type Role } from '../../features/auth/authSlice';
-import { NotificationMenu } from './NotificationMenu';
 import { ThemeToggle } from '../ui/ThemeToggle';
 import { setMobileSidebarOpen } from '../../features/ui/uiSlice';
 
@@ -30,7 +29,6 @@ export function AppLayout() {
   const navigate = useNavigate();
   const { user, role } = useAppSelector((state) => state.auth);
   const { mobileSidebarOpen } = useAppSelector((state) => state.ui);
-  const { data: status } = useGetStatusQuery();
   const [logoutRequest, { isLoading: isLoggingOut }] = useLogoutMutation();
 
   const visibleNavItems = navItems.filter((item) => role && item.roles.includes(role));
@@ -131,13 +129,6 @@ export function AppLayout() {
                   </div>
                 </div>
               </div>
-              <div className="flex items-center justify-between rounded-md border border-white/10 bg-black/10 px-2.5 py-2 text-[11px] font-semibold text-white/58">
-                <span>API</span>
-                <span className="inline-flex items-center gap-1.5 text-sage">
-                  <span className="h-1.5 w-1.5 rounded-full bg-sage" />
-                  {status?.environment ?? 'checking'}
-                </span>
-              </div>
             </div>
           </div>
         </aside>
@@ -159,11 +150,7 @@ export function AppLayout() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <NotificationMenu />
                 <ThemeToggle />
-                <div className="hidden h-9 items-center rounded-md border border-ink/10 bg-white/35 px-2.5 text-xs font-medium text-ink/70 backdrop-blur dark:border-white/10 dark:text-white/70 sm:flex">
-                  API {status?.environment ?? 'checking'}
-                </div>
                 <button
                   type="button"
                   onClick={handleLogout}

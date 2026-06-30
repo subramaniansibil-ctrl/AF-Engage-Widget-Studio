@@ -1,12 +1,12 @@
 import type { ReactNode } from 'react';
 
 interface KpiCardProps {
-  label: string;
-  value: string;
-  icon?: ReactNode;
-  helper?: string;
-  compact?: boolean;
-  tone?: 'default' | 'warning' | 'success';
+  readonly label: string;
+  readonly value: string;
+  readonly icon?: ReactNode;
+  readonly helper?: string;
+  readonly compact?: boolean;
+  readonly tone?: 'default' | 'warning' | 'success';
 }
 
 const toneStyles = {

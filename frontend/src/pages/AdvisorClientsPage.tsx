@@ -1,5 +1,5 @@
 import { ChangeEvent, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import {
   RetirementStage,
@@ -35,8 +35,18 @@ export function AdvisorClientsPage() {
   const [search, setSearch] = useState('');
   const [riskProfile, setRiskProfile] = useState<RiskProfile | ''>('');
   const [retirementStage, setRetirementStage] = useState<RetirementStage | ''>('');
+  const [searchParams] = useSearchParams();
   const filters = useMemo(() => ({ search, riskProfile, retirementStage }), [search, riskProfile, retirementStage]);
   const { data: clients = [], isFetching } = useGetClientsQuery(filters);
+  const requestedClientIds = useMemo(() => searchParams.get('clientIds')?.split(',').filter(Boolean) ?? [], [searchParams]);
+  const visibleClients = useMemo(() => {
+    if (!requestedClientIds.length) {
+      return clients;
+    }
+
+    const requestedSet = new Set(requestedClientIds);
+    return clients.filter((client) => requestedSet.has(client.id));
+  }, [clients, requestedClientIds]);
 
   return (
     <div className="space-y-6">
@@ -86,13 +96,13 @@ export function AdvisorClientsPage() {
 
       <Card className="overflow-hidden">
         <div className="flex items-center justify-between border-b border-ink/10 px-4 py-3">
-          <p className="text-sm font-semibold">{isFetching ? 'Refreshing clients...' : `${clients.length} clients`}</p>
+          <p className="text-sm font-semibold">{isFetching ? 'Refreshing clients...' : `${visibleClients.length} clients`}</p>
           <p className="text-xs text-ink/55">Pagination-ready list view</p>
         </div>
         {isFetching && !clients.length ? (
           <div className="space-y-3 p-4" data-testid="clients-loading">
-            {Array.from({ length: 5 }).map((_, index) => (
-              <Skeleton key={index} className="h-14" />
+            {Array.from({ length: 5 }, (_, index) => `client-skeleton-${index + 1}`).map((skeletonKey) => (
+              <Skeleton key={skeletonKey} className="h-14" />
             ))}
           </div>
         ) : (
@@ -108,7 +118,7 @@ export function AdvisorClientsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-ink/10">
-              {clients.map((client) => (
+              {visibleClients.map((client) => (
                 <tr key={client.id} className="transition hover:bg-sage/5">
                   <td className="px-4 py-3">
                     <Link to={`/advisor/clients/${client.id}`} className="font-semibold text-ink hover:text-sage">
@@ -126,7 +136,7 @@ export function AdvisorClientsPage() {
           </table>
         </div>
         )}
-        {!isFetching && !clients.length && (
+        {!isFetching && !visibleClients.length && (
           <div className="p-4">
             <EmptyState
               title="No clients found"
