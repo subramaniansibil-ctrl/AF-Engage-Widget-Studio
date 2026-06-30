@@ -76,7 +76,7 @@ export function ClientDashboardPage() {
         />
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[1fr_360px]">
+      <section>
         <div className="rounded-lg border border-ink/10 bg-white p-5 shadow-panel">
           <div><h3 className="text-lg font-semibold">Assigned widgets</h3><p className="mt-1 text-sm text-ink/60 dark:text-white/60">Select a widget to view the values prepared by your advisor.</p></div>
           <div className="mt-4 grid gap-3 md:grid-cols-2">
@@ -86,23 +86,6 @@ export function ClientDashboardPage() {
             {!dashboard.assignedWidgets.length && (
               <div className="md:col-span-2"><EmptyState title="No widgets have been assigned yet." copy="Please contact your advisor." /></div>
             )}
-          </div>
-        </div>
-
-        <div className="rounded-lg border border-ink/10 bg-white p-5 shadow-panel">
-          <h3 className="text-lg font-semibold">Recommendations</h3>
-          <div className="mt-4 space-y-3">
-            {dashboard.recommendations.map((recommendation) => (
-              <div key={recommendation.id} className="rounded-md border border-ink/10 p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <p className="font-semibold">{recommendation.title}</p>
-                  <span className="rounded-md bg-gold/15 px-2 py-1 text-xs font-semibold text-ink/70">
-                    {recommendation.priority}
-                  </span>
-                </div>
-                <p className="mt-2 text-sm leading-6 text-ink/65">{recommendation.description}</p>
-              </div>
-            ))}
           </div>
         </div>
       </section>

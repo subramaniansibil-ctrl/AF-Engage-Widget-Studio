@@ -3,18 +3,11 @@ import { apiSlice } from '../api/apiSlice';
 export type RiskProfile = 'CONSERVATIVE' | 'MODERATE' | 'GROWTH' | 'AGGRESSIVE';
 export type RetirementStage = 'ACCUMULATION' | 'PRE_RETIREMENT' | 'RETIRED';
 
-export interface InvestmentAllocation {
-  label: string;
-  category: string;
-  percentage: number;
-}
-
 export interface Portfolio {
   totalValue: number;
   savingsPotBalance: number;
   retirementPotBalance: number;
   monthlyContribution: number;
-  allocation: InvestmentAllocation[];
 }
 
 export interface RetirementGoal {

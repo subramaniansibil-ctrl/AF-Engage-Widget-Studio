@@ -139,7 +139,7 @@ func clientFromUpsertRequest(request models.ClientUpsertRequest) models.Client {
 }
 
 func PortfolioZeroValue() models.Portfolio {
-	return models.Portfolio{Allocation: []models.InvestmentAllocation{}}
+	return models.Portfolio{}
 }
 
 func ageFromDateOfBirth(value string) int {

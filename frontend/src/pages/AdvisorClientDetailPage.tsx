@@ -1,6 +1,7 @@
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Boxes, FlaskConical, PiggyBank, Send, Target, WalletCards } from 'lucide-react';
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
+import { ArrowLeft, ArrowRight, Boxes, FlaskConical, LoaderCircle, PiggyBank, Send, Target, WalletCards } from 'lucide-react';
+import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
+import { useRef } from 'react';
 import { useGetClientByIdQuery } from '../features/advisor/advisorApi';
 import { KpiCard } from '../components/ui/KpiCard';
 import {
@@ -10,6 +11,8 @@ import {
 } from '../features/widgets/widgetsApi';
 import { WidgetBrandIcon } from '../components/widgets/WidgetBrandIcon';
 import { EmptyState } from '../components/ui/EmptyState';
+import { useAppDispatch } from '../app/hooks';
+import { addToast } from '../features/ui/uiSlice';
 
 const currency = new Intl.NumberFormat('en-US', {
   style: 'currency',
@@ -17,13 +20,32 @@ const currency = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 0,
 });
 
-const allocationColors = ['#5a7f71', '#c7933d', '#dc6b57', '#17212f'];
-
 export function AdvisorClientDetailPage() {
   const { clientId = '' } = useParams();
+  const dispatch = useAppDispatch();
+  const publishInFlight = useRef(false);
   const { data: client, isLoading, isError } = useGetClientByIdQuery(clientId);
-  const { data: assignedWidgets = [] } = useGetAssignedWidgetsQuery(clientId, { skip: !clientId });
+  const { data: assignedWidgets = [], refetch: refetchAssignedWidgets } = useGetAssignedWidgetsQuery(clientId, { skip: !clientId });
   const [publishDashboard, { isLoading: isPublishing }] = usePublishDashboardMutation();
+
+  async function handlePublish() {
+    if (!clientId || publishInFlight.current) return;
+
+    publishInFlight.current = true;
+    try {
+      await publishDashboard(clientId).unwrap();
+      await refetchAssignedWidgets();
+      dispatch(addToast({ title: 'Widget published successfully.', variant: 'success' }));
+    } catch (error) {
+      dispatch(addToast({
+        title: 'Publishing failed',
+        description: publishErrorMessage(error),
+        variant: 'error',
+      }));
+    } finally {
+      publishInFlight.current = false;
+    }
+  }
 
   if (isLoading) {
     return <p className="text-sm text-ink/60">Loading client profile...</p>;
@@ -68,37 +90,7 @@ export function AdvisorClientDetailPage() {
         <KpiCard label="Retirement pot" value={currency.format(client.portfolio.retirementPotBalance)} icon={<Target className="h-4 w-4" />} />
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[1fr_380px]">
-        <div className="rounded-lg border border-ink/10 bg-white p-5 shadow-panel">
-          <h3 className="text-lg font-semibold">Investment allocation</h3>
-          <div className="mt-4 grid gap-4 md:grid-cols-[280px_1fr]">
-            <div className="h-72">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={client.portfolio.allocation} dataKey="percentage" nameKey="label" innerRadius={62} outerRadius={100}>
-                    {client.portfolio.allocation.map((entry, index) => (
-                      <Cell key={entry.category} fill={allocationColors[index % allocationColors.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value) => `${value}%`} />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="space-y-3 self-center">
-              {client.portfolio.allocation.map((item, index) => (
-                <div key={item.category} className="flex items-center justify-between rounded-md border border-ink/10 p-3">
-                  <div className="flex items-center gap-3">
-                    <span className="h-3 w-3 rounded-full" style={{ backgroundColor: allocationColors[index % allocationColors.length] }} />
-                    <span className="text-sm font-medium">{item.label}</span>
-                  </div>
-                  <span className="text-sm text-ink/60">{item.percentage}%</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-lg border border-ink/10 bg-white p-5 shadow-panel">
+      <section className="rounded-lg border border-ink/10 bg-white p-5 shadow-panel">
           <h3 className="text-lg font-semibold">Retirement goal progress</h3>
           <div className="mt-5">
             <div className="flex items-end justify-between gap-3">
@@ -115,7 +107,6 @@ export function AdvisorClientDetailPage() {
               Monthly contribution: {currency.format(client.portfolio.monthlyContribution)}
             </p>
           </div>
-        </div>
       </section>
 
       <section className="rounded-lg border border-ink/10 bg-white p-5 shadow-panel">
@@ -139,12 +130,13 @@ export function AdvisorClientDetailPage() {
             </Link>
             <button
               type="button"
-              onClick={() => publishDashboard(client.id)}
+              onClick={handlePublish}
               disabled={!assignedWidgets.length || isPublishing}
+              aria-busy={isPublishing}
               className="inline-flex items-center gap-2 rounded-md bg-sage px-3 py-2 text-sm font-semibold text-white transition hover:bg-sage/90 disabled:cursor-not-allowed disabled:bg-sage/45"
             >
-              <Send className="h-4 w-4" />
-              Publish dashboard
+              {isPublishing ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Send className="h-4 w-4" />}
+              {isPublishing ? 'Publishing…' : 'Publish dashboard'}
             </button>
           </div>
         </div>
@@ -175,7 +167,7 @@ function AssignedWidgetCard({ assignment }: Readonly<{ assignment: DashboardAssi
   const simulationUrl = `/advisor/clients/${assignment.clientId}/widgets/${assignment.widgetId}/simulations`;
   return (
     <article className="rounded-md border border-ink/10 p-4 transition hover:border-sage/40 hover:bg-sage/[0.035] dark:border-white/10">
-      <div className="flex items-center gap-3"><WidgetBrandIcon widgetId={assignment.widgetId} /><p className="font-semibold">{assignment.widgetName}</p></div>
+      <div className="flex items-center gap-3"><WidgetBrandIcon widgetId={assignment.widgetId} /><p className="font-semibold">{assignment.widgetName}</p><span className={`ml-auto rounded-full px-2 py-1 text-[11px] font-bold ${assignment.published ? 'bg-sage/12 text-sage' : 'bg-ink/8 text-ink/55 dark:bg-white/10 dark:text-white/55'}`}>{assignment.published ? 'Published' : 'Draft'}</span></div>
       <p className="mt-3 text-sm leading-6 text-ink/65">
         Scenario: {assignment.configuration.options.scenario ?? assignment.configuration.options.withdrawalScenario ?? 'Default'}
       </p>
@@ -189,4 +181,14 @@ function AssignedWidgetCard({ assignment }: Readonly<{ assignment: DashboardAssi
 
 function formatEnum(value: string) {
   return value.toLowerCase().replace(/_/g, ' ');
+}
+
+function publishErrorMessage(error: unknown) {
+  const queryError = error as FetchBaseQueryError;
+  if (typeof queryError?.data === 'object' && queryError.data) {
+    if ('error' in queryError.data) return String((queryError.data as { error: unknown }).error);
+    if ('message' in queryError.data) return String((queryError.data as { message: unknown }).message);
+  }
+  if (typeof queryError?.data === 'string' && queryError.data.trim()) return queryError.data;
+  return 'The widget could not be published. Please try again.';
 }

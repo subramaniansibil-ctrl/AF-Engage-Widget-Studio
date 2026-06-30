@@ -40,6 +40,12 @@ const uiSlice = createSlice({
     },
     addToast: {
       reducer(state, action: PayloadAction<ToastMessage>) {
+        const duplicate = state.toasts.some((toast) =>
+          toast.title === action.payload.title
+          && toast.description === action.payload.description
+          && toast.variant === action.payload.variant,
+        );
+        if (duplicate) return;
         state.toasts.push(action.payload);
       },
       prepare(message: Omit<ToastMessage, 'id'>) {

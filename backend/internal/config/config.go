@@ -18,7 +18,7 @@ func Load() Config {
 		HTTPAddress:    getEnv("HTTP_ADDRESS", ":8080"),
 		Environment:    getEnv("APP_ENV", "development"),
 		ServiceName:    getEnv("SERVICE_NAME", "af-engage-api"),
-		DataMode:       getEnv("APP_DATA_MODE", "mock"),
+		DataMode:       getEnv("APP_DATA_MODE", "postgres"),
 		DatabaseURL:    getEnv("DATABASE_URL", "postgres://af_engage:af_engage_password@localhost:5432/af_engage?sslmode=disable"),
 		MigrationsPath: getEnv("MIGRATIONS_PATH", "migrations"),
 		CORSOrigins:    getEnv("CORS_ALLOWED_ORIGINS", "http://localhost:5173"),

@@ -187,6 +187,5 @@ func scanManagedClient(row scanner) (models.Client, error) {
 		&client.Portfolio.RetirementPotBalance, &client.Portfolio.MonthlyContribution,
 		&client.RetirementGoal.TargetAmount, &client.RetirementGoal.TargetAge, &client.RetirementGoal.Progress,
 	)
-	client.Portfolio.Allocation = []models.InvestmentAllocation{}
 	return client, err
 }
