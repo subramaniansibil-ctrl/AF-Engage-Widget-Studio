@@ -35,8 +35,19 @@ export interface Simulation {
   inputs: Record<string, string>;
   results: Record<string, string>;
   result: string;
+  savedById?: string;
+  savedByName?: string;
+  savedByRole?: 'ADVISOR' | 'CLIENT' | 'ADMIN' | string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface AdvisorSimulationRequest extends SimulationRequest {
+  clientId: string;
+}
+
+export interface AdvisorSimulationUpdateRequest extends SimulationUpdateRequest {
+  clientId: string;
 }
 
 export interface ClientDashboardResponse {
@@ -81,6 +92,11 @@ export const clientApi = apiSlice.injectEndpoints({
       transformResponse: (response: Simulation[] | null) => response ?? [],
       providesTags: (_result, _error, widgetId) => [{ type: 'ClientSimulation', id: widgetId }],
     }),
+    getAdvisorClientSimulations: builder.query<Simulation[], { clientId: string; widgetId?: string }>({
+      query: ({ clientId, widgetId = '' }) => `/advisor/clients/${clientId}/simulations?widgetId=${encodeURIComponent(widgetId)}`,
+      transformResponse: (response: Simulation[] | null) => response ?? [],
+      providesTags: (_result, _error, { clientId, widgetId = '' }) => [{ type: 'ClientSimulation', id: `${clientId}-${widgetId}` }],
+    }),
     updateClientSimulation: builder.mutation<Simulation, SimulationUpdateRequest>({
       query: ({ id, ...body }) => ({ url: `/client/simulations/${id}`, method: 'PUT', body }),
       invalidatesTags: ['ClientSimulation', 'ClientDashboard'],
@@ -93,6 +109,22 @@ export const clientApi = apiSlice.injectEndpoints({
       query: (id) => ({ url: `/client/simulations/${id}`, method: 'DELETE' }),
       invalidatesTags: ['ClientSimulation', 'ClientDashboard'],
     }),
+    saveAdvisorClientSimulation: builder.mutation<Simulation, AdvisorSimulationRequest>({
+      query: ({ clientId, ...body }) => ({ url: `/advisor/clients/${clientId}/simulations`, method: 'POST', body }),
+      invalidatesTags: ['ClientSimulation', 'ClientDashboard'],
+    }),
+    updateAdvisorClientSimulation: builder.mutation<Simulation, AdvisorSimulationUpdateRequest>({
+      query: ({ clientId, id, ...body }) => ({ url: `/advisor/clients/${clientId}/simulations/${id}`, method: 'PUT', body }),
+      invalidatesTags: ['ClientSimulation', 'ClientDashboard'],
+    }),
+    duplicateAdvisorClientSimulation: builder.mutation<Simulation, { clientId: string; id: string; name?: string }>({
+      query: ({ clientId, id, name }) => ({ url: `/advisor/clients/${clientId}/simulations/${id}/duplicate`, method: 'POST', body: { name: name ?? '' } }),
+      invalidatesTags: ['ClientSimulation', 'ClientDashboard'],
+    }),
+    deleteAdvisorClientSimulation: builder.mutation<{ success: boolean }, { clientId: string; id: string }>({
+      query: ({ clientId, id }) => ({ url: `/advisor/clients/${clientId}/simulations/${id}`, method: 'DELETE' }),
+      invalidatesTags: ['ClientSimulation', 'ClientDashboard'],
+    }),
   }),
 });
 
@@ -103,7 +135,12 @@ export const {
   useGetRecommendationsQuery,
   useSaveSimulationMutation,
   useGetClientSimulationsQuery,
+  useGetAdvisorClientSimulationsQuery,
   useUpdateClientSimulationMutation,
   useDuplicateClientSimulationMutation,
   useDeleteClientSimulationMutation,
+  useSaveAdvisorClientSimulationMutation,
+  useUpdateAdvisorClientSimulationMutation,
+  useDuplicateAdvisorClientSimulationMutation,
+  useDeleteAdvisorClientSimulationMutation,
 } = clientApi;

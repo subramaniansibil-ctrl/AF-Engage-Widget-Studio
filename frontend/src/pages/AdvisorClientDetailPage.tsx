@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Boxes, PiggyBank, Send, Target, WalletCards } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Boxes, FlaskConical, PiggyBank, Send, Target, WalletCards } from 'lucide-react';
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import { useGetClientByIdQuery } from '../features/advisor/advisorApi';
 import { KpiCard } from '../components/ui/KpiCard';
@@ -172,8 +172,9 @@ function Badge({ label, value }: { label: string; value: string }) {
 
 function AssignedWidgetCard({ assignment }: { assignment: DashboardAssignment }) {
   const params = new URLSearchParams({ clientId: assignment.clientId, widgetId: assignment.widgetId, assignmentId: assignment.id, mode: 'edit', returnTo: `/advisor/clients/${assignment.clientId}` });
+  const simulationUrl = `/advisor/clients/${assignment.clientId}/widgets/${assignment.widgetId}/simulations`;
   return (
-    <Link to={`/advisor/widgets/configure?${params.toString()}`} className="group rounded-md border border-ink/10 p-4 transition hover:border-sage/40 hover:bg-sage/[0.035] dark:border-white/10">
+    <article className="rounded-md border border-ink/10 p-4 transition hover:border-sage/40 hover:bg-sage/[0.035] dark:border-white/10">
       <div className="flex items-center gap-3"><WidgetBrandIcon widgetId={assignment.widgetId} /><p className="font-semibold">{assignment.widgetName}</p></div>
       <p className="mt-3 text-sm leading-6 text-ink/65">
         Scenario: {assignment.configuration.options.scenario ?? assignment.configuration.options.withdrawalScenario ?? 'Default'}
@@ -181,8 +182,8 @@ function AssignedWidgetCard({ assignment }: { assignment: DashboardAssignment })
       <p className="mt-1 text-sm text-ink/55">
         Projection: {assignment.configuration.options.projectionYears ?? 'Default'} years
       </p>
-      <p className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-sage">Edit configuration <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" /></p>
-    </Link>
+      <div className="mt-3 flex flex-wrap gap-2"><Link to={simulationUrl} className="inline-flex items-center gap-1 text-xs font-semibold text-sage"><FlaskConical className="h-3.5 w-3.5" />Simulate</Link><Link to={`/advisor/widgets/configure?${params.toString()}`} className="inline-flex items-center gap-1 text-xs font-semibold text-ink/55 hover:text-sage">Edit configuration <ArrowRight className="h-3.5 w-3.5" /></Link></div>
+    </article>
   );
 }
 
