@@ -2,13 +2,6 @@ import type { Client, Portfolio, RetirementGoal } from '../advisor/advisorApi';
 import { apiSlice } from '../api/apiSlice';
 import type { DashboardAssignment } from '../widgets/widgetsApi';
 
-export interface ClientRecommendation {
-  id: string;
-  title: string;
-  description: string;
-  priority: 'LOW' | 'MEDIUM' | 'HIGH' | string;
-}
-
 export interface SimulationRequest {
   name: string;
   widgetId: string;
@@ -55,7 +48,6 @@ export interface ClientDashboardResponse {
   portfolioSummary: Portfolio;
   assignedWidgets: DashboardAssignment[];
   retirementGoalProgress: RetirementGoal;
-  recommendations: ClientRecommendation[];
   latestSimulations: Simulation[];
   retirementReadinessScore: number;
 }
@@ -74,10 +66,6 @@ export const clientApi = apiSlice.injectEndpoints({
     getClientWidgetById: builder.query<DashboardAssignment, string>({
       query: (widgetId) => `/client/widgets/${widgetId}`,
       providesTags: (_result, _error, widgetId) => [{ type: 'AssignedWidget', id: `client-${widgetId}` }],
-    }),
-    getRecommendations: builder.query<ClientRecommendation[], void>({
-      query: () => '/client/recommendations',
-      providesTags: ['ClientRecommendation'],
     }),
     saveSimulation: builder.mutation<Simulation, SimulationRequest>({
       query: (body) => ({
@@ -132,7 +120,6 @@ export const {
   useGetClientDashboardQuery,
   useGetClientWidgetsQuery,
   useGetClientWidgetByIdQuery,
-  useGetRecommendationsQuery,
   useSaveSimulationMutation,
   useGetClientSimulationsQuery,
   useGetAdvisorClientSimulationsQuery,

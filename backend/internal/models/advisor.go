@@ -19,18 +19,11 @@ const (
 	RetirementStageRetired       RetirementStage = "RETIRED"
 )
 
-type InvestmentAllocation struct {
-	Label      string  `json:"label"`
-	Category   string  `json:"category"`
-	Percentage float64 `json:"percentage"`
-}
-
 type Portfolio struct {
-	TotalValue           int64                  `json:"totalValue"`
-	SavingsPotBalance    int64                  `json:"savingsPotBalance"`
-	RetirementPotBalance int64                  `json:"retirementPotBalance"`
-	MonthlyContribution  int64                  `json:"monthlyContribution"`
-	Allocation           []InvestmentAllocation `json:"allocation"`
+	TotalValue           int64 `json:"totalValue"`
+	SavingsPotBalance    int64 `json:"savingsPotBalance"`
+	RetirementPotBalance int64 `json:"retirementPotBalance"`
+	MonthlyContribution  int64 `json:"monthlyContribution"`
 }
 
 type RetirementGoal struct {

@@ -60,7 +60,7 @@ func (r *postgresAdvisorRepository) ListClients(ctx context.Context, filters Cli
 		SELECT c.id, c.name, c.age, c.email, c.mobile_number, c.assigned_advisor, c.status,
 			COALESCE(TO_CHAR(c.date_of_birth, 'YYYY-MM-DD'), ''), c.risk_profile, c.retirement_stage,
 			c.investment_goal, COALESCE(NULLIF(c.portfolio_reference, ''), p.id), c.notes, c.created_at,
-			p.id, p.total_value, p.savings_pot_balance, p.retirement_pot_balance, p.monthly_contribution,
+			p.total_value, p.savings_pot_balance, p.retirement_pot_balance, p.monthly_contribution,
 			p.retirement_goal_target_amount, p.retirement_goal_target_age, p.retirement_goal_progress
 		FROM clients c
 		JOIN portfolios p ON p.client_id = c.id
@@ -93,15 +93,10 @@ func (r *postgresAdvisorRepository) ListClients(ctx context.Context, filters Cli
 
 	clients := []models.Client{}
 	for rows.Next() {
-		client, portfolioID, err := scanClient(rows)
+		client, err := scanClient(rows)
 		if err != nil {
 			return nil, err
 		}
-		allocation, err := r.listAllocation(ctx, portfolioID)
-		if err != nil {
-			return nil, err
-		}
-		client.Portfolio.Allocation = allocation
 		clients = append(clients, client)
 	}
 	return clients, rows.Err()
@@ -112,24 +107,19 @@ func (r *postgresAdvisorRepository) GetClientByID(ctx context.Context, id string
 		SELECT c.id, c.name, c.age, c.email, c.mobile_number, c.assigned_advisor, c.status,
 			COALESCE(TO_CHAR(c.date_of_birth, 'YYYY-MM-DD'), ''), c.risk_profile, c.retirement_stage,
 			c.investment_goal, COALESCE(NULLIF(c.portfolio_reference, ''), p.id), c.notes, c.created_at,
-			p.id, p.total_value, p.savings_pot_balance, p.retirement_pot_balance, p.monthly_contribution,
+			p.total_value, p.savings_pot_balance, p.retirement_pot_balance, p.monthly_contribution,
 			p.retirement_goal_target_amount, p.retirement_goal_target_age, p.retirement_goal_progress
 		FROM clients c
 		JOIN portfolios p ON p.client_id = c.id
 		WHERE c.id = $1 AND c.status = 'ACTIVE'
 	`, id)
-	client, portfolioID, err := scanClient(row)
+	client, err := scanClient(row)
 	if err == sql.ErrNoRows {
 		return models.Client{}, ErrClientNotFound
 	}
 	if err != nil {
 		return models.Client{}, err
 	}
-	allocation, err := r.listAllocation(ctx, portfolioID)
-	if err != nil {
-		return models.Client{}, err
-	}
-	client.Portfolio.Allocation = allocation
 	return client, nil
 }
 
@@ -137,9 +127,8 @@ type scanner interface {
 	Scan(dest ...any) error
 }
 
-func scanClient(row scanner) (models.Client, string, error) {
+func scanClient(row scanner) (models.Client, error) {
 	var client models.Client
-	var portfolioID string
 	err := row.Scan(
 		&client.ID,
 		&client.Name,
@@ -155,7 +144,6 @@ func scanClient(row scanner) (models.Client, string, error) {
 		&client.PortfolioID,
 		&client.Notes,
 		&client.CreatedAt,
-		&portfolioID,
 		&client.Portfolio.TotalValue,
 		&client.Portfolio.SavingsPotBalance,
 		&client.Portfolio.RetirementPotBalance,
@@ -164,30 +152,7 @@ func scanClient(row scanner) (models.Client, string, error) {
 		&client.RetirementGoal.TargetAge,
 		&client.RetirementGoal.Progress,
 	)
-	return client, portfolioID, err
-}
-
-func (r *postgresAdvisorRepository) listAllocation(ctx context.Context, portfolioID string) ([]models.InvestmentAllocation, error) {
-	rows, err := r.db.QueryContext(ctx, `
-		SELECT label, category, percentage
-		FROM investment_allocations
-		WHERE portfolio_id = $1
-		ORDER BY sort_order, label
-	`, portfolioID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	allocation := []models.InvestmentAllocation{}
-	for rows.Next() {
-		var item models.InvestmentAllocation
-		if err := rows.Scan(&item.Label, &item.Category, &item.Percentage); err != nil {
-			return nil, err
-		}
-		allocation = append(allocation, item)
-	}
-	return allocation, rows.Err()
+	return client, err
 }
 
 func argNumber(value int) string {

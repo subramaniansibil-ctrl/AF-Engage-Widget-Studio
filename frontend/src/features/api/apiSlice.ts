@@ -54,7 +54,6 @@ export const apiSlice = createApi({
     'Widget',
     'AssignedWidget',
     'ClientDashboard',
-    'ClientRecommendation',
     'ClientSimulation',
     'SimulationCalculation',
     'Analytics',
