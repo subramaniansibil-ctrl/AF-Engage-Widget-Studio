@@ -13,10 +13,11 @@ type ClientService interface {
 	GetAssignedWidget(ctx context.Context, clientID string, widgetID string) (models.DashboardAssignment, error)
 	ListRecommendations(ctx context.Context, clientID string) ([]models.ClientRecommendation, error)
 	ListSimulations(ctx context.Context, clientID string, widgetID string) ([]models.Simulation, error)
-	SaveSimulation(ctx context.Context, clientID string, request models.SimulationRequest) (models.Simulation, error)
+	SaveSimulation(ctx context.Context, clientID string, request models.SimulationRequest, saver models.User) (models.Simulation, error)
 	UpdateSimulation(ctx context.Context, clientID string, simulationID string, request models.SimulationUpdateRequest) (models.Simulation, error)
-	DuplicateSimulation(ctx context.Context, clientID string, simulationID string, name string) (models.Simulation, error)
+	DuplicateSimulation(ctx context.Context, clientID string, simulationID string, name string, saver models.User) (models.Simulation, error)
 	DeleteSimulation(ctx context.Context, clientID string, simulationID string) error
+	CanAccessClient(ctx context.Context, user models.User, clientID string) error
 }
 
 type clientService struct {
@@ -95,7 +96,15 @@ func (s *clientService) ListRecommendations(ctx context.Context, clientID string
 	return s.clientRepository.ListRecommendations(ctx, clientID)
 }
 
-func (s *clientService) SaveSimulation(ctx context.Context, clientID string, request models.SimulationRequest) (models.Simulation, error) {
+func (s *clientService) SaveSimulation(ctx context.Context, clientID string, request models.SimulationRequest, saver models.User) (models.Simulation, error) {
+	assignment, err := s.assignedWidgetForSave(ctx, clientID, request.WidgetID, saver.Role == models.RoleClient)
+	if err != nil {
+		return models.Simulation{}, err
+	}
+	request.WidgetName = assignment.WidgetName
+	request.SavedByID = saver.ID
+	request.SavedByName = saver.Name
+	request.SavedByRole = saver.Role
 	return s.clientRepository.SaveSimulation(ctx, clientID, request)
 }
 
@@ -107,10 +116,40 @@ func (s *clientService) UpdateSimulation(ctx context.Context, clientID string, s
 	return s.clientRepository.UpdateSimulation(ctx, clientID, simulationID, request)
 }
 
-func (s *clientService) DuplicateSimulation(ctx context.Context, clientID string, simulationID string, name string) (models.Simulation, error) {
-	return s.clientRepository.DuplicateSimulation(ctx, clientID, simulationID, name)
+func (s *clientService) DuplicateSimulation(ctx context.Context, clientID string, simulationID string, name string, saver models.User) (models.Simulation, error) {
+	return s.clientRepository.DuplicateSimulation(ctx, clientID, simulationID, name, saver)
 }
 
 func (s *clientService) DeleteSimulation(ctx context.Context, clientID string, simulationID string) error {
 	return s.clientRepository.DeleteSimulation(ctx, clientID, simulationID)
+}
+
+func (s *clientService) CanAccessClient(ctx context.Context, user models.User, clientID string) error {
+	if user.Role == models.RoleAdmin {
+		return nil
+	}
+	if user.Role == models.RoleClient && user.ClientID == clientID {
+		return nil
+	}
+	client, err := s.advisorRepository.GetClientByID(ctx, clientID)
+	if err != nil {
+		return err
+	}
+	if user.Role == models.RoleAdvisor && client.AssignedAdvisor == user.Name {
+		return nil
+	}
+	return repositories.ErrClientNotFound
+}
+
+func (s *clientService) assignedWidgetForSave(ctx context.Context, clientID string, widgetID string, publishedOnly bool) (models.DashboardAssignment, error) {
+	assignments, err := s.widgetRepository.ListAssignedWidgets(ctx, clientID)
+	if err != nil {
+		return models.DashboardAssignment{}, err
+	}
+	for _, assignment := range assignments {
+		if assignment.WidgetID == widgetID && (!publishedOnly || assignment.Published) {
+			return assignment, nil
+		}
+	}
+	return models.DashboardAssignment{}, repositories.ErrAssignmentNotFound
 }

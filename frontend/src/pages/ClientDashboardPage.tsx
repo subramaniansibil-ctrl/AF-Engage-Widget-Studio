@@ -143,7 +143,7 @@ function SimulationCard({ simulation }: { simulation: Simulation }) {
       <p className="font-semibold">{formatWidgetId(simulation.widgetId)}</p>
       <p className="mt-2 text-sm leading-6 text-ink/65">{simulation.result}</p>
       <p className="mt-3 text-xs font-medium text-ink/45">
-        {new Date(simulation.createdAt).toLocaleDateString()}
+        Saved by {simulation.savedByName || roleLabel(simulation.savedByRole)} ({roleLabel(simulation.savedByRole)}) - {new Date(simulation.createdAt).toLocaleDateString()}
       </p>
     </article>
   );
@@ -170,4 +170,8 @@ function formatWidgetId(value: string) {
     .split('-')
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ');
+}
+
+function roleLabel(value: string | undefined) {
+  return value ? value.toLowerCase().replace(/^./, (letter) => letter.toUpperCase()) : 'Client';
 }

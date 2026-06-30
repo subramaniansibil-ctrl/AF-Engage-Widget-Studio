@@ -1,4 +1,4 @@
-import { ArrowLeft, ChevronDown, Eye, Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import { ArrowLeft, ChevronDown, Eye, FlaskConical, Pencil, Plus, Search, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useAppDispatch } from '../app/hooks';
@@ -106,12 +106,13 @@ export function AdvisorClientWidgetsPage() {
 
 function AssignedWidgetCard({ assignment, widget, clientName, previewOpen, removePending, removing, onPreview, onRemove, onCancelRemove, onConfirmRemove }: { assignment: DashboardAssignment; widget: Widget; clientName: string; previewOpen: boolean; removePending: boolean; removing: boolean; onPreview: () => void; onRemove: () => void; onCancelRemove: () => void; onConfirmRemove: () => void }) {
   const editUrl = assignmentEditUrl(assignment);
+  const simulationUrl = `/advisor/clients/${assignment.clientId}/widgets/${assignment.widgetId}/simulations`;
   return (
     <article className="rounded-md border border-ink/10 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-ink">
       <div className="flex items-start gap-3"><WidgetBrandIcon widgetId={widget.id} icon={widget.icon} /><div className="min-w-0"><p className="text-xs font-semibold text-sage">{widget.category}</p><h3 className="mt-1 truncate text-sm font-semibold">{widget.name}</h3></div></div>
       <p className="mt-3 line-clamp-2 min-h-10 text-sm leading-5 text-ink/60 dark:text-white/60">{widget.description}</p>
       <p className="mt-3 text-xs text-ink/45 dark:text-white/45">Last updated {formatDate(assignment.updatedAt || assignment.createdAt)}</p>
-      <div className="mt-4 flex flex-wrap gap-2"><Link to={editUrl} className="inline-flex min-h-9 items-center gap-1.5 rounded-md bg-ink px-3 py-2 text-xs font-semibold text-white dark:bg-sage dark:text-ink"><Pencil className="h-3.5 w-3.5" />Edit</Link><Button variant="secondary" className="text-xs" onClick={onPreview}><Eye className="h-3.5 w-3.5" />{previewOpen ? 'Hide preview' : 'Preview'}</Button><Button variant="ghost" className="text-xs text-coral" onClick={onRemove}><Trash2 className="h-3.5 w-3.5" />Remove</Button></div>
+      <div className="mt-4 flex flex-wrap gap-2"><Link to={simulationUrl} className="inline-flex min-h-9 items-center gap-1.5 rounded-md bg-ink px-3 py-2 text-xs font-semibold text-white dark:bg-sage dark:text-ink"><FlaskConical className="h-3.5 w-3.5" />Simulate</Link><Link to={editUrl} className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-ink/10 px-3 py-2 text-xs font-semibold text-ink/75 dark:border-white/10 dark:text-white/75"><Pencil className="h-3.5 w-3.5" />Edit</Link><Button variant="secondary" className="text-xs" onClick={onPreview}><Eye className="h-3.5 w-3.5" />{previewOpen ? 'Hide preview' : 'Preview'}</Button><Button variant="ghost" className="text-xs text-coral" onClick={onRemove}><Trash2 className="h-3.5 w-3.5" />Remove</Button></div>
       {previewOpen && <div className="mt-4"><WidgetLivePreview widgetId={widget.id} name={widget.name} category={widget.category} values={assignment.configuration.options} clientName={clientName} compact /></div>}
       {removePending && <div className="mt-4 rounded-md border border-coral/20 bg-coral/5 p-3"><p className="text-xs font-medium text-coral">Remove this widget from the client dashboard?</p><div className="mt-3 flex justify-end gap-2"><Button variant="ghost" onClick={onCancelRemove} disabled={removing}>Cancel</Button><Button onClick={onConfirmRemove} disabled={removing}>{removing ? 'Removing…' : 'Confirm'}</Button></div></div>}
     </article>

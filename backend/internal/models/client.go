@@ -16,6 +16,9 @@ type SimulationRequest struct {
 	Inputs     map[string]string `json:"inputs"`
 	Results    map[string]string `json:"results"`
 	Result     string            `json:"result"`
+	SavedByID   string           `json:"-"`
+	SavedByName string           `json:"-"`
+	SavedByRole Role             `json:"-"`
 }
 
 type SimulationUpdateRequest struct {
@@ -38,6 +41,9 @@ type Simulation struct {
 	Inputs     map[string]string `json:"inputs"`
 	Results    map[string]string `json:"results"`
 	Result     string            `json:"result"`
+	SavedByID   string           `json:"savedById,omitempty"`
+	SavedByName string           `json:"savedByName"`
+	SavedByRole Role             `json:"savedByRole"`
 	CreatedAt  time.Time         `json:"createdAt"`
 	UpdatedAt  time.Time         `json:"updatedAt"`
 }

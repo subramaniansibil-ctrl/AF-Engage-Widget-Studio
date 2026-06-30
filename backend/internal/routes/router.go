@@ -54,6 +54,11 @@ func NewRouter(cfg config.Config, statusService services.StatusService, authServ
 			advisor.PUT("/clients/:clientId/assigned-widgets/:assignmentId", widgetHandler.UpdateAssignedWidget)    // PUT updates one assigned widget configuration.
 			advisor.DELETE("/clients/:clientId/assigned-widgets/:assignmentId", widgetHandler.RemoveAssignedWidget) // DELETE removes one assigned widget from a client.
 			advisor.POST("/clients/:clientId/publish-dashboard", widgetHandler.PublishDashboard)                    // POST /api/v1/advisor/clients/:clientId/publish-dashboard publishes assignments.
+			advisor.POST("/clients/:clientId/simulations", clientHandler.AdvisorSaveSimulation)                     // POST saves a scenario into a client's assigned widget history.
+			advisor.GET("/clients/:clientId/simulations", clientHandler.AdvisorSimulations)                         // GET lists saved scenarios for one advisor-owned client.
+			advisor.PUT("/clients/:clientId/simulations/:simulationId", clientHandler.AdvisorUpdateSimulation)
+			advisor.POST("/clients/:clientId/simulations/:simulationId/duplicate", clientHandler.AdvisorDuplicateSimulation)
+			advisor.DELETE("/clients/:clientId/simulations/:simulationId", clientHandler.AdvisorDeleteSimulation)
 		}
 		client := v1.Group("/client", middleware.AuthMiddleware(authService), middleware.RoleMiddleware(models.RoleClient, models.RoleAdmin))
 		{

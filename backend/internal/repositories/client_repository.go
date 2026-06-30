@@ -17,7 +17,7 @@ type ClientRepository interface {
 	ListSimulations(ctx context.Context, clientID string, widgetID string) ([]models.Simulation, error)
 	SaveSimulation(ctx context.Context, clientID string, request models.SimulationRequest) (models.Simulation, error)
 	UpdateSimulation(ctx context.Context, clientID string, simulationID string, request models.SimulationUpdateRequest) (models.Simulation, error)
-	DuplicateSimulation(ctx context.Context, clientID string, simulationID string, name string) (models.Simulation, error)
+	DuplicateSimulation(ctx context.Context, clientID string, simulationID string, name string, saver models.User) (models.Simulation, error)
 	DeleteSimulation(ctx context.Context, clientID string, simulationID string) error
 }
 
@@ -37,6 +37,7 @@ func NewMockClientRepository() ClientRepository {
 				Inputs:    map[string]string{"projectionYears": "20", "scenario": "No withdrawal"},
 				Results:   map[string]string{"projectedRetirementValue": "$1,420,000"},
 				Result:    "Retirement goal remains on track at the current contribution rate.",
+				SavedByID: "client-001", SavedByName: "Avery Chen", SavedByRole: models.RoleClient,
 				CreatedAt: createdAt, UpdatedAt: createdAt,
 			}},
 		},
@@ -71,7 +72,7 @@ func (r *mockClientRepository) SaveSimulation(ctx context.Context, clientID stri
 	simulation := models.Simulation{
 		ID: fmt.Sprintf("simulation-%03d", r.nextID), ClientID: clientID, WidgetID: request.WidgetID,
 		Name: request.Name, WidgetName: request.WidgetName, Inputs: request.Inputs, Results: request.Results,
-		Result: request.Result, CreatedAt: now, UpdatedAt: now,
+		Result: request.Result, SavedByID: request.SavedByID, SavedByName: request.SavedByName, SavedByRole: request.SavedByRole, CreatedAt: now, UpdatedAt: now,
 	}
 	normalizeSimulation(&simulation)
 	r.nextID++
@@ -95,7 +96,7 @@ func (r *mockClientRepository) UpdateSimulation(ctx context.Context, clientID st
 	return models.Simulation{}, ErrSimulationNotFound
 }
 
-func (r *mockClientRepository) DuplicateSimulation(ctx context.Context, clientID string, simulationID string, name string) (models.Simulation, error) {
+func (r *mockClientRepository) DuplicateSimulation(ctx context.Context, clientID string, simulationID string, name string, saver models.User) (models.Simulation, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	for _, existing := range r.simulations[clientID] {
@@ -111,6 +112,8 @@ func (r *mockClientRepository) DuplicateSimulation(ctx context.Context, clientID
 		}
 		duplicate.Inputs, duplicate.Results = copyStringMap(existing.Inputs), copyStringMap(existing.Results)
 		duplicate.CreatedAt, duplicate.UpdatedAt = now, now
+		duplicate.SavedByID, duplicate.SavedByName, duplicate.SavedByRole = saver.ID, saver.Name, saver.Role
+		normalizeSimulation(&duplicate)
 		r.nextID++
 		r.simulations[clientID] = append([]models.Simulation{duplicate}, r.simulations[clientID]...)
 		return duplicate, nil
@@ -139,6 +142,12 @@ func normalizeSimulation(simulation *models.Simulation) {
 	}
 	if simulation.Result == "" {
 		simulation.Result = "Simulation saved for future comparison."
+	}
+	if simulation.SavedByName == "" {
+		simulation.SavedByName = "Client"
+	}
+	if simulation.SavedByRole == "" {
+		simulation.SavedByRole = models.RoleClient
 	}
 }
 

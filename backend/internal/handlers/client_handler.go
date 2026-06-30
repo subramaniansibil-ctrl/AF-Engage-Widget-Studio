@@ -79,7 +79,15 @@ func (h *ClientHandler) Recommendations(c *gin.Context) {
 }
 
 func (h *ClientHandler) SaveSimulation(c *gin.Context) {
-	clientID, ok := clientIDFromContext(c)
+	user, ok := userFromContext(c)
+	if !ok {
+		utils.JSONError(c, http.StatusUnauthorized, "client context required")
+		return
+	}
+	clientID := user.ClientID
+	if clientID == "" {
+		ok = false
+	}
 	if !ok {
 		utils.JSONError(c, http.StatusUnauthorized, "client context required")
 		return
@@ -91,9 +99,9 @@ func (h *ClientHandler) SaveSimulation(c *gin.Context) {
 		return
 	}
 
-	simulation, err := h.service.SaveSimulation(c.Request.Context(), clientID, request)
+	simulation, err := h.service.SaveSimulation(c.Request.Context(), clientID, request, user)
 	if err != nil {
-		utils.JSONError(c, http.StatusInternalServerError, "failed to save simulation")
+		handleSimulationError(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, simulation)
@@ -133,8 +141,13 @@ func (h *ClientHandler) UpdateSimulation(c *gin.Context) {
 }
 
 func (h *ClientHandler) DuplicateSimulation(c *gin.Context) {
-	clientID, ok := clientIDFromContext(c)
+	user, ok := userFromContext(c)
 	if !ok {
+		utils.JSONError(c, http.StatusUnauthorized, "client context required")
+		return
+	}
+	clientID := user.ClientID
+	if clientID == "" {
 		utils.JSONError(c, http.StatusUnauthorized, "client context required")
 		return
 	}
@@ -143,7 +156,7 @@ func (h *ClientHandler) DuplicateSimulation(c *gin.Context) {
 		utils.JSONValidationError(c, err)
 		return
 	}
-	simulation, err := h.service.DuplicateSimulation(c.Request.Context(), clientID, c.Param("simulationId"), request.Name)
+	simulation, err := h.service.DuplicateSimulation(c.Request.Context(), clientID, c.Param("simulationId"), request.Name, user)
 	if err != nil {
 		handleSimulationError(c, err)
 		return
@@ -164,22 +177,143 @@ func (h *ClientHandler) DeleteSimulation(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"success": true})
 }
 
+func (h *ClientHandler) AdvisorSaveSimulation(c *gin.Context) {
+	user, ok := userFromContext(c)
+	if !ok {
+		utils.JSONError(c, http.StatusUnauthorized, "authentication required")
+		return
+	}
+	clientID := c.Param("clientId")
+	if err := h.service.CanAccessClient(c.Request.Context(), user, clientID); err != nil {
+		utils.JSONError(c, http.StatusForbidden, "client is not assigned to this advisor")
+		return
+	}
+	var request models.SimulationRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		utils.JSONValidationError(c, err)
+		return
+	}
+	simulation, err := h.service.SaveSimulation(c.Request.Context(), clientID, request, user)
+	if err != nil {
+		handleSimulationError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, simulation)
+}
+
+func (h *ClientHandler) AdvisorSimulations(c *gin.Context) {
+	user, ok := userFromContext(c)
+	if !ok {
+		utils.JSONError(c, http.StatusUnauthorized, "authentication required")
+		return
+	}
+	clientID := c.Param("clientId")
+	if err := h.service.CanAccessClient(c.Request.Context(), user, clientID); err != nil {
+		utils.JSONError(c, http.StatusForbidden, "client is not assigned to this advisor")
+		return
+	}
+	simulations, err := h.service.ListSimulations(c.Request.Context(), clientID, c.Query("widgetId"))
+	if err != nil {
+		utils.JSONError(c, http.StatusInternalServerError, "failed to load simulations")
+		return
+	}
+	c.JSON(http.StatusOK, simulations)
+}
+
+func (h *ClientHandler) AdvisorUpdateSimulation(c *gin.Context) {
+	user, ok := userFromContext(c)
+	if !ok {
+		utils.JSONError(c, http.StatusUnauthorized, "authentication required")
+		return
+	}
+	clientID := c.Param("clientId")
+	if err := h.service.CanAccessClient(c.Request.Context(), user, clientID); err != nil {
+		utils.JSONError(c, http.StatusForbidden, "client is not assigned to this advisor")
+		return
+	}
+	var request models.SimulationUpdateRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		utils.JSONValidationError(c, err)
+		return
+	}
+	simulation, err := h.service.UpdateSimulation(c.Request.Context(), clientID, c.Param("simulationId"), request)
+	if err != nil {
+		handleSimulationError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, simulation)
+}
+
+func (h *ClientHandler) AdvisorDuplicateSimulation(c *gin.Context) {
+	user, ok := userFromContext(c)
+	if !ok {
+		utils.JSONError(c, http.StatusUnauthorized, "authentication required")
+		return
+	}
+	clientID := c.Param("clientId")
+	if err := h.service.CanAccessClient(c.Request.Context(), user, clientID); err != nil {
+		utils.JSONError(c, http.StatusForbidden, "client is not assigned to this advisor")
+		return
+	}
+	var request models.DuplicateSimulationRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		utils.JSONValidationError(c, err)
+		return
+	}
+	simulation, err := h.service.DuplicateSimulation(c.Request.Context(), clientID, c.Param("simulationId"), request.Name, user)
+	if err != nil {
+		handleSimulationError(c, err)
+		return
+	}
+	c.JSON(http.StatusCreated, simulation)
+}
+
+func (h *ClientHandler) AdvisorDeleteSimulation(c *gin.Context) {
+	user, ok := userFromContext(c)
+	if !ok {
+		utils.JSONError(c, http.StatusUnauthorized, "authentication required")
+		return
+	}
+	clientID := c.Param("clientId")
+	if err := h.service.CanAccessClient(c.Request.Context(), user, clientID); err != nil {
+		utils.JSONError(c, http.StatusForbidden, "client is not assigned to this advisor")
+		return
+	}
+	if err := h.service.DeleteSimulation(c.Request.Context(), clientID, c.Param("simulationId")); err != nil {
+		handleSimulationError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true})
+}
+
 func handleSimulationError(c *gin.Context, err error) {
 	if errors.Is(err, repositories.ErrSimulationNotFound) {
 		utils.JSONError(c, http.StatusNotFound, "simulation not found")
+		return
+	}
+	if errors.Is(err, repositories.ErrAssignmentNotFound) {
+		utils.JSONError(c, http.StatusNotFound, "assigned widget not found")
 		return
 	}
 	utils.JSONError(c, http.StatusInternalServerError, "simulation operation failed")
 }
 
 func clientIDFromContext(c *gin.Context) (string, bool) {
-	value, exists := c.Get("user")
-	if !exists {
-		return "", false
-	}
-	user, ok := value.(models.User)
+	user, ok := userFromContext(c)
 	if !ok || user.ClientID == "" {
 		return "", false
 	}
 	return user.ClientID, true
+}
+
+func userFromContext(c *gin.Context) (models.User, bool) {
+	value, exists := c.Get("user")
+	if !exists {
+		return models.User{}, false
+	}
+	user, ok := value.(models.User)
+	if !ok {
+		return models.User{}, false
+	}
+	return user, true
 }
