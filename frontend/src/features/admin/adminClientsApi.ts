@@ -77,9 +77,9 @@ function queryString(filters: ClientFilters) {
 
 export const adminClientsApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
-    getAdminClients: builder.query<AdminClient[], ClientFilters>({
+    getAdminClients: builder.query<PaginatedResponse<AdminClient>, ClientFilters>({
       query: (filters) => `/client-management${queryString(filters)}`,
-      transformResponse: (response: AdminClient[] | null) => response ?? [],
+      transformResponse: (response: PaginatedResponse<AdminClient> | AdminClient[] | null) => normalizePaginatedResponse(response),
       providesTags: (result) => [
         { type: 'AdminClient' as const, id: 'LIST' },
         ...(result?.items ?? []).map((client) => ({ type: 'AdminClient' as const, id: client.id })),

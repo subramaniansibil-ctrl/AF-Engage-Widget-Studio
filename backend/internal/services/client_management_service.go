@@ -12,7 +12,7 @@ import (
 )
 
 type ClientManagementService interface {
-	ListClients(ctx context.Context, filters models.ClientManagementFilters, actor ...models.User) ([]models.Client, error)
+	ListClients(ctx context.Context, filters models.ClientManagementFilters, actor ...models.User) ([]models.Client, int, error)
 	GetClient(ctx context.Context, id string, actor ...models.User) (models.Client, error)
 	CreateClient(ctx context.Context, request models.ClientUpsertRequest, actor ...models.User) (models.Client, error)
 	UpdateClient(ctx context.Context, id string, request models.ClientUpsertRequest, actor ...models.User) (models.Client, error)
@@ -43,7 +43,7 @@ func NewClientManagementService(repository repositories.ClientManagementReposito
 	return service
 }
 
-func (s *clientManagementService) ListClients(ctx context.Context, filters models.ClientManagementFilters, actors ...models.User) ([]models.Client, error) {
+func (s *clientManagementService) ListClients(ctx context.Context, filters models.ClientManagementFilters, actors ...models.User) ([]models.Client, int, error) {
 	actor := managementActor(actors)
 	if actor.Role == models.RoleAdvisor {
 		filters.AssignedAdvisor = actor.Name
@@ -216,7 +216,7 @@ func (s *clientManagementService) applyAdvisorAssignment(ctx context.Context, re
 	if s.advisors == nil {
 		return nil
 	}
-	items, err := s.advisors.ListManagedAdvisors(ctx, models.AdvisorManagementFilters{Status: models.AdvisorStatusActive})
+	items, _, err := s.advisors.ListManagedAdvisors(ctx, models.AdvisorManagementFilters{Status: models.AdvisorStatusActive})
 	if err != nil {
 		return err
 	}

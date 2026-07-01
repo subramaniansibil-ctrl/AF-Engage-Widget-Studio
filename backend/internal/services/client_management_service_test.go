@@ -21,7 +21,8 @@ func TestClientManagementCreateRejectsDuplicates(t *testing.T) {
 }
 
 func TestClientManagementCreateCreatesLoginAccount(t *testing.T) {
-	service := NewClientManagementService(repositories.NewMockAdvisorRepository(), repositories.NewMockAuthRepository())
+	authRepository := repositories.NewMockAuthRepository()
+	service := NewClientManagementService(repositories.NewMockAdvisorRepository(), authRepository)
 	request := validClientRequest("client-201", "login@example.com")
 	request.Password = "Password123"
 	request.ConfirmPassword = "Password123"
@@ -34,7 +35,6 @@ func TestClientManagementCreateCreatesLoginAccount(t *testing.T) {
 		t.Fatalf("expected created client id client-201, got %s", created.ID)
 	}
 
-	authRepository := repositories.NewMockAuthRepository()
 	user, token, err := authRepository.Authenticate(context.Background(), "login@example.com", "Password123")
 	if err != nil {
 		t.Fatalf("expected auth login to succeed after client creation, got %v", err)

@@ -1,6 +1,6 @@
 import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
-import { Download, Eye, FileUp, Pencil, Plus, Search, UserRoundX, UsersRound, X } from 'lucide-react';
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { Download, Eye, FileUp, Pencil, Plus, Search, UserRoundX, X } from 'lucide-react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { useAppDispatch, useAppSelector } from '../app/hooks';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
@@ -33,7 +33,9 @@ export function AdminClientsPage() {
   const { role, user } = useAppSelector((state) => state.auth);
   const isAdmin = role === 'ADMIN';
   const currentAdvisor = user?.name ?? '';
-  const { data: advisors = [] } = useGetAdminAdvisorsQuery({ status: 'ACTIVE' }, { skip: !isAdmin });
+  const { data: advisorPage } = useGetAdminAdvisorsQuery({ status: 'ACTIVE' }, { skip: !isAdmin });
+  const advisors = advisorPage?.items ?? [];
+  const advisorNames = advisors.map((item) => item.name);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<'' | 'ACTIVE' | 'INACTIVE'>('');
   const [advisor, setAdvisor] = useState('');
@@ -88,20 +90,20 @@ export function AdminClientsPage() {
             </div>
             <Button variant="ghost" className="h-9 w-9 px-0" onClick={() => setPanel(null)} aria-label="Close panel"><X className="h-4 w-4" /></Button>
           </div>
-          {panel === 'bulk' ? <BulkUpload onDone={() => setPanel(null)} isAdmin={isAdmin} currentAdvisor={currentAdvisor} advisors={advisors.map((item) => item.name)} /> : panel === 'view' && selected ? <ClientView client={selected} onEdit={() => openPanel('edit', selected)} /> : <ClientForm client={panel === 'edit' ? selected : null} onDone={() => setPanel(null)} isAdmin={isAdmin} currentAdvisor={currentAdvisor} advisors={advisors.map((item) => item.name)} />}
+          {panel === 'bulk' ? <BulkUpload onDone={() => setPanel(null)} isAdmin={isAdmin} currentAdvisor={currentAdvisor} advisors={advisorNames} /> : panel === 'view' && selected ? <ClientView client={selected} isAdmin={isAdmin} onEdit={() => openPanel('edit', selected)} /> : <ClientForm client={panel === 'edit' ? selected : null} onDone={() => setPanel(null)} isAdmin={isAdmin} currentAdvisor={currentAdvisor} advisors={advisorNames} />}
         </section>
       )}
 
       <section className="space-y-3">
-        <div className="grid gap-2 rounded-md border border-ink/10 bg-white/55 p-3 backdrop-blur-xl dark:border-white/10 dark:bg-white/5 md:grid-cols-[minmax(240px,1fr)_160px_190px_auto]">
+        <div className={`grid gap-2 rounded-md border border-ink/10 bg-white/55 p-3 backdrop-blur-xl dark:border-white/10 dark:bg-white/5 ${isAdmin ? 'md:grid-cols-[minmax(240px,1fr)_160px_190px_auto]' : 'md:grid-cols-[minmax(240px,1fr)_160px_auto]'}`}>
           <label className="relative">
             <span className="sr-only">Search clients</span><Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-ink/40" />
-            <input className={`${inputClass} pl-9`} value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Name, email, advisor or client ID" />
+            <input className={`${inputClass} pl-9`} value={search} onChange={(event) => setSearch(event.target.value)} placeholder={isAdmin ? 'Name, email, advisor or client ID' : 'Name, email or client ID'} />
           </label>
           <select aria-label="Filter by status" className={inputClass} value={status} onChange={(event) => setStatus(event.target.value as typeof status)}>
             <option value="">All statuses</option><option value="ACTIVE">Active</option><option value="INACTIVE">Inactive</option>
           </select>
-          {isAdmin ? <select aria-label="Filter by assigned advisor" className={inputClass} value={advisor} onChange={(event) => setAdvisor(event.target.value)}><option value="">All advisors</option>{advisors.map((item) => <option key={item.id} value={item.name}>{item.name}</option>)}</select> : <input aria-label="Assigned advisor" disabled className={inputClass} value={currentAdvisor} />}
+          {isAdmin && <select aria-label="Filter by assigned advisor" className={inputClass} value={advisor} onChange={(event) => setAdvisor(event.target.value)}><option value="">All advisors</option>{advisors.map((item) => <option key={item.id} value={item.name}>{item.name}</option>)}</select>}
           <label className="flex min-h-10 items-center gap-2 rounded-md border border-ink/10 bg-white/45 px-3 text-sm font-medium dark:border-white/10 dark:bg-white/5">
             <input type="checkbox" checked={recent} onChange={(event) => setRecent(event.target.checked)} className="h-4 w-4 accent-sage" />Recently created
           </label>
@@ -112,9 +114,9 @@ export function AdminClientsPage() {
         ) : (
           <div className="overflow-hidden rounded-md border border-ink/10 bg-white/65 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
             <div className="overflow-x-auto">
-              <table className="min-w-[900px] w-full text-left text-sm">
+              <table className={`${isAdmin ? 'min-w-[900px]' : 'min-w-[760px]'} w-full text-left text-sm`}>
                 <thead className="border-b border-ink/10 bg-ink/[0.025] text-xs font-semibold uppercase text-ink/50 dark:border-white/10 dark:bg-white/[0.03] dark:text-white/50">
-                  <tr><th className="px-4 py-3">Client</th><th className="px-4 py-3">Client ID</th><th className="px-4 py-3">Contact</th><th className="px-4 py-3">Advisor</th><th className="px-4 py-3">Status</th><th className="px-4 py-3 text-right">Actions</th></tr>
+                  <tr><th className="px-4 py-3">Client</th><th className="px-4 py-3">Client ID</th><th className="px-4 py-3">Contact</th>{isAdmin && <th className="px-4 py-3">Advisor</th>}<th className="px-4 py-3">Status</th><th className="px-4 py-3 text-right">Actions</th></tr>
                 </thead>
                 <tbody className="divide-y divide-ink/8 dark:divide-white/8">
                   {clients.map((client) => (
@@ -122,7 +124,7 @@ export function AdminClientsPage() {
                       <td className="px-4 py-3"><p className="font-semibold">{client.name}</p><p className="mt-0.5 text-xs text-ink/50 dark:text-white/50">{client.riskProfile || 'No risk profile'}</p></td>
                       <td className="px-4 py-3 font-mono text-xs text-ink/65 dark:text-white/65">{client.id}</td>
                       <td className="px-4 py-3"><p>{client.email}</p><p className="mt-0.5 text-xs text-ink/50 dark:text-white/50">{client.mobileNumber}</p></td>
-                      <td className="px-4 py-3">{client.assignedAdvisor}</td>
+                      {isAdmin && <td className="px-4 py-3">{client.assignedAdvisor}</td>}
                       <td className="px-4 py-3"><StatusBadge status={client.status} /></td>
                       <td className="px-4 py-3">
                         {deactivateId === client.id ? (
@@ -165,7 +167,7 @@ function ClientForm({ client, onDone, isAdmin, currentAdvisor, advisors }: { cli
   async function submit(event: FormEvent) {
     event.preventDefault();
     try {
-      const body = isAdmin ? form : { ...form, assignedAdvisor: currentAdvisor };
+      const body = isAdmin ? form : { ...form, assignedAdvisor: '' };
       if (client) await updateClient({ id: client.id, body }).unwrap(); else await createClient(body).unwrap();
       dispatch(addToast({ title: client ? 'Client updated' : 'Client created', description: `${form.name} is ready for advisor workflows.`, variant: 'success' }));
       onDone();
@@ -180,7 +182,7 @@ function ClientForm({ client, onDone, isAdmin, currentAdvisor, advisors }: { cli
         <Field label="Client ID *"><input required disabled={Boolean(client)} className={inputClass} value={form.id} onChange={(e) => set('id', e.target.value)} /></Field>
         <Field label="Email address *"><input required type="email" className={inputClass} value={form.email} onChange={(e) => set('email', e.target.value)} /></Field>
         <Field label="Mobile number *"><input required className={inputClass} value={form.mobileNumber} onChange={(e) => set('mobileNumber', e.target.value)} /></Field>
-        <Field label="Assigned advisor *">{isAdmin ? <select required className={inputClass} value={form.assignedAdvisor} onChange={(e) => set('assignedAdvisor', e.target.value)}><option value="">Select an active advisor</option>{advisors.map((name) => <option key={name} value={name}>{name}</option>)}</select> : <input required disabled readOnly className={inputClass} value={currentAdvisor} />}</Field>
+        {isAdmin && <Field label="Assigned advisor *"><select required className={inputClass} value={form.assignedAdvisor} onChange={(e) => set('assignedAdvisor', e.target.value)}><option value="">Select an active advisor</option>{advisors.map((name) => <option key={name} value={name}>{name}</option>)}</select></Field>}
         <Field label={client ? 'New password' : 'Password *'}><input required={!client} type="password" minLength={8} className={inputClass} value={form.password} onChange={(e) => set('password', e.target.value)} placeholder={client ? 'Leave blank to keep current password' : ''} /></Field>
         <Field label="Status *"><select required className={inputClass} value={form.status} onChange={(e) => set('status', e.target.value as ClientUpsertRequest['status'])}><option value="ACTIVE">Active</option><option value="INACTIVE">Inactive</option></select></Field>
         <Field label="Date of birth"><input type="date" className={inputClass} value={form.dateOfBirth} onChange={(e) => set('dateOfBirth', e.target.value)} /></Field>
@@ -206,7 +208,7 @@ function BulkUpload({ onDone, isAdmin, currentAdvisor, advisors }: { onDone: () 
   }
   async function readFile(file: File | undefined) {
     if (!file) return;
-    const parsed = parseClientCsv(await file.text(), { includeAdvisor: isAdmin, forcedAdvisor: isAdmin ? undefined : currentAdvisor, validAdvisors: isAdmin ? advisors : undefined }); setRows(parsed.rows); setErrors(parsed.errors); setFileName(file.name);
+    const parsed = parseClientCsv(await file.text(), { includeAdvisor: isAdmin, forcedAdvisor: isAdmin ? undefined : '', validAdvisors: isAdmin ? advisors : undefined }); setRows(parsed.rows); setErrors(parsed.errors); setFileName(file.name);
   }
   async function upload() {
     try {
@@ -231,8 +233,8 @@ function BulkUpload({ onDone, isAdmin, currentAdvisor, advisors }: { onDone: () 
   );
 }
 
-function ClientView({ client, onEdit }: { client: AdminClient; onEdit: () => void }) {
-  const details = [['Client ID', client.id], ['Email', client.email], ['Mobile', client.mobileNumber], ['Assigned advisor', client.assignedAdvisor], ['Status', client.status], ['Date of birth', client.dateOfBirth || 'Not provided'], ['Risk profile', client.riskProfile || 'Not set'], ['Investment goal', client.investmentGoal || 'Not provided'], ['Portfolio ID', client.portfolioId || 'Not provided'], ['Notes', client.notes || 'No notes']];
+function ClientView({ client, isAdmin, onEdit }: { client: AdminClient; isAdmin: boolean; onEdit: () => void }) {
+  const details = [['Client ID', client.id], ['Email', client.email], ['Mobile', client.mobileNumber], ...(isAdmin ? [['Assigned advisor', client.assignedAdvisor]] : []), ['Status', client.status], ['Date of birth', client.dateOfBirth || 'Not provided'], ['Risk profile', client.riskProfile || 'Not set'], ['Investment goal', client.investmentGoal || 'Not provided'], ['Portfolio ID', client.portfolioId || 'Not provided'], ['Notes', client.notes || 'No notes']];
   return <div><div className="grid gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">{details.map(([label, value]) => <div key={label}><p className="text-xs font-semibold uppercase text-ink/45 dark:text-white/45">{label}</p><p className="mt-1 text-sm font-medium">{value}</p></div>)}</div><div className="mt-5 flex justify-end"><Button onClick={onEdit}><Pencil className="h-4 w-4" />Edit client</Button></div></div>;
 }
 

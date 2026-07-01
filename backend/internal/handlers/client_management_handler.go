@@ -33,7 +33,6 @@ func (h *ClientManagementHandler) List(c *gin.Context) {
 		Search: c.Query("search"), Status: models.ClientStatus(c.Query("status")),
 		AssignedAdvisor: c.Query("assignedAdvisor"), RecentlyCreated: recent,
 		Page: pagination.Page, PageSize: pagination.PageSize,
-	})
 	}, actor)
 	if err != nil {
 		utils.JSONError(c, http.StatusInternalServerError, "failed to load clients")
