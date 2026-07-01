@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"database/sql"
+	"strings"
 	"sync"
 
 	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/models"
@@ -25,9 +26,9 @@ func (r *postgresAuthRepository) Authenticate(ctx context.Context, email string,
 	err := r.db.QueryRowContext(ctx, `
 		SELECT id, name, email, role, COALESCE(password_hash, ''), client_id, COALESCE(status, 'ACTIVE')
 		FROM users
-		WHERE email = $1
+		WHERE LOWER(email) = LOWER($1)
 	`, email).Scan(&user.ID, &user.Name, &user.Email, &user.Role, &storedPassword, &clientID, &user.Status)
-	if err == sql.ErrNoRows || storedPassword != password {
+	if err == sql.ErrNoRows || !verifyPassword(storedPassword, password) {
 		return models.User{}, "", ErrInvalidCredentials
 	}
 	if err != nil {
@@ -49,6 +50,34 @@ func (r *postgresAuthRepository) Authenticate(ctx context.Context, email string,
 	r.mu.Unlock()
 
 	return user, token, nil
+}
+
+func (r *postgresAuthRepository) CreateUser(ctx context.Context, user models.User, password string) error {
+	hashedPassword, err := hashPassword(password)
+	if err != nil {
+		return err
+	}
+	var clientID sql.NullString
+	if user.ClientID != "" {
+		clientID = sql.NullString{String: user.ClientID, Valid: true}
+	}
+	_, err = r.db.ExecContext(ctx, `
+		INSERT INTO users (id, name, email, password_hash, role, client_id, status)
+		VALUES ($1, $2, LOWER($3), $4, $5, $6, $7)
+	`, user.ID, user.Name, user.Email, hashedPassword, user.Role, clientID, user.Status)
+	if err != nil {
+		if strings.Contains(strings.ToLower(err.Error()), "duplicate") {
+			return ErrDuplicateClientEmail
+		}
+		return err
+	}
+	return nil
+}
+
+func (r *postgresAuthRepository) EmailExists(ctx context.Context, email string) (bool, error) {
+	var exists bool
+	err := r.db.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROM users WHERE LOWER(email) = LOWER($1))`, email).Scan(&exists)
+	return exists, err
 }
 
 func (r *postgresAuthRepository) GetUserByToken(ctx context.Context, token string) (models.User, error) {

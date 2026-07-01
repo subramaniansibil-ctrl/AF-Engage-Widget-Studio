@@ -32,6 +32,7 @@ export interface ClientUpsertRequest {
   investmentGoal: string;
   portfolioId: string;
   notes: string;
+  password: string;
 }
 
 export interface ClientFilters {

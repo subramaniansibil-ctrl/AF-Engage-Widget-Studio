@@ -66,7 +66,7 @@ func main() {
 	clientService := services.NewClientService(advisorRepository, widgetRepository, clientRepository)
 	simulationService := services.NewSimulationService()
 	analyticsService := services.NewAnalyticsService(analyticsRepository)
-	clientManagementService := services.NewClientManagementService(clientManagementRepository)
+	clientManagementService := services.NewClientManagementService(clientManagementRepository, authRepository)
 	advisorManagementService := services.NewAdvisorManagementService(advisorManagementRepository)
 	router := routes.NewRouter(cfg, statusService, authService, advisorService, widgetService, clientService, simulationService, analyticsService, clientManagementService, advisorManagementService)
 

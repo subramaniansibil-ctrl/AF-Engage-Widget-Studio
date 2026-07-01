@@ -23,7 +23,7 @@ const pageSize = 10;
 const inputClass = 'min-h-10 w-full rounded-md border border-ink/12 bg-white/70 px-3 text-sm text-ink outline-none transition placeholder:text-ink/35 focus:border-sage focus:ring-2 focus:ring-sage/15 dark:border-white/12 dark:bg-white/5 dark:text-white';
 const emptyForm: ClientUpsertRequest = {
   id: '', name: '', email: '', mobileNumber: '', assignedAdvisor: 'Advisor User', status: 'ACTIVE',
-  dateOfBirth: '', riskProfile: 'MODERATE', investmentGoal: '', portfolioId: '', notes: '',
+  dateOfBirth: '', riskProfile: 'MODERATE', investmentGoal: '', portfolioId: '', notes: '', password: '', confirmPassword: '',
 };
 
 export function AdminClientsPage() {
@@ -170,6 +170,7 @@ function ClientForm({ client, onDone }: { client: AdminClient | null; onDone: ()
         <Field label="Email address *"><input required type="email" className={inputClass} value={form.email} onChange={(e) => set('email', e.target.value)} /></Field>
         <Field label="Mobile number *"><input required className={inputClass} value={form.mobileNumber} onChange={(e) => set('mobileNumber', e.target.value)} /></Field>
         <Field label="Assigned advisor *"><input required className={inputClass} value={form.assignedAdvisor} onChange={(e) => set('assignedAdvisor', e.target.value)} /></Field>
+        <Field label={client ? 'New password' : 'Password *'}><input required={!client} type="password" minLength={8} className={inputClass} value={form.password} onChange={(e) => set('password', e.target.value)} placeholder={client ? 'Leave blank to keep current password' : ''} /></Field>
         <Field label="Status *"><select required className={inputClass} value={form.status} onChange={(e) => set('status', e.target.value as ClientUpsertRequest['status'])}><option value="ACTIVE">Active</option><option value="INACTIVE">Inactive</option></select></Field>
         <Field label="Date of birth"><input type="date" className={inputClass} value={form.dateOfBirth} onChange={(e) => set('dateOfBirth', e.target.value)} /></Field>
         <Field label="Risk profile"><select className={inputClass} value={form.riskProfile} onChange={(e) => set('riskProfile', e.target.value as ClientUpsertRequest['riskProfile'])}><option value="">Not set</option><option value="CONSERVATIVE">Conservative</option><option value="MODERATE">Moderate</option><option value="GROWTH">Growth</option><option value="AGGRESSIVE">Aggressive</option></select></Field>
@@ -229,5 +230,5 @@ function IconButton({ label, children, ...props }: React.ButtonHTMLAttributes<HT
 function StatusBadge({ status }: { status: string }) { return <span className={`inline-flex rounded-full px-2 py-1 text-[11px] font-bold ${status === 'ACTIVE' ? 'bg-sage/12 text-sage' : 'bg-ink/8 text-ink/55 dark:bg-white/10 dark:text-white/55'}`}>{status === 'ACTIVE' ? 'Active' : 'Inactive'}</span>; }
 function ClientTableSkeleton() { return <div className="space-y-2 rounded-md border border-ink/10 bg-white/50 p-4 dark:border-white/10 dark:bg-white/5">{Array.from({ length: 6 }).map((_, index) => <Skeleton key={index} className="h-14" />)}</div>; }
 function panelTitle(panel: Exclude<Panel, null>) { return ({ create: 'Create client', edit: 'Edit client', view: 'Client details', bulk: 'Bulk upload clients' } as const)[panel]; }
-function fromClient(client: AdminClient): ClientUpsertRequest { return { id: client.id, name: client.name, email: client.email, mobileNumber: client.mobileNumber ?? '', assignedAdvisor: client.assignedAdvisor ?? '', status: client.status || 'ACTIVE', dateOfBirth: client.dateOfBirth ?? '', riskProfile: client.riskProfile ?? '', investmentGoal: client.investmentGoal ?? '', portfolioId: client.portfolioId ?? '', notes: client.notes ?? '' }; }
+function fromClient(client: AdminClient): ClientUpsertRequest { return { id: client.id, name: client.name, email: client.email, mobileNumber: client.mobileNumber ?? '', assignedAdvisor: client.assignedAdvisor ?? '', status: client.status || 'ACTIVE', dateOfBirth: client.dateOfBirth ?? '', riskProfile: client.riskProfile ?? '', investmentGoal: client.investmentGoal ?? '', portfolioId: client.portfolioId ?? '', notes: client.notes ?? '', password: '', confirmPassword: '' }; }
 function errorMessage(error: unknown) { const queryError = error as FetchBaseQueryError; if (typeof queryError?.data === 'object' && queryError.data && 'error' in queryError.data) return String((queryError.data as { error: string }).error); return 'Please try again.'; }

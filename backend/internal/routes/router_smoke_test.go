@@ -37,7 +37,7 @@ func TestAPISmokeHealthLoginAndAdvisorDashboard(t *testing.T) {
 		services.NewClientService(advisorRepository, widgetRepository, clientRepository),
 		services.NewSimulationService(),
 		services.NewAnalyticsService(repositories.NewMockAnalyticsRepository()),
-		services.NewClientManagementService(advisorRepository),
+		services.NewClientManagementService(advisorRepository, authRepository),
 		services.NewAdvisorManagementService(advisorRepository),
 	)
 
@@ -210,7 +210,7 @@ func TestAdminClientManagementPermissionsAndDuplicates(t *testing.T) {
 	authRepository := repositories.NewMockAuthRepository()
 	advisorRepository := repositories.NewMockAdvisorRepository()
 	widgetRepository := repositories.NewMockWidgetRepository()
-	router := NewRouter(cfg, services.NewStatusService(repositories.NewStatusRepository(cfg)), services.NewAuthService(authRepository), services.NewAdvisorService(advisorRepository), services.NewWidgetService(widgetRepository), services.NewClientService(advisorRepository, widgetRepository, repositories.NewMockClientRepository()), services.NewSimulationService(), services.NewAnalyticsService(repositories.NewMockAnalyticsRepository()), services.NewClientManagementService(advisorRepository), services.NewAdvisorManagementService(advisorRepository))
+	router := NewRouter(cfg, services.NewStatusService(repositories.NewStatusRepository(cfg)), services.NewAuthService(authRepository), services.NewAdvisorService(advisorRepository), services.NewWidgetService(widgetRepository), services.NewClientService(advisorRepository, widgetRepository, repositories.NewMockClientRepository()), services.NewSimulationService(), services.NewAnalyticsService(repositories.NewMockAnalyticsRepository()), services.NewClientManagementService(advisorRepository, authRepository), services.NewAdvisorManagementService(advisorRepository))
 
 	advisorToken := loginToken(t, router, "advisor@afengage.com")
 	forbiddenRequest := httptest.NewRequest(http.MethodGet, "/api/v1/admin/clients", nil)
@@ -222,7 +222,7 @@ func TestAdminClientManagementPermissionsAndDuplicates(t *testing.T) {
 	}
 
 	adminToken := loginToken(t, router, "admin@afengage.com")
-	clientBody, _ := json.Marshal(models.ClientUpsertRequest{ID: "client-admin-001", Name: "Admin Created", Email: "created@example.com", MobileNumber: "+27 82 555 0199", AssignedAdvisor: "Advisor User", Status: models.ClientStatusActive})
+	clientBody, _ := json.Marshal(models.ClientUpsertRequest{ID: "client-admin-001", Name: "Admin Created", Email: "created@example.com", MobileNumber: "+27 82 555 0199", AssignedAdvisor: "Advisor User", Status: models.ClientStatusActive, Password: "Password123", ConfirmPassword: "Password123"})
 	createRequest := httptest.NewRequest(http.MethodPost, "/api/v1/admin/clients", bytes.NewReader(clientBody))
 	createRequest.Header.Set("Authorization", "Bearer "+adminToken)
 	createRequest.Header.Set("Content-Type", "application/json")
@@ -248,12 +248,12 @@ func TestAdvisorClientListAndAuthorization(t *testing.T) {
 	advisorRepository := repositories.NewMockAdvisorRepository()
 	widgetRepository := repositories.NewMockWidgetRepository()
 	clientRepository := repositories.NewMockClientRepository()
-	router := NewRouter(cfg, services.NewStatusService(repositories.NewStatusRepository(cfg)), services.NewAuthService(authRepository), services.NewAdvisorService(advisorRepository), services.NewWidgetService(widgetRepository), services.NewClientService(advisorRepository, widgetRepository, clientRepository), services.NewSimulationService(), services.NewAnalyticsService(repositories.NewMockAnalyticsRepository()), services.NewClientManagementService(advisorRepository), services.NewAdvisorManagementService(advisorRepository))
+	router := NewRouter(cfg, services.NewStatusService(repositories.NewStatusRepository(cfg)), services.NewAuthService(authRepository), services.NewAdvisorService(advisorRepository), services.NewWidgetService(widgetRepository), services.NewClientService(advisorRepository, widgetRepository, clientRepository), services.NewSimulationService(), services.NewAnalyticsService(repositories.NewMockAnalyticsRepository()), services.NewClientManagementService(advisorRepository, authRepository), services.NewAdvisorManagementService(advisorRepository))
 
 	advisorToken := loginToken(t, router, "advisor@afengage.com")
 	adminToken := loginToken(t, router, "admin@afengage.com")
 
-	clientBody, _ := json.Marshal(models.ClientUpsertRequest{ID: "client-other-001", Name: "Other Client", Email: "other.client@example.com", MobileNumber: "+1 555 0110", AssignedAdvisor: "Other Advisor", Status: models.ClientStatusActive, DateOfBirth: "1980-01-01", RiskProfile: models.RiskModerate, InvestmentGoal: "Test", PortfolioID: "portfolio-other-001", Notes: "Unauthorized client test"})
+	clientBody, _ := json.Marshal(models.ClientUpsertRequest{ID: "client-other-001", Name: "Other Client", Email: "other.client@example.com", MobileNumber: "+1 555 0110", AssignedAdvisor: "Other Advisor", Status: models.ClientStatusActive, DateOfBirth: "1980-01-01", RiskProfile: models.RiskModerate, InvestmentGoal: "Test", PortfolioID: "portfolio-other-001", Notes: "Unauthorized client test", Password: "Password123", ConfirmPassword: "Password123"})
 	createRequest := httptest.NewRequest(http.MethodPost, "/api/v1/admin/clients", bytes.NewReader(clientBody))
 	createRequest.Header.Set("Authorization", "Bearer "+adminToken)
 	createRequest.Header.Set("Content-Type", "application/json")
@@ -313,7 +313,7 @@ func TestAdminAdvisorManagementPermissionsAndCrud(t *testing.T) {
 	authRepository := repositories.NewMockAuthRepository()
 	advisorRepository := repositories.NewMockAdvisorRepository()
 	widgetRepository := repositories.NewMockWidgetRepository()
-	router := NewRouter(cfg, services.NewStatusService(repositories.NewStatusRepository(cfg)), services.NewAuthService(authRepository), services.NewAdvisorService(advisorRepository), services.NewWidgetService(widgetRepository), services.NewClientService(advisorRepository, widgetRepository, repositories.NewMockClientRepository()), services.NewSimulationService(), services.NewAnalyticsService(repositories.NewMockAnalyticsRepository()), services.NewClientManagementService(advisorRepository), services.NewAdvisorManagementService(advisorRepository))
+	router := NewRouter(cfg, services.NewStatusService(repositories.NewStatusRepository(cfg)), services.NewAuthService(authRepository), services.NewAdvisorService(advisorRepository), services.NewWidgetService(widgetRepository), services.NewClientService(advisorRepository, widgetRepository, repositories.NewMockClientRepository()), services.NewSimulationService(), services.NewAnalyticsService(repositories.NewMockAnalyticsRepository()), services.NewClientManagementService(advisorRepository, authRepository), services.NewAdvisorManagementService(advisorRepository))
 
 	advisorToken := loginToken(t, router, "advisor@afengage.com")
 	forbiddenRequest := httptest.NewRequest(http.MethodGet, "/api/v1/admin/advisors", nil)
