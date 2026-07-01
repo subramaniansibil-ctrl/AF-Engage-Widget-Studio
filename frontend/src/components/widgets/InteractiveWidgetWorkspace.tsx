@@ -1,7 +1,8 @@
 import { motion } from 'framer-motion';
 import { CircleHelp, Lightbulb, MoveRight } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Bar, Line } from 'react-chartjs-2';
+import { afChartBarColor, afChartColors } from '../charts/chartjs';
 import type { Portfolio, RetirementGoal } from '../../features/advisor/advisorApi';
 import type { Simulation } from '../../features/client/clientApi';
 import type { IncomeSustainabilityInput, OnefeeSimulationInput, TwoPotSimulationInput } from '../../features/simulations/simulationsApi';
@@ -64,7 +65,48 @@ function TwoPotEditor({ assignment, portfolio, retirementGoal, clientAge, loaded
     <WidgetMetric label="Net withdrawal" value={currency.format(output.netWithdrawal)} />
     <WidgetMetric label="Retirement impact" value={currency.format(output.projectedRetirementLoss)} />
     <WidgetMetric label="Projected value" value={currency.format(output.projectedRetirementValue)} />
-  </>} chart={<ResponsiveContainer width="100%" height="100%"><BarChart data={chart} margin={{ bottom: 8 }}><CartesianGrid strokeDasharray="3 3" vertical={false} /><XAxis dataKey="scenario" label={{ value: 'Retirement outcome', position: 'insideBottom', offset: -4 }} /><YAxis tickFormatter={(value) => compactCurrency.format(Number(value))} width={96} label={{ value: 'Projected value', angle: -90, position: 'insideLeft' }} /><Tooltip formatter={(value) => currency.format(Number(value))} /><Legend verticalAlign="top" /><Bar dataKey="value" name="Projected amount" fill="#00a878" radius={[5, 5, 0, 0]} /></BarChart></ResponsiveContainer>} chartTitle="How a withdrawal changes your retirement value" chartDescription="Compare the value with no withdrawal, your selected withdrawal, and the long-term amount given up." mainResult={{ label: 'Cash you receive after estimated tax', value: currency.format(output.netWithdrawal), detail: `${currency.format(output.projectedRetirementLoss)} less may be available at retirement.` }} howWorks="We subtract your withdrawal and estimated tax, then grow the remaining retirement savings using your selected yearly return until retirement." insight={`At retirement age ${retirementAge}, this scenario preserves an illustrated ${Math.max(0, Math.round(output.projectedRetirementValue / Math.max(output.baselineRetirementValue, 1) * 100))}% of the value you could have without a withdrawal.`} nextStep="Try a smaller withdrawal and compare the retirement impact. Save the option that best balances today’s need with your future goal." />;
+  </>} chart={<Bar data={{
+    labels: chart.map((item) => item.scenario),
+    datasets: [
+      {
+        label: 'Projected amount',
+        data: chart.map((item) => item.value),
+        backgroundColor: chart.map((_, index) => afChartBarColor(index)),
+        borderRadius: 5,
+      },
+    ],
+  }} options={{
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'top',
+      },
+      tooltip: {
+        callbacks: {
+          label: (context) => currency.format(Number(context.raw)),
+        },
+      },
+    },
+    scales: {
+      x: {
+        grid: {
+          display: false,
+        },
+        ticks: {
+          font: {
+            size: 12,
+          },
+        },
+      },
+      y: {
+        beginAtZero: true,
+        ticks: {
+          callback: (value) => compactCurrency.format(Number(value)),
+        },
+      },
+    },
+  }} />} chartTitle="How a withdrawal changes your retirement value" chartDescription="Compare the value with no withdrawal, your selected withdrawal, and the long-term amount given up." mainResult={{ label: 'Cash you receive after estimated tax', value: currency.format(output.netWithdrawal), detail: `${currency.format(output.projectedRetirementLoss)} less may be available at retirement.` }} howWorks="We subtract your withdrawal and estimated tax, then grow the remaining retirement savings using your selected yearly return until retirement." insight={`At retirement age ${retirementAge}, this scenario preserves an illustrated ${Math.max(0, Math.round(output.projectedRetirementValue / Math.max(output.baselineRetirementValue, 1) * 100))}% of the value you could have without a withdrawal.`} nextStep="Try a smaller withdrawal and compare the retirement impact. Save the option that best balances today’s need with your future goal." />;
 }
 
 function OnefeeEditor({ assignment, portfolio, loadedSimulation, onSnapshotChange }: WorkspaceProps) {
@@ -91,7 +133,60 @@ function OnefeeEditor({ assignment, portfolio, loadedSimulation, onSnapshotChang
     <WidgetMetric label="Onefee cost" value={currency.format(output.onefeeCost)} />
     <WidgetMetric label="Estimated savings" value={currency.format(output.estimatedSavings)} />
     <WidgetMetric label="Wealth difference" value={currency.format(output.projectedWealthDifference)} />
-  </>} chart={<ResponsiveContainer width="100%" height="100%"><LineChart data={chart} margin={{ bottom: 8 }}><CartesianGrid strokeDasharray="3 3" vertical={false} /><XAxis dataKey="year" label={{ value: 'Years invested', position: 'insideBottom', offset: -4 }} /><YAxis tickFormatter={(value) => compactCurrency.format(Number(value))} width={96} label={{ value: 'Investment value', angle: -90, position: 'insideLeft' }} /><Tooltip formatter={(value) => currency.format(Number(value))} /><Legend verticalAlign="top" /><Line type="monotone" dataKey="currentFees" stroke="#dc6b57" strokeWidth={2.5} dot={false} name="Current fee" /><Line type="monotone" dataKey="onefee" stroke="#00a878" strokeWidth={2.5} dot={false} name="Alternative fee" /></LineChart></ResponsiveContainer>} chartTitle="How fees affect your investment over time" chartDescription="The gap between the lines is the extra investment value kept when the yearly fee is lower." mainResult={{ label: 'Potential extra investment value', value: currency.format(output.projectedWealthDifference), detail: `Based on staying invested for ${input.investmentTerm} years.` }} howWorks="We grow the same starting investment along two paths, deducting each yearly fee along the way. The difference shows the long-term cost of the higher fee." insight={`The lower-fee option could leave you with ${currency.format(output.projectedWealthDifference)} more after ${input.investmentTerm} years.`} nextStep="Check the fees on your latest statement, update both values, and discuss whether switching costs or product differences affect the comparison." />;
+  </>} chart={<Line data={{
+    labels: chart.map((item) => item.year),
+    datasets: [
+      {
+        label: 'Current fee',
+        data: chart.map((item) => item.currentFees),
+        borderColor: afChartColors.coral,
+        backgroundColor: afChartColors.coral,
+        borderWidth: 2.5,
+        tension: 0.35,
+        pointRadius: 0,
+      },
+      {
+        label: 'Alternative fee',
+        data: chart.map((item) => item.onefee),
+        borderColor: afChartColors.sage,
+        backgroundColor: afChartColors.sage,
+        borderWidth: 2.5,
+        tension: 0.35,
+        pointRadius: 0,
+      },
+    ],
+  }} options={{
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'top',
+      },
+      tooltip: {
+        callbacks: {
+          label: (context) => `${context.dataset.label ?? 'Value'}: ${currency.format(Number(context.raw))}`,
+        },
+      },
+    },
+    scales: {
+      x: {
+        grid: {
+          display: false,
+        },
+        ticks: {
+          font: {
+            size: 12,
+          },
+        },
+      },
+      y: {
+        beginAtZero: true,
+        ticks: {
+          callback: (value) => compactCurrency.format(Number(value)),
+        },
+      },
+    },
+  }} />} chartTitle="How fees affect your investment over time" chartDescription="The gap between the lines is the extra investment value kept when the yearly fee is lower." mainResult={{ label: 'Potential extra investment value', value: currency.format(output.projectedWealthDifference), detail: `Based on staying invested for ${input.investmentTerm} years.` }} howWorks="We grow the same starting investment along two paths, deducting each yearly fee along the way. The difference shows the long-term cost of the higher fee." insight={`The lower-fee option could leave you with ${currency.format(output.projectedWealthDifference)} more after ${input.investmentTerm} years.`} nextStep="Check the fees on your latest statement, update both values, and discuss whether switching costs or product differences affect the comparison." />;
 }
 
 function IncomeEditor({ assignment, portfolio, retirementGoal, loadedSimulation, onSnapshotChange }: WorkspaceProps) {
@@ -119,7 +214,51 @@ function IncomeEditor({ assignment, portfolio, retirementGoal, loadedSimulation,
     <WidgetMetric label="Portfolio longevity" value={`${output.estimatedLongevity} years`} />
     <WidgetMetric label="Sustainability" value={`${output.sustainabilityScore}/100`} />
     <WidgetMetric label="Risk level" value={output.riskLevel} />
-  </>} chart={<ResponsiveContainer width="100%" height="100%"><LineChart data={chart} margin={{ bottom: 8 }}><CartesianGrid strokeDasharray="3 3" vertical={false} /><XAxis dataKey="year" label={{ value: 'Years into retirement', position: 'insideBottom', offset: -4 }} /><YAxis tickFormatter={(value) => compactCurrency.format(Number(value))} width={96} label={{ value: 'Savings remaining', angle: -90, position: 'insideLeft' }} /><Tooltip formatter={(value) => currency.format(Number(value))} /><Legend verticalAlign="top" /><Line type="monotone" dataKey="balance" stroke="#00a878" strokeWidth={2.5} dot={false} name="Savings remaining" /></LineChart></ResponsiveContainer>} chartTitle="How long your retirement savings may last" chartDescription="Follow the line to see how withdrawals, investment growth, and rising living costs change the balance each year." mainResult={{ label: 'Estimated time your income can last', value: `${output.estimatedLongevity} years`, detail: `${output.riskLevel} risk · ${output.sustainabilityScore}/100 sustainability score.` }} howWorks="Each year we grow the remaining savings, subtract your income, and increase that income with living costs. The score reflects whether the money lasts for your selected retirement period." insight={`This plan may support about ${output.estimatedLongevity} years of income. Its illustrated risk is ${output.riskLevel.toLowerCase()}.`} nextStep="If the score feels low, try a smaller monthly income, a shorter target period, or more starting savings. Save a realistic option to discuss with your advisor." progress={output.sustainabilityScore} />;
+  </>} chart={<Line data={{
+    labels: chart.map((item) => item.year),
+    datasets: [
+      {
+        label: 'Savings remaining',
+        data: chart.map((item) => item.balance),
+        borderColor: afChartColors.sage,
+        backgroundColor: afChartColors.sage,
+        borderWidth: 2.5,
+        tension: 0.35,
+        pointRadius: 0,
+      },
+    ],
+  }} options={{
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'top',
+      },
+      tooltip: {
+        callbacks: {
+          label: (context) => `${context.dataset.label ?? 'Value'}: ${currency.format(Number(context.raw))}`,
+        },
+      },
+    },
+    scales: {
+      x: {
+        grid: {
+          display: false,
+        },
+        ticks: {
+          font: {
+            size: 12,
+          },
+        },
+      },
+      y: {
+        beginAtZero: true,
+        ticks: {
+          callback: (value) => compactCurrency.format(Number(value)),
+        },
+      },
+    },
+  }} />} chartTitle="How long your retirement savings may last" chartDescription="Follow the line to see how withdrawals, investment growth, and rising living costs change the balance each year." mainResult={{ label: 'Estimated time your income can last', value: `${output.estimatedLongevity} years`, detail: `${output.riskLevel} risk · ${output.sustainabilityScore}/100 sustainability score.` }} howWorks="Each year we grow the remaining savings, subtract your income, and increase that income with living costs. The score reflects whether the money lasts for your selected retirement period." insight={`This plan may support about ${output.estimatedLongevity} years of income. Its illustrated risk is ${output.riskLevel.toLowerCase()}.`} nextStep="If the score feels low, try a smaller monthly income, a shorter target period, or more starting savings. Save a realistic option to discuss with your advisor." progress={output.sustainabilityScore} />;
 }
 
 function GenericEditor({ assignment, loadedSimulation, onSnapshotChange }: WorkspaceProps) {

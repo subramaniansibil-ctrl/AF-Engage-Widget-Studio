@@ -1,6 +1,7 @@
 import { AlertTriangle, Gauge, LayoutDashboard, UsersRound, WalletCards } from 'lucide-react';
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Bar } from 'react-chartjs-2';
 import { Link } from 'react-router-dom';
+import { afChartBarColor } from '../components/charts/chartjs';
 import { useGetAdvisorDashboardQuery, useGetClientsQuery } from '../features/advisor/advisorApi';
 import { Card } from '../components/ui/Card';
 import { DashboardSkeleton } from '../components/ui/Skeleton';
@@ -25,6 +26,50 @@ export function AdvisorDashboardPage() {
   const preRetirementCount = preRetirementClients.length;
   const dashboardRefreshClients = clients.slice(0, Math.min(clients.length, Math.max(1, stats?.activeDashboards ?? 0)));
   const dashboardRefreshCount = Math.min(clients.length, Math.max(1, stats?.activeDashboards ?? 0));
+  const widgetUsageSummary = stats?.widgetUsageSummary ?? [];
+  const chartData = {
+    labels: widgetUsageSummary.map((item) => item.name),
+    datasets: [
+      {
+        label: 'Usage count',
+        data: widgetUsageSummary.map((item) => item.count),
+        backgroundColor: widgetUsageSummary.map((_, index) => afChartBarColor(index, 1)),
+        borderRadius: 4,
+      },
+    ],
+  };
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false,
+      },
+      tooltip: {
+        callbacks: {
+          label: (context: { formattedValue: string }) => `Usage count: ${context.formattedValue}`,
+        },
+      },
+    },
+    scales: {
+      x: {
+        grid: {
+          display: false,
+        },
+        ticks: {
+          font: {
+            size: 12,
+          },
+        },
+      },
+      y: {
+        beginAtZero: true,
+        ticks: {
+          precision: 0,
+        },
+      },
+    },
+  } as const;
 
   const focusItems = [
     {
@@ -106,15 +151,7 @@ export function AdvisorDashboardPage() {
             <EmptyState title="Unable to load analytics" description="The dashboard API did not respond. Retry after confirming the backend is running." />
           ) : (
             <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={stats?.widgetUsageSummary ?? []}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#d8e1e8" />
-                  <XAxis dataKey="name" tick={{ fontSize: 12 }} interval={0} />
-                  <YAxis allowDecimals={false} />
-                  <Tooltip />
-                  <Bar dataKey="count" fill="#5a7f71" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              <Bar data={chartData} options={chartOptions} />
             </div>
           )}
         </Card>
