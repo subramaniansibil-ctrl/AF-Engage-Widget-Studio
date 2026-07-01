@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { Boxes, ChartNoAxesCombined, LayoutDashboard, LogOut, Menu, Shield, Sparkles, UserRound, UsersRound } from 'lucide-react';
+import { Boxes, ChartNoAxesCombined, LayoutDashboard, LogOut, Menu, Shield, Sparkles, UserCog, UserRound, UsersRound } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { useGetStatusQuery, useLogoutMutation } from '../../features/api/apiSlice';
@@ -23,6 +23,7 @@ const navItems: NavItem[] = [
   { to: '/client/dashboard', label: 'Overview', icon: UserRound, roles: ['CLIENT', 'ADMIN'] },
   { to: '/admin/dashboard', label: 'Admin', icon: Shield, roles: ['ADMIN'] },
   { to: '/admin/clients', label: 'Client management', icon: UsersRound, roles: ['ADMIN'] },
+  { to: '/admin/advisors', label: 'Advisors', icon: UserCog, roles: ['ADMIN'] },
 ];
 
 export function AppLayout() {

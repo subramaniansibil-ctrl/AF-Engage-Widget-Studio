@@ -60,7 +60,8 @@ export const apiSlice = createApi({
     'Analytics',
     'Notification',
     'AuditLog',
-	'AdminClient',
+    'AdminClient',
+    'AdminAdvisor',
   ],
   endpoints: (builder) => ({
     getStatus: builder.query<APIStatus, void>({

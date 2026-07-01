@@ -26,12 +26,13 @@ type AdvisorRepository interface {
 }
 
 type mockAdvisorRepository struct {
-	mu      sync.RWMutex
-	clients []models.Client
+	mu       sync.RWMutex
+	clients  []models.Client
+	advisors []models.Advisor
 }
 
 func NewMockAdvisorRepository() *mockAdvisorRepository {
-	return &mockAdvisorRepository{clients: mockClients()}
+	return &mockAdvisorRepository{clients: mockClients(), advisors: mockAdvisors()}
 }
 
 func (r *mockAdvisorRepository) GetDashboardStats(ctx context.Context) (models.AdvisorDashboardStats, error) {
@@ -135,6 +136,13 @@ func mockClients() []models.Client {
 		client("client-018", "Amara Wilson", 68, "amara.wilson@example.com", models.RiskConservative, models.RetirementStageRetired, 1725000, 310000, 1125000, 0, 2100000, 67, allocation(30, 54, 12, 4)),
 		client("client-019", "Henry O'Neill", 49, "henry.oneill@example.com", models.RiskModerate, models.RetirementStageAccumulation, 845000, 91000, 525000, 3700, 1750000, 65, allocation(59, 27, 8, 6)),
 		client("client-020", "Laila Hassan", 56, "laila.hassan@example.com", models.RiskGrowth, models.RetirementStagePreRetirement, 1090000, 125000, 705000, 4300, 2150000, 64, allocation(66, 20, 7, 7)),
+	}
+}
+
+func mockAdvisors() []models.Advisor {
+	now := time.Now()
+	return []models.Advisor{
+		{ID: "user_advisor_001", Name: "Advisor User", Email: "advisor@afengage.com", Status: models.AdvisorStatusActive, CreatedAt: now.AddDate(0, -2, 0)},
 	}
 }
 

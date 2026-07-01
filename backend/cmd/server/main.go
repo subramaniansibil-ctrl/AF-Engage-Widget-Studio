@@ -30,6 +30,7 @@ func main() {
 	mockAdvisorRepository := repositories.NewMockAdvisorRepository()
 	advisorRepository := repositories.AdvisorRepository(mockAdvisorRepository)
 	clientManagementRepository := repositories.ClientManagementRepository(mockAdvisorRepository)
+	advisorManagementRepository := repositories.AdvisorManagementRepository(mockAdvisorRepository)
 	widgetRepository := repositories.WidgetRepository(repositories.NewMockWidgetRepository())
 	clientRepository := repositories.ClientRepository(repositories.NewMockClientRepository())
 	analyticsRepository := repositories.AnalyticsRepository(repositories.NewMockAnalyticsRepository())
@@ -49,6 +50,7 @@ func main() {
 		postgresAdvisorRepository := repositories.NewPostgresAdvisorRepository(db)
 		advisorRepository = postgresAdvisorRepository
 		clientManagementRepository = postgresAdvisorRepository
+		advisorManagementRepository = postgresAdvisorRepository
 		widgetRepository = repositories.NewPostgresWidgetRepository(db)
 		clientRepository = repositories.NewPostgresClientRepository(db)
 		analyticsRepository = repositories.NewPostgresAnalyticsRepository(db)
@@ -65,7 +67,8 @@ func main() {
 	simulationService := services.NewSimulationService()
 	analyticsService := services.NewAnalyticsService(analyticsRepository)
 	clientManagementService := services.NewClientManagementService(clientManagementRepository)
-	router := routes.NewRouter(cfg, statusService, authService, advisorService, widgetService, clientService, simulationService, analyticsService, clientManagementService)
+	advisorManagementService := services.NewAdvisorManagementService(advisorManagementRepository)
+	router := routes.NewRouter(cfg, statusService, authService, advisorService, widgetService, clientService, simulationService, analyticsService, clientManagementService, advisorManagementService)
 
 	server := &http.Server{
 		Addr:              cfg.HTTPAddress,
