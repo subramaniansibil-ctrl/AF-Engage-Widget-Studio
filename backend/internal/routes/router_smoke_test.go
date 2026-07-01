@@ -89,7 +89,7 @@ func TestAPISmokeHealthLoginAndAdvisorDashboard(t *testing.T) {
 		t.Fatalf("expected unassigned widget 404, got %d", missingWidgetRecorder.Code)
 	}
 
-	simulationBody, _ := json.Marshal(models.SimulationRequest{Name: "Early Retirement", WidgetID: "two-pot-impact", WidgetName: "Two-Pot Impact", Inputs: map[string]string{"retirementAge": "60"}, Results: map[string]string{"projectedRetirementValue": "$1,200,000"}, Result: "Goal completion 82%."})
+	simulationBody, _ := json.Marshal(models.SimulationRequest{Name: "Early Retirement", WidgetID: "two-pot-impact", WidgetName: "Two-Pot Impact", Inputs: map[string]string{"retirementAge": "60"}, Results: map[string]string{"projectedRetirementValue": "R 1 200 000"}, Result: "Goal completion 82%."})
 	simulationRequest := httptest.NewRequest(http.MethodPost, "/api/v1/client/simulations", bytes.NewReader(simulationBody))
 	simulationRequest.Header.Set("Authorization", "Bearer "+clientToken)
 	simulationRequest.Header.Set("Content-Type", "application/json")

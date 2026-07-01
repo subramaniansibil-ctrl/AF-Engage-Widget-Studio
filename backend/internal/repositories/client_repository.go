@@ -35,7 +35,7 @@ func NewMockClientRepository() ClientRepository {
 				ID: "simulation-001", ClientID: "client-001", WidgetID: "two-pot-impact",
 				Name: "Current retirement plan", WidgetName: "Two-Pot Impact",
 				Inputs:    map[string]string{"projectionYears": "20", "scenario": "No withdrawal"},
-				Results:   map[string]string{"projectedRetirementValue": "$1,420,000"},
+				Results:   map[string]string{"projectedRetirementValue": "R 1 420 000"},
 				Result:    "Retirement goal remains on track at the current contribution rate.",
 				SavedByID: "client-001", SavedByName: "Avery Chen", SavedByRole: models.RoleClient,
 				CreatedAt: createdAt, UpdatedAt: createdAt,

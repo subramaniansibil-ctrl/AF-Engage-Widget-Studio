@@ -9,12 +9,7 @@ import {
 import { Card } from '../components/ui/Card';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Skeleton } from '../components/ui/Skeleton';
-
-const currency = new Intl.NumberFormat('en-US', {
-  style: 'currency',
-  currency: 'USD',
-  maximumFractionDigits: 0,
-});
+import { zarCurrency as currency } from '../utils/currency';
 
 const riskOptions: Array<{ label: string; value: RiskProfile | '' }> = [
   { label: 'All risk profiles', value: '' },

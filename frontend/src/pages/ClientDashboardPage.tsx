@@ -8,12 +8,7 @@ import {
 } from '../features/client/clientApi';
 import type { DashboardAssignment } from '../features/widgets/widgetsApi';
 import { WidgetBrandIcon } from '../components/widgets/WidgetBrandIcon';
-
-const currency = new Intl.NumberFormat('en-US', {
-  style: 'currency',
-  currency: 'USD',
-  maximumFractionDigits: 0,
-});
+import { zarCurrency as currency } from '../utils/currency';
 
 export function ClientDashboardPage() {
   const { data: dashboard, isLoading, isError } = useGetClientDashboardQuery();
