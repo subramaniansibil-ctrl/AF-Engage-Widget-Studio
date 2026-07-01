@@ -10,11 +10,19 @@ export interface ParsedClientCsv {
   errors: ClientImportError[];
 }
 
-export function parseClientCsv(source: string): ParsedClientCsv {
+export interface ClientCsvOptions {
+  includeAdvisor?: boolean;
+  forcedAdvisor?: string;
+  validAdvisors?: string[];
+}
+
+export function parseClientCsv(source: string, options: ClientCsvOptions = {}): ParsedClientCsv {
+  const includeAdvisor = options.includeAdvisor ?? true;
   const records = parseCsvRecords(source.replace(/^\uFEFF/, ''));
   if (records.length === 0) return { rows: [], errors: [{ rowNumber: 1, field: 'file', message: 'CSV file is empty' }] };
   const headers = records[0].map((value) => value.trim());
-  const missing = CLIENT_TEMPLATE_HEADERS.filter((header) => !headers.includes(header));
+  const requiredHeaders = CLIENT_TEMPLATE_HEADERS.filter((header) => includeAdvisor || header !== 'Assigned Advisor');
+  const missing = requiredHeaders.filter((header) => !headers.includes(header));
   if (missing.length > 0) {
     return { rows: [], errors: missing.map((field) => ({ rowNumber: 1, field, message: 'column is missing' })) };
   }
@@ -30,14 +38,15 @@ export function parseClientCsv(source: string): ParsedClientCsv {
     const riskProfile = get('Risk Profile').toUpperCase() as RiskProfile | '';
     const client: ClientUpsertRequest = {
       id: get('Client ID'), name: get('Client Name'), email: get('Email').toLowerCase(),
-      mobileNumber: get('Mobile Number'), assignedAdvisor: get('Assigned Advisor'), status,
+      mobileNumber: get('Mobile Number'), assignedAdvisor: options.forcedAdvisor ?? get('Assigned Advisor'), status,
       dateOfBirth: get('Date of Birth'), riskProfile, investmentGoal: get('Investment Goal'),
-      portfolioId: get('Portfolio ID'), notes: '',
+      portfolioId: get('Portfolio ID'), notes: '', password: '',
     };
     const required: Array<[string, string]> = [
       ['Client Name', client.name], ['Client ID', client.id], ['Email', client.email],
-      ['Mobile Number', client.mobileNumber], ['Assigned Advisor', client.assignedAdvisor], ['Status', client.status],
+      ['Mobile Number', client.mobileNumber], ['Status', client.status],
     ];
+    if (includeAdvisor) required.push(['Assigned Advisor', client.assignedAdvisor]);
     required.forEach(([field, value]) => {
       if (!value) errors.push({ rowNumber, field, message: 'is required' });
     });
@@ -45,15 +54,25 @@ export function parseClientCsv(source: string): ParsedClientCsv {
     if (client.status && !['ACTIVE', 'INACTIVE'].includes(client.status)) errors.push({ rowNumber, field: 'Status', message: 'must be Active or Inactive' });
     if (client.riskProfile && !['CONSERVATIVE', 'MODERATE', 'GROWTH', 'AGGRESSIVE'].includes(client.riskProfile)) errors.push({ rowNumber, field: 'Risk Profile', message: 'is invalid' });
     if (client.dateOfBirth && !/^\d{4}-\d{2}-\d{2}$/.test(client.dateOfBirth)) errors.push({ rowNumber, field: 'Date of Birth', message: 'must use YYYY-MM-DD' });
+    if (includeAdvisor && client.assignedAdvisor && options.validAdvisors) {
+      const advisor = options.validAdvisors.find((name) => name.toLowerCase() === client.assignedAdvisor.toLowerCase());
+      if (!advisor) errors.push({ rowNumber, field: 'Assigned Advisor', message: 'must match an active advisor' });
+      else client.assignedAdvisor = advisor;
+    }
     if (!errors.some((error) => error.rowNumber === rowNumber)) rows.push({ rowNumber, client });
   });
   return { rows, errors };
 }
 
-export function clientTemplateCsv() {
+export function clientTemplateCsv(options: ClientCsvOptions = {}) {
+  const includeAdvisor = options.includeAdvisor ?? true;
+  const headers = CLIENT_TEMPLATE_HEADERS.filter((header) => includeAdvisor || header !== 'Assigned Advisor');
+  const values = ['Taylor Morgan', 'client-101', 'taylor.morgan@example.com', '+27 82 555 0101'];
+  if (includeAdvisor) values.push(options.validAdvisors?.[0] ?? 'Advisor User');
+  values.push('ACTIVE', '1985-06-15', 'MODERATE', 'Retirement income', 'portfolio-101');
   return [
-    CLIENT_TEMPLATE_HEADERS.join(','),
-    'Taylor Morgan,client-101,taylor.morgan@example.com,+27 82 555 0101,Advisor User,ACTIVE,1985-06-15,MODERATE,Retirement income,portfolio-101',
+    headers.join(','),
+    values.join(','),
   ].join('\n');
 }
 

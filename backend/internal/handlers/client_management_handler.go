@@ -22,13 +22,18 @@ func NewClientManagementHandler(service services.ClientManagementService) *Clien
 }
 
 func (h *ClientManagementHandler) List(c *gin.Context) {
+	actor, ok := userFromContext(c)
+	if !ok {
+		utils.JSONError(c, http.StatusUnauthorized, "authentication required")
+		return
+	}
 	recent, _ := strconv.ParseBool(c.Query("recent"))
 	pagination := utils.ParsePagination(c, utils.DefaultPageSize, utils.MaxPageSize)
 	clients, totalItems, err := h.service.ListClients(c.Request.Context(), models.ClientManagementFilters{
 		Search: c.Query("search"), Status: models.ClientStatus(c.Query("status")),
 		AssignedAdvisor: c.Query("assignedAdvisor"), RecentlyCreated: recent,
 		Page: pagination.Page, PageSize: pagination.PageSize,
-	})
+	}, actor)
 	if err != nil {
 		utils.JSONError(c, http.StatusInternalServerError, "failed to load clients")
 		return
@@ -40,7 +45,12 @@ func (h *ClientManagementHandler) List(c *gin.Context) {
 }
 
 func (h *ClientManagementHandler) Get(c *gin.Context) {
-	client, err := h.service.GetClient(c.Request.Context(), c.Param("clientId"))
+	actor, ok := userFromContext(c)
+	if !ok {
+		utils.JSONError(c, http.StatusUnauthorized, "authentication required")
+		return
+	}
+	client, err := h.service.GetClient(c.Request.Context(), c.Param("clientId"), actor)
 	if err != nil {
 		handleClientManagementError(c, err)
 		return
@@ -49,12 +59,17 @@ func (h *ClientManagementHandler) Get(c *gin.Context) {
 }
 
 func (h *ClientManagementHandler) Create(c *gin.Context) {
+	actor, ok := userFromContext(c)
+	if !ok {
+		utils.JSONError(c, http.StatusUnauthorized, "authentication required")
+		return
+	}
 	var request models.ClientUpsertRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		utils.JSONValidationError(c, err)
 		return
 	}
-	client, err := h.service.CreateClient(c.Request.Context(), request)
+	client, err := h.service.CreateClient(c.Request.Context(), request, actor)
 	if err != nil {
 		handleClientManagementError(c, err)
 		return
@@ -63,12 +78,17 @@ func (h *ClientManagementHandler) Create(c *gin.Context) {
 }
 
 func (h *ClientManagementHandler) Update(c *gin.Context) {
+	actor, ok := userFromContext(c)
+	if !ok {
+		utils.JSONError(c, http.StatusUnauthorized, "authentication required")
+		return
+	}
 	var request models.ClientUpsertRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		utils.JSONValidationError(c, err)
 		return
 	}
-	client, err := h.service.UpdateClient(c.Request.Context(), c.Param("clientId"), request)
+	client, err := h.service.UpdateClient(c.Request.Context(), c.Param("clientId"), request, actor)
 	if err != nil {
 		handleClientManagementError(c, err)
 		return
@@ -77,7 +97,12 @@ func (h *ClientManagementHandler) Update(c *gin.Context) {
 }
 
 func (h *ClientManagementHandler) Deactivate(c *gin.Context) {
-	if err := h.service.DeactivateClient(c.Request.Context(), c.Param("clientId")); err != nil {
+	actor, ok := userFromContext(c)
+	if !ok {
+		utils.JSONError(c, http.StatusUnauthorized, "authentication required")
+		return
+	}
+	if err := h.service.DeactivateClient(c.Request.Context(), c.Param("clientId"), actor); err != nil {
 		handleClientManagementError(c, err)
 		return
 	}
@@ -85,12 +110,17 @@ func (h *ClientManagementHandler) Deactivate(c *gin.Context) {
 }
 
 func (h *ClientManagementHandler) BulkImport(c *gin.Context) {
+	actor, ok := userFromContext(c)
+	if !ok {
+		utils.JSONError(c, http.StatusUnauthorized, "authentication required")
+		return
+	}
 	var request models.BulkClientImportRequest
 	if err := json.NewDecoder(c.Request.Body).Decode(&request); err != nil || len(request.Rows) == 0 {
 		utils.JSONError(c, http.StatusBadRequest, "at least one client row is required")
 		return
 	}
-	c.JSON(http.StatusOK, h.service.ImportClients(c.Request.Context(), request))
+	c.JSON(http.StatusOK, h.service.ImportClients(c.Request.Context(), request, actor))
 }
 
 func handleClientManagementError(c *gin.Context, err error) {

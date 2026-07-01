@@ -126,6 +126,7 @@ export function AdvisorClientsPage() {
                   <th className="px-4 py-3 text-left text-sm font-semibold">Age</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">Risk</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">Stage</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Advisor</th>
                   <th className="px-4 py-3 text-right text-sm font-semibold">Portfolio</th>
                 </tr>
               </thead>
@@ -141,6 +142,7 @@ export function AdvisorClientsPage() {
                     <td className="px-4 py-3 text-sm">{client.age}</td>
                     <td className="px-4 py-3 text-sm">{formatEnum(client.riskProfile)}</td>
                     <td className="px-4 py-3 text-sm">{formatEnum(client.retirementStage)}</td>
+                    <td className="px-4 py-3 text-sm">{client.assignedAdvisor}</td>
                     <td className="px-4 py-3 text-right text-sm font-medium">{currency.format(client.portfolio.totalValue)}</td>
                   </tr>
                 ))}

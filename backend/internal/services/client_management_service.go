@@ -12,12 +12,12 @@ import (
 )
 
 type ClientManagementService interface {
-	ListClients(ctx context.Context, filters models.ClientManagementFilters) ([]models.Client, int, error)
-	GetClient(ctx context.Context, id string) (models.Client, error)
-	CreateClient(ctx context.Context, request models.ClientUpsertRequest) (models.Client, error)
-	UpdateClient(ctx context.Context, id string, request models.ClientUpsertRequest) (models.Client, error)
-	DeactivateClient(ctx context.Context, id string) error
-	ImportClients(ctx context.Context, request models.BulkClientImportRequest) models.BulkClientImportResponse
+	ListClients(ctx context.Context, filters models.ClientManagementFilters, actor ...models.User) ([]models.Client, int, error)
+	GetClient(ctx context.Context, id string, actor ...models.User) (models.Client, error)
+	CreateClient(ctx context.Context, request models.ClientUpsertRequest, actor ...models.User) (models.Client, error)
+	UpdateClient(ctx context.Context, id string, request models.ClientUpsertRequest, actor ...models.User) (models.Client, error)
+	DeactivateClient(ctx context.Context, id string, actor ...models.User) error
+	ImportClients(ctx context.Context, request models.BulkClientImportRequest, actor ...models.User) models.BulkClientImportResponse
 }
 
 type ClientValidationError struct {
@@ -32,21 +32,42 @@ func (e *ClientValidationError) Error() string {
 type clientManagementService struct {
 	repository     repositories.ClientManagementRepository
 	authRepository repositories.AuthRepository
+	advisors       repositories.AdvisorManagementRepository
 }
 
-func NewClientManagementService(repository repositories.ClientManagementRepository, authRepository repositories.AuthRepository) ClientManagementService {
-	return &clientManagementService{repository: repository, authRepository: authRepository}
+func NewClientManagementService(repository repositories.ClientManagementRepository, authRepository repositories.AuthRepository, advisors ...repositories.AdvisorManagementRepository) ClientManagementService {
+	service := &clientManagementService{repository: repository, authRepository: authRepository}
+	if len(advisors) > 0 {
+		service.advisors = advisors[0]
+	}
+	return service
 }
 
-func (s *clientManagementService) ListClients(ctx context.Context, filters models.ClientManagementFilters) ([]models.Client, int, error) {
+func (s *clientManagementService) ListClients(ctx context.Context, filters models.ClientManagementFilters, actors ...models.User) ([]models.Client, int, error) {
+	actor := managementActor(actors)
+	if actor.Role == models.RoleAdvisor {
+		filters.AssignedAdvisor = actor.Name
+	}
 	return s.repository.ListManagedClients(ctx, filters)
 }
 
-func (s *clientManagementService) GetClient(ctx context.Context, id string) (models.Client, error) {
-	return s.repository.GetManagedClientByID(ctx, id)
+func (s *clientManagementService) GetClient(ctx context.Context, id string, actors ...models.User) (models.Client, error) {
+	client, err := s.repository.GetManagedClientByID(ctx, id)
+	if err != nil {
+		return models.Client{}, err
+	}
+	actor := managementActor(actors)
+	if actor.Role == models.RoleAdvisor && client.AssignedAdvisor != actor.Name {
+		return models.Client{}, repositories.ErrClientNotFound
+	}
+	return client, nil
 }
 
-func (s *clientManagementService) CreateClient(ctx context.Context, request models.ClientUpsertRequest) (models.Client, error) {
+func (s *clientManagementService) CreateClient(ctx context.Context, request models.ClientUpsertRequest, actors ...models.User) (models.Client, error) {
+	actor := managementActor(actors)
+	if err := s.applyAdvisorAssignment(ctx, &request, actor, ""); err != nil {
+		return models.Client{}, err
+	}
 	normalizeClientRequest(&request)
 	if err := validateClientRequest(request, true); err != nil {
 		return models.Client{}, err
@@ -79,7 +100,18 @@ func (s *clientManagementService) CreateClient(ctx context.Context, request mode
 	return client, nil
 }
 
-func (s *clientManagementService) UpdateClient(ctx context.Context, id string, request models.ClientUpsertRequest) (models.Client, error) {
+func (s *clientManagementService) UpdateClient(ctx context.Context, id string, request models.ClientUpsertRequest, actors ...models.User) (models.Client, error) {
+	actor := managementActor(actors)
+	existing, err := s.repository.GetManagedClientByID(ctx, id)
+	if err != nil {
+		return models.Client{}, err
+	}
+	if actor.Role == models.RoleAdvisor && existing.AssignedAdvisor != actor.Name {
+		return models.Client{}, repositories.ErrClientNotFound
+	}
+	if err := s.applyAdvisorAssignment(ctx, &request, actor, existing.AssignedAdvisor); err != nil {
+		return models.Client{}, err
+	}
 	normalizeClientRequest(&request)
 	request.ID = id
 	if err := validateClientRequest(request, false); err != nil {
@@ -88,17 +120,37 @@ func (s *clientManagementService) UpdateClient(ctx context.Context, id string, r
 	return s.repository.UpdateManagedClient(ctx, id, request)
 }
 
-func (s *clientManagementService) DeactivateClient(ctx context.Context, id string) error {
+func (s *clientManagementService) DeactivateClient(ctx context.Context, id string, actors ...models.User) error {
+	actor := managementActor(actors)
+	if actor.Role == models.RoleAdvisor {
+		client, err := s.repository.GetManagedClientByID(ctx, id)
+		if err != nil {
+			return err
+		}
+		if client.AssignedAdvisor != actor.Name {
+			return repositories.ErrClientNotFound
+		}
+	}
 	return s.repository.DeactivateManagedClient(ctx, id)
 }
 
-func (s *clientManagementService) ImportClients(ctx context.Context, request models.BulkClientImportRequest) models.BulkClientImportResponse {
+func (s *clientManagementService) ImportClients(ctx context.Context, request models.BulkClientImportRequest, actors ...models.User) models.BulkClientImportResponse {
+	actor := managementActor(actors)
 	response := models.BulkClientImportResponse{Clients: []models.Client{}, Errors: []models.ClientImportError{}}
 	seenIDs := map[string]int{}
 	seenEmails := map[string]int{}
 	failedRows := map[int]struct{}{}
 
 	for _, row := range request.Rows {
+		if err := s.applyAdvisorAssignment(ctx, &row.Client, actor, ""); err != nil {
+			field, message := "assignedAdvisor", "could not be validated"
+			if validationError, ok := err.(*ClientValidationError); ok {
+				field, message = validationError.Field, validationError.Message
+			}
+			response.Errors = append(response.Errors, models.ClientImportError{RowNumber: row.RowNumber, Field: field, Message: message})
+			failedRows[row.RowNumber] = struct{}{}
+			continue
+		}
 		normalizeClientRequest(&row.Client)
 		rowErrors := []models.ClientImportError{}
 		if err := validateClientRequest(row.Client, false); err != nil {
@@ -138,6 +190,43 @@ func (s *clientManagementService) ImportClients(ctx context.Context, request mod
 	response.Imported = len(response.Clients)
 	response.Failed = len(failedRows)
 	return response
+}
+
+func managementActor(actors []models.User) models.User {
+	if len(actors) > 0 {
+		return actors[0]
+	}
+	return models.User{Role: models.RoleAdmin}
+}
+
+func (s *clientManagementService) applyAdvisorAssignment(ctx context.Context, request *models.ClientUpsertRequest, actor models.User, existingAdvisor string) error {
+	if actor.Role == models.RoleAdvisor {
+		request.AssignedAdvisor = actor.Name
+		return nil
+	}
+	if actor.Role != models.RoleAdmin {
+		return &ClientValidationError{Field: "assignedAdvisor", Message: "can only be changed by an admin"}
+	}
+	if existingAdvisor != "" && strings.TrimSpace(request.AssignedAdvisor) == "" {
+		request.AssignedAdvisor = existingAdvisor
+	}
+	if strings.TrimSpace(request.AssignedAdvisor) == "" {
+		return &ClientValidationError{Field: "assignedAdvisor", Message: "is required"}
+	}
+	if s.advisors == nil {
+		return nil
+	}
+	items, _, err := s.advisors.ListManagedAdvisors(ctx, models.AdvisorManagementFilters{Status: models.AdvisorStatusActive})
+	if err != nil {
+		return err
+	}
+	for _, advisor := range items {
+		if strings.EqualFold(advisor.Name, request.AssignedAdvisor) {
+			request.AssignedAdvisor = advisor.Name
+			return nil
+		}
+	}
+	return &ClientValidationError{Field: "assignedAdvisor", Message: "must match an active advisor"}
 }
 
 func normalizeClientRequest(request *models.ClientUpsertRequest) {

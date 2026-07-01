@@ -81,6 +81,7 @@ export const router = createBrowserRouter([
                 children: [
                   { path: 'advisor/dashboard', element: routeElement(AdvisorDashboardPage) },
                   { path: 'advisor/clients', element: routeElement(AdvisorClientsPage) },
+                  { path: 'advisor/client-management', element: routeElement(AdminClientsPage) },
                   { path: 'advisor/clients/:clientId', element: routeElement(AdvisorClientDetailPage) },
                   { path: 'advisor/clients/:clientId/widgets', element: routeElement(AdvisorClientWidgetsPage) },
                   { path: 'advisor/clients/:clientId/widgets/:widgetId/simulations', element: routeElement(AdvisorClientSimulationPage) },

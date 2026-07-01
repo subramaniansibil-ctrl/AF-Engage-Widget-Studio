@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/config"
@@ -263,6 +262,41 @@ func TestAdvisorClientListAndAuthorization(t *testing.T) {
 		t.Fatalf("expected client create 201, got %d: %s", createRecorder.Code, createRecorder.Body.String())
 	}
 
+	managedBody, _ := json.Marshal(models.ClientUpsertRequest{ID: "client-managed-001", Name: "Advisor Managed", Email: "advisor.managed@example.com", MobileNumber: "+27 82 555 0111", AssignedAdvisor: "Other Advisor", Status: models.ClientStatusActive, DateOfBirth: "1985-01-01", RiskProfile: models.RiskModerate, InvestmentGoal: "Advisor workflow", PortfolioID: "portfolio-managed-001", Notes: "Created through advisor management", Password: "Password123", ConfirmPassword: "Password123"})
+	managedCreateRequest := httptest.NewRequest(http.MethodPost, "/api/v1/client-management", bytes.NewReader(managedBody))
+	managedCreateRequest.Header.Set("Authorization", "Bearer "+advisorToken)
+	managedCreateRequest.Header.Set("Content-Type", "application/json")
+	managedCreateRecorder := httptest.NewRecorder()
+	router.ServeHTTP(managedCreateRecorder, managedCreateRequest)
+	if managedCreateRecorder.Code != http.StatusCreated {
+		t.Fatalf("expected advisor client-management create 201, got %d: %s", managedCreateRecorder.Code, managedCreateRecorder.Body.String())
+	}
+	var managedClient models.Client
+	if err := json.Unmarshal(managedCreateRecorder.Body.Bytes(), &managedClient); err != nil {
+		t.Fatalf("decode advisor managed client: %v", err)
+	}
+	if managedClient.AssignedAdvisor != "Advisor User" {
+		t.Fatalf("expected backend to force logged-in advisor assignment, got %q", managedClient.AssignedAdvisor)
+	}
+
+	managedListRequest := httptest.NewRequest(http.MethodGet, "/api/v1/client-management?search=Advisor%20Managed", nil)
+	managedListRequest.Header.Set("Authorization", "Bearer "+advisorToken)
+	managedListRecorder := httptest.NewRecorder()
+	router.ServeHTTP(managedListRecorder, managedListRequest)
+	if managedListRecorder.Code != http.StatusOK {
+		t.Fatalf("expected advisor client-management list 200, got %d: %s", managedListRecorder.Code, managedListRecorder.Body.String())
+	}
+	var managedPage struct {
+		Items []models.Client       `json:"items"`
+		Meta  models.PaginationMeta `json:"meta"`
+	}
+	if err := json.Unmarshal(managedListRecorder.Body.Bytes(), &managedPage); err != nil {
+		t.Fatalf("decode advisor client-management list: %v", err)
+	}
+	if len(managedPage.Items) != 1 || managedPage.Items[0].ID != "client-managed-001" {
+		t.Fatalf("expected advisor management list to return created client only, got %+v", managedPage.Items)
+	}
+
 	listRequest := httptest.NewRequest(http.MethodGet, "/api/v1/advisor/clients", nil)
 	listRequest.Header.Set("Authorization", "Bearer "+advisorToken)
 	listRecorder := httptest.NewRecorder()
@@ -272,7 +306,7 @@ func TestAdvisorClientListAndAuthorization(t *testing.T) {
 	}
 
 	var clientPage struct {
-		Items []models.Client `json:"items"`
+		Items []models.Client       `json:"items"`
 		Meta  models.PaginationMeta `json:"meta"`
 	}
 	if err := json.Unmarshal(listRecorder.Body.Bytes(), &clientPage); err != nil {
@@ -295,7 +329,7 @@ func TestAdvisorClientListAndAuthorization(t *testing.T) {
 		t.Fatalf("expected advisor client search 200, got %d: %s", searchRecorder.Code, searchRecorder.Body.String())
 	}
 	var searchResults struct {
-		Items []models.Client `json:"items"`
+		Items []models.Client       `json:"items"`
 		Meta  models.PaginationMeta `json:"meta"`
 	}
 	if err := json.Unmarshal(searchRecorder.Body.Bytes(), &searchResults); err != nil {
@@ -311,6 +345,14 @@ func TestAdvisorClientListAndAuthorization(t *testing.T) {
 	router.ServeHTTP(forbiddenRecorder, forbiddenRequest)
 	if forbiddenRecorder.Code != http.StatusForbidden {
 		t.Fatalf("expected advisor to receive 403 for unauthorized client, got %d", forbiddenRecorder.Code)
+	}
+
+	managedForbiddenRequest := httptest.NewRequest(http.MethodGet, "/api/v1/client-management/client-other-001", nil)
+	managedForbiddenRequest.Header.Set("Authorization", "Bearer "+advisorToken)
+	managedForbiddenRecorder := httptest.NewRecorder()
+	router.ServeHTTP(managedForbiddenRecorder, managedForbiddenRequest)
+	if managedForbiddenRecorder.Code != http.StatusNotFound {
+		t.Fatalf("expected advisor client-management unauthorized client to be hidden with 404, got %d", managedForbiddenRecorder.Code)
 	}
 }
 

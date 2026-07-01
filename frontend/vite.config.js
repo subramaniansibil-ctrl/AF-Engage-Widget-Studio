@@ -1,18 +1,25 @@
 import { defineConfig } from 'vitest/config';
+import { loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
-export default defineConfig({
-    plugins: [react()],
-    test: {
-        environment: 'jsdom',
-        setupFiles: './src/test/setup.ts',
-    },
-    server: {
-        port: 5173,
-        proxy: {
-            '/api': {
-                target: 'http://backend:8080',
-                changeOrigin: true,
+export default defineConfig(function (_a) {
+    var mode = _a.mode;
+    var env = loadEnv(mode, '.', '');
+    var apiTarget = env.VITE_API_TARGET || 'http://backend:8080';
+    return {
+        plugins: [react()],
+        test: {
+            environment: 'jsdom',
+            setupFiles: './src/test/setup.ts',
+        },
+        server: {
+            host: '0.0.0.0',
+            port: 5173,
+            proxy: {
+                '/api': {
+                    target: apiTarget,
+                    changeOrigin: true,
+                },
             },
         },
-    },
+    };
 });
