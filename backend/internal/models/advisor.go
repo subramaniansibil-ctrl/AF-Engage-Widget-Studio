@@ -2,6 +2,35 @@ package models
 
 import "time"
 
+type AdvisorStatus string
+
+const (
+	AdvisorStatusActive   AdvisorStatus = "ACTIVE"
+	AdvisorStatusInactive AdvisorStatus = "INACTIVE"
+)
+
+type Advisor struct {
+	ID          string        `json:"id"`
+	Name        string        `json:"name"`
+	Email       string        `json:"email"`
+	Status      AdvisorStatus `json:"status"`
+	ClientCount int           `json:"clientCount"`
+	CreatedAt   time.Time     `json:"createdAt,omitempty"`
+}
+
+type AdvisorManagementFilters struct {
+	Search string
+	Status AdvisorStatus
+}
+
+type AdvisorUpsertRequest struct {
+	ID       string        `json:"id" binding:"required,min=2,max=64"`
+	Name     string        `json:"name" binding:"required,min=2,max=120"`
+	Email    string        `json:"email" binding:"required,email"`
+	Status   AdvisorStatus `json:"status" binding:"required,oneof=ACTIVE INACTIVE"`
+	Password string        `json:"password" binding:"omitempty,min=8,max=120"`
+}
+
 type RiskProfile string
 
 const (

@@ -37,6 +37,7 @@ func TestAPISmokeHealthLoginAndAdvisorDashboard(t *testing.T) {
 		services.NewSimulationService(),
 		services.NewAnalyticsService(repositories.NewMockAnalyticsRepository()),
 		services.NewClientManagementService(advisorRepository),
+		services.NewAdvisorManagementService(advisorRepository),
 	)
 
 	healthRecorder := httptest.NewRecorder()
@@ -208,7 +209,7 @@ func TestAdminClientManagementPermissionsAndDuplicates(t *testing.T) {
 	authRepository := repositories.NewMockAuthRepository()
 	advisorRepository := repositories.NewMockAdvisorRepository()
 	widgetRepository := repositories.NewMockWidgetRepository()
-	router := NewRouter(cfg, services.NewStatusService(repositories.NewStatusRepository(cfg)), services.NewAuthService(authRepository), services.NewAdvisorService(advisorRepository), services.NewWidgetService(widgetRepository), services.NewClientService(advisorRepository, widgetRepository, repositories.NewMockClientRepository()), services.NewSimulationService(), services.NewAnalyticsService(repositories.NewMockAnalyticsRepository()), services.NewClientManagementService(advisorRepository))
+	router := NewRouter(cfg, services.NewStatusService(repositories.NewStatusRepository(cfg)), services.NewAuthService(authRepository), services.NewAdvisorService(advisorRepository), services.NewWidgetService(widgetRepository), services.NewClientService(advisorRepository, widgetRepository, repositories.NewMockClientRepository()), services.NewSimulationService(), services.NewAnalyticsService(repositories.NewMockAnalyticsRepository()), services.NewClientManagementService(advisorRepository), services.NewAdvisorManagementService(advisorRepository))
 
 	advisorToken := loginToken(t, router, "advisor@afengage.com")
 	forbiddenRequest := httptest.NewRequest(http.MethodGet, "/api/v1/admin/clients", nil)
@@ -237,6 +238,52 @@ func TestAdminClientManagementPermissionsAndDuplicates(t *testing.T) {
 	router.ServeHTTP(duplicateRecorder, duplicateRequest)
 	if duplicateRecorder.Code != http.StatusConflict {
 		t.Fatalf("expected duplicate client 409, got %d: %s", duplicateRecorder.Code, duplicateRecorder.Body.String())
+	}
+}
+
+func TestAdminAdvisorManagementPermissionsAndCrud(t *testing.T) {
+	cfg := config.Config{Environment: "test", ServiceName: "af-engage-api-test", CORSOrigins: "http://localhost:5173", RateLimitRPM: "1000"}
+	authRepository := repositories.NewMockAuthRepository()
+	advisorRepository := repositories.NewMockAdvisorRepository()
+	widgetRepository := repositories.NewMockWidgetRepository()
+	router := NewRouter(cfg, services.NewStatusService(repositories.NewStatusRepository(cfg)), services.NewAuthService(authRepository), services.NewAdvisorService(advisorRepository), services.NewWidgetService(widgetRepository), services.NewClientService(advisorRepository, widgetRepository, repositories.NewMockClientRepository()), services.NewSimulationService(), services.NewAnalyticsService(repositories.NewMockAnalyticsRepository()), services.NewClientManagementService(advisorRepository), services.NewAdvisorManagementService(advisorRepository))
+
+	advisorToken := loginToken(t, router, "advisor@afengage.com")
+	forbiddenRequest := httptest.NewRequest(http.MethodGet, "/api/v1/admin/advisors", nil)
+	forbiddenRequest.Header.Set("Authorization", "Bearer "+advisorToken)
+	forbiddenRecorder := httptest.NewRecorder()
+	router.ServeHTTP(forbiddenRecorder, forbiddenRequest)
+	if forbiddenRecorder.Code != http.StatusForbidden {
+		t.Fatalf("expected advisor to receive 403, got %d", forbiddenRecorder.Code)
+	}
+
+	adminToken := loginToken(t, router, "admin@afengage.com")
+	advisorBody, _ := json.Marshal(models.AdvisorUpsertRequest{ID: "advisor-admin-001", Name: "Admin Advisor", Email: "admin.advisor@example.com", Status: models.AdvisorStatusActive, Password: "password123"})
+	createRequest := httptest.NewRequest(http.MethodPost, "/api/v1/admin/advisors", bytes.NewReader(advisorBody))
+	createRequest.Header.Set("Authorization", "Bearer "+adminToken)
+	createRequest.Header.Set("Content-Type", "application/json")
+	createRecorder := httptest.NewRecorder()
+	router.ServeHTTP(createRecorder, createRequest)
+	if createRecorder.Code != http.StatusCreated {
+		t.Fatalf("expected advisor create 201, got %d: %s", createRecorder.Code, createRecorder.Body.String())
+	}
+
+	updateBody, _ := json.Marshal(models.AdvisorUpsertRequest{ID: "advisor-admin-001", Name: "Admin Advisor Updated", Email: "admin.advisor@example.com", Status: models.AdvisorStatusActive})
+	updateRequest := httptest.NewRequest(http.MethodPut, "/api/v1/admin/advisors/advisor-admin-001", bytes.NewReader(updateBody))
+	updateRequest.Header.Set("Authorization", "Bearer "+adminToken)
+	updateRequest.Header.Set("Content-Type", "application/json")
+	updateRecorder := httptest.NewRecorder()
+	router.ServeHTTP(updateRecorder, updateRequest)
+	if updateRecorder.Code != http.StatusOK {
+		t.Fatalf("expected advisor update 200, got %d: %s", updateRecorder.Code, updateRecorder.Body.String())
+	}
+
+	disableRequest := httptest.NewRequest(http.MethodDelete, "/api/v1/admin/advisors/advisor-admin-001", nil)
+	disableRequest.Header.Set("Authorization", "Bearer "+adminToken)
+	disableRecorder := httptest.NewRecorder()
+	router.ServeHTTP(disableRecorder, disableRequest)
+	if disableRecorder.Code != http.StatusOK {
+		t.Fatalf("expected advisor disable 200, got %d: %s", disableRecorder.Code, disableRecorder.Body.String())
 	}
 }
 

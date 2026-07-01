@@ -41,6 +41,7 @@ func NewMockAuthRepository() AuthRepository {
 					Name:  "Advisor User",
 					Email: "advisor@afengage.com",
 					Role:  models.RoleAdvisor,
+					Status: string(models.AdvisorStatusActive),
 				},
 				password: "password123",
 			},

@@ -11,7 +11,7 @@ import (
 	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/services"
 )
 
-func NewRouter(cfg config.Config, statusService services.StatusService, authService services.AuthService, advisorService services.AdvisorService, widgetService services.WidgetService, clientService services.ClientService, simulationService services.SimulationService, analyticsService services.AnalyticsService, clientManagementService services.ClientManagementService) *gin.Engine {
+func NewRouter(cfg config.Config, statusService services.StatusService, authService services.AuthService, advisorService services.AdvisorService, widgetService services.WidgetService, clientService services.ClientService, simulationService services.SimulationService, analyticsService services.AnalyticsService, clientManagementService services.ClientManagementService, advisorManagementService services.AdvisorManagementService) *gin.Engine {
 	if cfg.Environment == "production" {
 		gin.SetMode(gin.ReleaseMode)
 	}
@@ -27,6 +27,7 @@ func NewRouter(cfg config.Config, statusService services.StatusService, authServ
 	simulationHandler := handlers.NewSimulationHandler(simulationService)
 	analyticsHandler := handlers.NewAnalyticsHandler(analyticsService)
 	clientManagementHandler := handlers.NewClientManagementHandler(clientManagementService)
+	advisorManagementHandler := handlers.NewAdvisorManagementHandler(advisorManagementService)
 	router.GET("/health", statusHandler.Health) // GET /health returns service liveness and version metadata.
 
 	v1 := router.Group("/api/v1")
@@ -91,6 +92,14 @@ func NewRouter(cfg config.Config, statusService services.StatusService, authServ
 			adminClients.PUT("/:clientId", clientManagementHandler.Update)        // PUT updates an existing client.
 			adminClients.DELETE("/:clientId", clientManagementHandler.Deactivate) // DELETE deactivates a client without removing history.
 			adminClients.POST("/bulk", clientManagementHandler.BulkImport)        // POST validates and imports client rows.
+		}
+		adminAdvisors := v1.Group("/admin/advisors", middleware.AuthMiddleware(authService), middleware.RoleMiddleware(models.RoleAdmin))
+		{
+			adminAdvisors.GET("", advisorManagementHandler.List)                     // GET lists advisors for administration with search and filters.
+			adminAdvisors.GET("/:advisorId", advisorManagementHandler.Get)           // GET returns one managed advisor.
+			adminAdvisors.POST("", advisorManagementHandler.Create)                  // POST creates an advisor user.
+			adminAdvisors.PUT("/:advisorId", advisorManagementHandler.Update)        // PUT updates an existing advisor.
+			adminAdvisors.DELETE("/:advisorId", advisorManagementHandler.Deactivate) // DELETE disables advisor access without deleting history.
 		}
 		notifications := v1.Group("/notifications", middleware.AuthMiddleware(authService))
 		{
