@@ -8,7 +8,7 @@ import (
 )
 
 type AdvisorService interface {
-	GetDashboardStats(ctx context.Context) (models.AdvisorDashboardStats, error)
+	GetDashboardStats(ctx context.Context, advisorName string) (models.AdvisorDashboardStats, error)
 	ListClients(ctx context.Context, filters repositories.ClientFilters) ([]models.Client, int, error)
 	GetClientByID(ctx context.Context, id string) (models.Client, error)
 }
@@ -21,8 +21,8 @@ func NewAdvisorService(repository repositories.AdvisorRepository) AdvisorService
 	return &advisorService{repository: repository}
 }
 
-func (s *advisorService) GetDashboardStats(ctx context.Context) (models.AdvisorDashboardStats, error) {
-	return s.repository.GetDashboardStats(ctx)
+func (s *advisorService) GetDashboardStats(ctx context.Context, advisorName string) (models.AdvisorDashboardStats, error) {
+	return s.repository.GetDashboardStats(ctx, advisorName)
 }
 
 func (s *advisorService) ListClients(ctx context.Context, filters repositories.ClientFilters) ([]models.Client, int, error) {

@@ -17,29 +17,52 @@ func NewPostgresAdvisorRepository(db *sql.DB) *postgresAdvisorRepository {
 	return &postgresAdvisorRepository{db: db}
 }
 
-func (r *postgresAdvisorRepository) GetDashboardStats(ctx context.Context) (models.AdvisorDashboardStats, error) {
+func (r *postgresAdvisorRepository) GetDashboardStats(ctx context.Context, advisorName string) (models.AdvisorDashboardStats, error) {
 	var stats models.AdvisorDashboardStats
-	err := r.db.QueryRowContext(ctx, `
+	args := []any{}
+	if advisorName != "" {
+		args = append(args, advisorName)
+	}
+
+	query := advisorDashboardScopeCte(advisorName) + `
 		SELECT
 			COUNT(c.id),
 			COALESCE(SUM(p.total_value), 0),
 			COUNT(c.id) FILTER (WHERE c.risk_profile IN ('GROWTH', 'AGGRESSIVE')),
-			(SELECT COUNT(DISTINCT client_id) FROM dashboard_assignments WHERE published = TRUE)
+			(
+				SELECT COUNT(DISTINCT da.client_id)
+				FROM dashboard_assignments da
+				JOIN clients c ON c.id = da.client_id
+				WHERE da.published = TRUE AND c.status = 'ACTIVE'` + advisorDashboardClientScope(advisorName) + `
+			)
 		FROM clients c
 		LEFT JOIN portfolios p ON p.client_id = c.id
-		WHERE c.status = 'ACTIVE'
-	`).Scan(&stats.TotalClients, &stats.TotalAssetsUnderAdvice, &stats.HighRiskClients, &stats.ActiveDashboards)
+		WHERE c.status = 'ACTIVE'` + advisorDashboardClientScope(advisorName)
+
+	err := r.db.QueryRowContext(ctx, query, args...).Scan(&stats.TotalClients, &stats.TotalAssetsUnderAdvice, &stats.HighRiskClients, &stats.ActiveDashboards)
 	if err != nil {
 		return models.AdvisorDashboardStats{}, err
 	}
 
-	rows, err := r.db.QueryContext(ctx, `
-		SELECT w.name, COUNT(da.id)
+	rows, err := r.db.QueryContext(ctx, advisorDashboardScopeCte(advisorName)+`
+		SELECT w.name, COALESCE(assignment_counts.assignment_count, 0) + COALESCE(simulation_counts.simulation_count, 0)
 		FROM widgets w
-		LEFT JOIN dashboard_assignments da ON da.widget_id = w.id
-		GROUP BY w.name
-		ORDER BY COUNT(da.id) DESC, w.name
-	`)
+		LEFT JOIN (
+			SELECT da.widget_id, COUNT(*) AS assignment_count
+			FROM dashboard_assignments da
+			JOIN clients c ON c.id = da.client_id
+			WHERE c.status = 'ACTIVE'`+advisorDashboardClientScope(advisorName)+`
+			GROUP BY da.widget_id
+		) assignment_counts ON assignment_counts.widget_id = w.id
+		LEFT JOIN (
+			SELECT sh.widget_id, COUNT(*) AS simulation_count
+			FROM simulation_history sh
+			JOIN clients c ON c.id = sh.client_id
+			WHERE c.status = 'ACTIVE'`+advisorDashboardClientScope(advisorName)+`
+			GROUP BY sh.widget_id
+		) simulation_counts ON simulation_counts.widget_id = w.id
+		ORDER BY COALESCE(assignment_counts.assignment_count, 0) + COALESCE(simulation_counts.simulation_count, 0) DESC, w.name
+	`, args...)
 	if err != nil {
 		return models.AdvisorDashboardStats{}, err
 	}
@@ -53,6 +76,24 @@ func (r *postgresAdvisorRepository) GetDashboardStats(ctx context.Context) (mode
 	}
 
 	return stats, rows.Err()
+}
+
+func advisorDashboardScopeCte(advisorName string) string {
+	if advisorName == "" {
+		return ""
+	}
+	return `WITH advisor_clients AS (
+		SELECT id
+		FROM clients
+		WHERE status = 'ACTIVE' AND assigned_advisor = $1
+	) `
+}
+
+func advisorDashboardClientScope(advisorName string) string {
+	if advisorName == "" {
+		return ""
+	}
+	return " AND c.id IN (SELECT id FROM advisor_clients)"
 }
 
 func (r *postgresAdvisorRepository) ListClients(ctx context.Context, filters ClientFilters) ([]models.Client, int, error) {

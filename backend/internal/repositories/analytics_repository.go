@@ -12,7 +12,8 @@ import (
 var ErrNotificationNotFound = errors.New("notification not found")
 
 type AnalyticsRepository interface {
-	GetAdvisorAnalytics(ctx context.Context) (models.AnalyticsSummary, error)
+	GetAdminAnalytics(ctx context.Context) (models.AnalyticsSummary, error)
+	GetAdvisorAnalytics(ctx context.Context, advisorName string) (models.AnalyticsSummary, error)
 	GetWidgetUsage(ctx context.Context) ([]models.WidgetUsage, error)
 	ListNotifications(ctx context.Context) ([]models.Notification, error)
 	MarkNotificationRead(ctx context.Context, id string) (models.Notification, error)
@@ -50,7 +51,7 @@ func NewMockAnalyticsRepository() AnalyticsRepository {
 	}
 }
 
-func (r *mockAnalyticsRepository) GetAdvisorAnalytics(ctx context.Context) (models.AnalyticsSummary, error) {
+func (r *mockAnalyticsRepository) GetAdminAnalytics(ctx context.Context) (models.AnalyticsSummary, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
@@ -59,10 +60,33 @@ func (r *mockAnalyticsRepository) GetAdvisorAnalytics(ctx context.Context) (mode
 		TotalClients:        20,
 		TotalWidgets:        3,
 		TotalSimulations:    totalSimulations(r.widgetUsage),
-		ClientEngagement:    76,
 		PublishedDashboards: 11,
 		MostUsedWidget:      mostUsedWidget(r.widgetUsage),
 		WidgetUsage:         append([]models.WidgetUsage(nil), r.widgetUsage...),
+	}, nil
+}
+
+func (r *mockAnalyticsRepository) GetAdvisorAnalytics(ctx context.Context, advisorName string) (models.AnalyticsSummary, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	assignedClientCount := 8
+	totalClientCount := 20
+	usage := []models.WidgetUsage{
+		{WidgetID: "two-pot-impact", WidgetName: "Two-Pot Impact", AssignedCount: 6, PublishedCount: 4, SimulationCount: 15},
+		{WidgetID: "income-sustainability", WidgetName: "Income Sustainability", AssignedCount: 4, PublishedCount: 3, SimulationCount: 9},
+		{WidgetID: "onefee-wealth-reclaim", WidgetName: "Onefee Wealth Reclaim", AssignedCount: 3, PublishedCount: 2, SimulationCount: 6},
+	}
+
+	return models.AnalyticsSummary{
+		TotalUsers:          1,
+		TotalClients:        assignedClientCount,
+		TotalWidgets:        3,
+		TotalSimulations:    totalSimulations(usage),
+		ClientEngagement:    clientEngagementPercentage(assignedClientCount, totalClientCount),
+		PublishedDashboards: 4,
+		MostUsedWidget:      mostUsedWidget(usage),
+		WidgetUsage:         usage,
 	}, nil
 }
 
@@ -110,12 +134,29 @@ func totalSimulations(usage []models.WidgetUsage) int {
 	return total
 }
 
+func clientEngagementPercentage(assignedClientCount int, totalClientCount int) int {
+	if totalClientCount <= 0 {
+		return 0
+	}
+	return int(float64(assignedClientCount) / float64(totalClientCount) * 100)
+}
+
 func mostUsedWidget(usage []models.WidgetUsage) string {
-	var top models.WidgetUsage
-	for _, item := range usage {
-		if item.SimulationCount > top.SimulationCount {
+	if len(usage) == 0 {
+		return ""
+	}
+	top := usage[0]
+	topScore := widgetUsageScore(top)
+	for _, item := range usage[1:] {
+		score := widgetUsageScore(item)
+		if score > topScore {
 			top = item
+			topScore = score
 		}
 	}
 	return top.WidgetName
+}
+
+func widgetUsageScore(item models.WidgetUsage) int {
+	return item.SimulationCount + item.PublishedCount + item.AssignedCount
 }
