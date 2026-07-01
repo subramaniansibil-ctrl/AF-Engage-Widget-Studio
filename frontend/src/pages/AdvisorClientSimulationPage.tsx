@@ -1,4 +1,4 @@
-import { ArrowLeft, CalendarDays, RotateCcw, Save, Sparkles } from 'lucide-react';
+import { ArrowLeft, CalendarDays, Download, RotateCcw, Save, Sparkles } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useAppDispatch } from '../app/hooks';
@@ -56,21 +56,25 @@ export function AdvisorClientSimulationPage() {
     setWorkspaceVersion((value) => value + 1);
   }
 
-  return <div className="space-y-6">
-    <Link to={`/advisor/clients/${clientId}/widgets`} className="inline-flex items-center gap-2 text-sm font-semibold text-sage"><ArrowLeft className="h-4 w-4" />Back to {client.name}'s widgets</Link>
-    <section className="flex flex-col justify-between gap-4 rounded-md border border-ink/10 bg-white/60 p-5 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/5 lg:flex-row lg:items-start">
+  function exportAsPdf() {
+    window.print();
+  }
+
+  return <div className="space-y-6 print:space-y-2">
+    <Link to={`/advisor/clients/${clientId}/widgets`} className="inline-flex items-center gap-2 text-sm font-semibold text-sage print:hidden"><ArrowLeft className="h-4 w-4" />Back to {client.name}'s widgets</Link>
+    <section className="flex flex-col justify-between gap-4 rounded-md border border-ink/10 bg-white/60 p-5 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/5 lg:flex-row lg:items-start print:break-inside-avoid print:p-3 print:shadow-none print:bg-white">
       <div className="flex min-w-0 items-start gap-3"><WidgetBrandIcon widgetId={assignment.widgetId} icon={assignment.widgetIcon} /><div className="min-w-0"><p className="text-xs font-semibold text-sage">{client.name}</p><h2 className="mt-1 text-2xl font-bold sm:text-3xl">{assignment.widgetName}</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-ink/60 dark:text-white/60">{assignment.widgetDescription}</p><div className="mt-3 flex items-center gap-2 text-xs text-ink/45 dark:text-white/45"><CalendarDays className="h-4 w-4" />Assigned configuration updated {formatDate(assignment.updatedAt || assignment.createdAt)}</div></div></div>
-      <div className="flex flex-wrap gap-2"><Button variant="secondary" onClick={resetToBaseline}><RotateCcw className="h-4 w-4" />Reset baseline</Button><Button onClick={() => setSaveDialogOpen(true)} disabled={!Object.keys(snapshot.inputs).length}><Save className="h-4 w-4" />Save for Client</Button></div>
+      <div className="flex flex-wrap gap-2 print:hidden"><Button variant="secondary" onClick={exportAsPdf}><Download className="h-4 w-4" />Export PDF</Button><Button variant="secondary" onClick={resetToBaseline}><RotateCcw className="h-4 w-4" />Reset baseline</Button><Button onClick={() => setSaveDialogOpen(true)} disabled={!Object.keys(snapshot.inputs).length}><Save className="h-4 w-4" />Save for Client</Button></div>
     </section>
 
-    {saveDialogOpen && <section role="dialog" aria-modal="false" aria-labelledby="save-simulation-title" className="rounded-md border border-sage/25 bg-white/80 p-5 shadow-panel backdrop-blur-xl dark:border-sage/25 dark:bg-ink/90"><div className="flex items-start gap-3"><span className="grid h-10 w-10 place-items-center rounded-md bg-sage/10 text-sage"><Sparkles className="h-5 w-5" /></span><div className="flex-1"><h3 id="save-simulation-title" className="font-semibold">Name this client simulation</h3><p className="mt-1 text-sm text-ink/55 dark:text-white/55">Saved scenarios are visible in the client's widget history.</p><input autoFocus aria-label="Simulation name" value={simulationName} onChange={(event) => setSimulationName(event.target.value)} placeholder="e.g. Client meeting option" className="mt-4 min-h-11 w-full max-w-xl rounded-md border border-ink/12 bg-white px-3 text-sm outline-none focus:border-sage dark:border-white/12 dark:bg-white/5" /><div className="mt-3 flex flex-wrap gap-2">{nameExamples.map((name) => <button key={name} type="button" onClick={() => setSimulationName(name)} className="rounded-md border border-ink/10 px-2.5 py-1.5 text-xs text-ink/60 hover:border-sage/30 hover:text-sage dark:border-white/10 dark:text-white/60">{name}</button>)}</div><div className="mt-4 flex justify-end gap-2"><Button variant="secondary" onClick={() => setSaveDialogOpen(false)}>Cancel</Button><Button onClick={saveNamedSimulation} disabled={saving || simulationName.trim().length < 2}>{saving ? 'Saving...' : 'Save for Client'}</Button></div></div></div></section>}
+    {saveDialogOpen && <section role="dialog" aria-modal="false" aria-labelledby="save-simulation-title" className="rounded-md border border-sage/25 bg-white/80 p-5 shadow-panel backdrop-blur-xl dark:border-sage/25 dark:bg-ink/90 print:hidden"><div className="flex items-start gap-3"><span className="grid h-10 w-10 place-items-center rounded-md bg-sage/10 text-sage"><Sparkles className="h-5 w-5" /></span><div className="flex-1"><h3 id="save-simulation-title" className="font-semibold">Name this client simulation</h3><p className="mt-1 text-sm text-ink/55 dark:text-white/55">Saved scenarios are visible in the client's widget history.</p><input autoFocus aria-label="Simulation name" value={simulationName} onChange={(event) => setSimulationName(event.target.value)} placeholder="e.g. Client meeting option" className="mt-4 min-h-11 w-full max-w-xl rounded-md border border-ink/12 bg-white px-3 text-sm outline-none focus:border-sage dark:border-white/12 dark:bg-white/5" /><div className="mt-3 flex flex-wrap gap-2">{nameExamples.map((name) => <button key={name} type="button" onClick={() => setSimulationName(name)} className="rounded-md border border-ink/10 px-2.5 py-1.5 text-xs text-ink/60 hover:border-sage/30 hover:text-sage dark:border-white/10 dark:text-white/60">{name}</button>)}</div><div className="mt-4 flex justify-end gap-2"><Button variant="secondary" onClick={() => setSaveDialogOpen(false)}>Cancel</Button><Button onClick={saveNamedSimulation} disabled={saving || simulationName.trim().length < 2}>{saving ? 'Saving...' : 'Save for Client'}</Button></div></div></div></section>}
 
-    {activeSimulation && <div className="rounded-md border border-gold/25 bg-gold/8 px-4 py-3 text-sm"><strong>Editing:</strong> {activeSimulation.name}. Changes remain local until you update or save another simulation.</div>}
+    {activeSimulation && <div className="rounded-md border border-gold/25 bg-gold/8 px-4 py-3 text-sm print:hidden"><strong>Editing:</strong> {activeSimulation.name}. Changes remain local until you update or save another simulation.</div>}
 
     <InteractiveWidgetWorkspace key={`${activeSimulation?.id ?? 'baseline'}-${workspaceVersion}`} assignment={assignment} portfolio={client.portfolio} retirementGoal={client.retirementGoal} clientAge={client.age} loadedSimulation={activeSimulation} onSnapshotChange={handleSnapshot} />
 
-    <SavedSimulationsPanel simulations={simulations} loading={simulationsLoading} activeSimulation={activeSimulation} currentSnapshot={snapshot} advisorClientId={clientId} ownerLabel={`${client.name}'s`} onOpen={(simulation) => { setActiveSimulation(simulation); setWorkspaceVersion((value) => value + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />
-    <p className="text-xs leading-5 text-ink/45 dark:text-white/45">Illustrative simulations only. Results use simplified assumptions and are not financial advice.</p>
+    <div className="print:hidden"><SavedSimulationsPanel simulations={simulations} loading={simulationsLoading} activeSimulation={activeSimulation} currentSnapshot={snapshot} advisorClientId={clientId} ownerLabel={`${client.name}'s`} onOpen={(simulation) => { setActiveSimulation(simulation); setWorkspaceVersion((value) => value + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }} /></div>
+    <p className="text-xs leading-5 text-ink/45 dark:text-white/45 print:hidden">Illustrative simulations only. Results use simplified assumptions and are not financial advice.</p>
   </div>;
 }
 

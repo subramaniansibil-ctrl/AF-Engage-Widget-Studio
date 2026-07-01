@@ -1,9 +1,10 @@
 import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import { Download, Eye, FileUp, Pencil, Plus, Search, UserRoundX, UsersRound, X } from 'lucide-react';
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { useAppDispatch } from '../app/hooks';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
+import { Pagination } from '../components/ui/Pagination';
 import { Skeleton } from '../components/ui/Skeleton';
 import {
   useBulkImportClientsMutation,
@@ -36,12 +37,12 @@ export function AdminClientsPage() {
   const [panel, setPanel] = useState<Panel>(null);
   const [selected, setSelected] = useState<AdminClient | null>(null);
   const [deactivateId, setDeactivateId] = useState<string | null>(null);
-  const { data: clients = [], isLoading, isFetching, error } = useGetAdminClientsQuery({ search, status, assignedAdvisor: advisor, recent });
+  const { data: clientPage, isLoading, isFetching, error } = useGetAdminClientsQuery({ search, status, assignedAdvisor: advisor, recent, page, pageSize });
   const [deactivate, { isLoading: isDeactivating }] = useDeactivateAdminClientMutation();
 
   useEffect(() => setPage(1), [search, status, advisor, recent]);
-  const pageCount = Math.max(1, Math.ceil(clients.length / pageSize));
-  const visibleClients = useMemo(() => clients.slice((page - 1) * pageSize, page * pageSize), [clients, page]);
+  const clients = clientPage?.items ?? [];
+  const meta = clientPage?.meta;
 
   function openPanel(next: Exclude<Panel, null>, client?: AdminClient) {
     setSelected(client ?? null);
@@ -111,7 +112,7 @@ export function AdminClientsPage() {
                   <tr><th className="px-4 py-3">Client</th><th className="px-4 py-3">Client ID</th><th className="px-4 py-3">Contact</th><th className="px-4 py-3">Advisor</th><th className="px-4 py-3">Status</th><th className="px-4 py-3 text-right">Actions</th></tr>
                 </thead>
                 <tbody className="divide-y divide-ink/8 dark:divide-white/8">
-                  {visibleClients.map((client) => (
+                  {clients.map((client) => (
                     <tr key={client.id} className="transition hover:bg-sage/[0.045]">
                       <td className="px-4 py-3"><p className="font-semibold">{client.name}</p><p className="mt-0.5 text-xs text-ink/50 dark:text-white/50">{client.riskProfile || 'No risk profile'}</p></td>
                       <td className="px-4 py-3 font-mono text-xs text-ink/65 dark:text-white/65">{client.id}</td>
@@ -134,10 +135,14 @@ export function AdminClientsPage() {
                 </tbody>
               </table>
             </div>
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-ink/10 px-4 py-3 text-xs text-ink/55 dark:border-white/10 dark:text-white/55">
-              <span>{clients.length} client{clients.length === 1 ? '' : 's'} {isFetching && '• Refreshing'}</span>
-              <div className="flex items-center gap-2"><Button variant="secondary" disabled={page === 1} onClick={() => setPage((value) => value - 1)}>Previous</Button><span>Page {page} of {pageCount}</span><Button variant="secondary" disabled={page === pageCount} onClick={() => setPage((value) => value + 1)}>Next</Button></div>
-            </div>
+            <Pagination
+              page={meta?.page ?? page}
+              totalPages={meta?.totalPages ?? 1}
+              totalItems={meta?.totalItems}
+              itemLabel="client"
+              isFetching={isFetching}
+              onChange={setPage}
+            />
           </div>
         )}
       </section>

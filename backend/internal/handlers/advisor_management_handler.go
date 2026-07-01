@@ -20,15 +20,20 @@ func NewAdvisorManagementHandler(service services.AdvisorManagementService) *Adv
 }
 
 func (h *AdvisorManagementHandler) List(c *gin.Context) {
-	advisors, err := h.service.ListAdvisors(c.Request.Context(), models.AdvisorManagementFilters{
+	pagination := utils.ParsePagination(c, utils.DefaultPageSize, utils.MaxPageSize)
+	advisors, totalItems, err := h.service.ListAdvisors(c.Request.Context(), models.AdvisorManagementFilters{
 		Search: c.Query("search"),
 		Status: models.AdvisorStatus(c.Query("status")),
+		Page: pagination.Page, PageSize: pagination.PageSize,
 	})
 	if err != nil {
 		utils.JSONError(c, http.StatusInternalServerError, "failed to load advisors")
 		return
 	}
-	c.JSON(http.StatusOK, advisors)
+	c.JSON(http.StatusOK, models.PaginatedResponse[models.Advisor]{
+		Items: advisors,
+		Meta:  utils.PaginationMeta(pagination.Page, pagination.PageSize, totalItems),
+	})
 }
 
 func (h *AdvisorManagementHandler) Get(c *gin.Context) {

@@ -15,14 +15,14 @@ var (
 )
 
 type ClientManagementRepository interface {
-	ListManagedClients(ctx context.Context, filters models.ClientManagementFilters) ([]models.Client, error)
+	ListManagedClients(ctx context.Context, filters models.ClientManagementFilters) ([]models.Client, int, error)
 	GetManagedClientByID(ctx context.Context, id string) (models.Client, error)
 	CreateManagedClient(ctx context.Context, request models.ClientUpsertRequest) (models.Client, error)
 	UpdateManagedClient(ctx context.Context, id string, request models.ClientUpsertRequest) (models.Client, error)
 	DeactivateManagedClient(ctx context.Context, id string) error
 }
 
-func (r *mockAdvisorRepository) ListManagedClients(ctx context.Context, filters models.ClientManagementFilters) ([]models.Client, error) {
+func (r *mockAdvisorRepository) ListManagedClients(ctx context.Context, filters models.ClientManagementFilters) ([]models.Client, int, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	search := strings.ToLower(strings.TrimSpace(filters.Search))
@@ -43,7 +43,8 @@ func (r *mockAdvisorRepository) ListManagedClients(ctx context.Context, filters 
 		}
 		clients = append(clients, client)
 	}
-	return clients, nil
+	pageClients, _ := paginateSlice(clients, filters.Page, filters.PageSize)
+	return pageClients, len(clients), nil
 }
 
 func (r *mockAdvisorRepository) GetManagedClientByID(ctx context.Context, id string) (models.Client, error) {

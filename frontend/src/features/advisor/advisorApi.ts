@@ -1,4 +1,5 @@
 import { apiSlice } from '../api/apiSlice';
+import { normalizePaginatedResponse, type PaginatedResponse } from '../api/pagination';
 
 export type RiskProfile = 'CONSERVATIVE' | 'MODERATE' | 'GROWTH' | 'AGGRESSIVE';
 export type RetirementStage = 'ACCUMULATION' | 'PRE_RETIREMENT' | 'RETIRED';
@@ -44,6 +45,8 @@ export interface ClientFilters {
   search?: string;
   riskProfile?: RiskProfile | '';
   retirementStage?: RetirementStage | '';
+  page?: number;
+  pageSize?: number;
 }
 
 export const advisorApi = apiSlice.injectEndpoints({
@@ -52,15 +55,18 @@ export const advisorApi = apiSlice.injectEndpoints({
       query: () => '/advisor/dashboard',
       providesTags: ['AdvisorDashboard'],
     }),
-    getClients: builder.query<Client[], ClientFilters | void>({
+    getClients: builder.query<PaginatedResponse<Client>, ClientFilters | void>({
       query: (filters) => ({
         url: '/advisor/clients',
         params: {
           search: filters?.search || undefined,
           riskProfile: filters?.riskProfile || undefined,
           retirementStage: filters?.retirementStage || undefined,
+          page: filters?.page || undefined,
+          pageSize: filters?.pageSize || undefined,
         },
       }),
+      transformResponse: (response: PaginatedResponse<Client> | Client[] | null) => normalizePaginatedResponse(response),
       providesTags: ['Client'],
     }),
     getClientById: builder.query<Client, string>({

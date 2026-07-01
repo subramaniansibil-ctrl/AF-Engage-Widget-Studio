@@ -47,6 +47,7 @@ interface ConfigurationField {
 }
 
 const PAGE_SIZE = 6;
+const CLIENT_PAGE_SIZE = 1000;
 const configurationFields: Record<string, ConfigurationField[]> = {
   'two-pot-impact': [
     { key: 'projectionYears', label: 'Projection period', type: 'number', suffix: 'years' },
@@ -138,7 +139,8 @@ export function WidgetConfigurationPage() {
   const isEditMode = searchParams.get('mode') === 'edit' && Boolean(initialClientId && initialWidgetId && assignmentId);
   const requestedReturnTo = searchParams.get('returnTo') ?? '';
   const returnTo = requestedReturnTo.startsWith('/advisor/clients/') ? requestedReturnTo : `/advisor/clients/${initialClientId}`;
-  const { data: clients = [], isLoading: clientsLoading } = useGetClientsQuery();
+  const { data: clientPage, isLoading: clientsLoading } = useGetClientsQuery({ page: 1, pageSize: CLIENT_PAGE_SIZE });
+  const clients = clientPage?.items ?? [];
   const { data: widgets = [], isLoading: widgetsLoading } = useGetWidgetsQuery();
   const [clientId, setClientId] = useState(initialClientId);
   const [selectedWidgetIds, setSelectedWidgetIds] = useState<string[]>(initialWidgetId ? [initialWidgetId] : []);

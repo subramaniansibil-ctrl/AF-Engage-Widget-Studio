@@ -22,6 +22,28 @@ body {
   background: transparent;
 }
 
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+
+  html,
+  body,
+  #root {
+    background: #fff !important;
+  }
+
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .af-page-shell {
+    background: #fff !important;
+  }
+}
+
 @layer components {
   .af-page-shell {
     background:

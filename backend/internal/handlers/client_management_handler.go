@@ -23,15 +23,20 @@ func NewClientManagementHandler(service services.ClientManagementService) *Clien
 
 func (h *ClientManagementHandler) List(c *gin.Context) {
 	recent, _ := strconv.ParseBool(c.Query("recent"))
-	clients, err := h.service.ListClients(c.Request.Context(), models.ClientManagementFilters{
+	pagination := utils.ParsePagination(c, utils.DefaultPageSize, utils.MaxPageSize)
+	clients, totalItems, err := h.service.ListClients(c.Request.Context(), models.ClientManagementFilters{
 		Search: c.Query("search"), Status: models.ClientStatus(c.Query("status")),
 		AssignedAdvisor: c.Query("assignedAdvisor"), RecentlyCreated: recent,
+		Page: pagination.Page, PageSize: pagination.PageSize,
 	})
 	if err != nil {
 		utils.JSONError(c, http.StatusInternalServerError, "failed to load clients")
 		return
 	}
-	c.JSON(http.StatusOK, clients)
+	c.JSON(http.StatusOK, models.PaginatedResponse[models.Client]{
+		Items: clients,
+		Meta:  utils.PaginationMeta(pagination.Page, pagination.PageSize, totalItems),
+	})
 }
 
 func (h *ClientManagementHandler) Get(c *gin.Context) {

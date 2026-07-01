@@ -3,9 +3,11 @@ package utils
 import (
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/models"
 )
 
 type ErrorResponse struct {
@@ -45,5 +47,58 @@ func validationMessage(fieldError validator.FieldError) string {
 		return "must be less than or equal to " + fieldError.Param()
 	default:
 		return "is invalid"
+	}
+}
+
+const (
+	DefaultPageSize = 10
+	MaxPageSize     = 100
+)
+
+type PaginationQuery struct {
+	Page     int
+	PageSize int
+}
+
+func ParsePagination(c *gin.Context, defaultPageSize, maxPageSize int) PaginationQuery {
+	page := 1
+	pageSize := defaultPageSize
+
+	if value, err := strconv.Atoi(c.Query("page")); err == nil && value > 0 {
+		page = value
+	}
+	if value, err := strconv.Atoi(c.Query("pageSize")); err == nil && value > 0 {
+		pageSize = value
+	}
+
+	if pageSize <= 0 {
+		pageSize = defaultPageSize
+	}
+	if pageSize > maxPageSize {
+		pageSize = maxPageSize
+	}
+
+	return PaginationQuery{Page: page, PageSize: pageSize}
+}
+
+func PaginationMeta(page, pageSize, totalItems int) models.PaginationMeta {
+	if pageSize <= 0 {
+		pageSize = DefaultPageSize
+	}
+	totalPages := 1
+	if totalItems > 0 {
+		totalPages = (totalItems + pageSize - 1) / pageSize
+	}
+	if page < 1 {
+		page = 1
+	}
+	if page > totalPages {
+		page = totalPages
+	}
+	return models.PaginationMeta{
+		Page:       page,
+		PageSize:   pageSize,
+		TotalItems: totalItems,
+		TotalPages: totalPages,
 	}
 }

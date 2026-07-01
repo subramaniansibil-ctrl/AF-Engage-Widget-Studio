@@ -16,14 +16,14 @@ var (
 )
 
 type AdvisorManagementRepository interface {
-	ListManagedAdvisors(ctx context.Context, filters models.AdvisorManagementFilters) ([]models.Advisor, error)
+	ListManagedAdvisors(ctx context.Context, filters models.AdvisorManagementFilters) ([]models.Advisor, int, error)
 	GetManagedAdvisorByID(ctx context.Context, id string) (models.Advisor, error)
 	CreateManagedAdvisor(ctx context.Context, request models.AdvisorUpsertRequest) (models.Advisor, error)
 	UpdateManagedAdvisor(ctx context.Context, id string, request models.AdvisorUpsertRequest) (models.Advisor, error)
 	DeactivateManagedAdvisor(ctx context.Context, id string) error
 }
 
-func (r *mockAdvisorRepository) ListManagedAdvisors(ctx context.Context, filters models.AdvisorManagementFilters) ([]models.Advisor, error) {
+func (r *mockAdvisorRepository) ListManagedAdvisors(ctx context.Context, filters models.AdvisorManagementFilters) ([]models.Advisor, int, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	search := strings.ToLower(strings.TrimSpace(filters.Search))
@@ -39,7 +39,8 @@ func (r *mockAdvisorRepository) ListManagedAdvisors(ctx context.Context, filters
 		advisor.ClientCount = r.countClientsForAdvisor(advisor.Name)
 		advisors = append(advisors, advisor)
 	}
-	return advisors, nil
+	pagedAdvisors, _ := paginateSlice(advisors, filters.Page, filters.PageSize)
+	return pagedAdvisors, len(advisors), nil
 }
 
 func (r *mockAdvisorRepository) GetManagedAdvisorByID(ctx context.Context, id string) (models.Advisor, error) {

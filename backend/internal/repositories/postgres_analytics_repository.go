@@ -136,14 +136,33 @@ func (r *postgresAnalyticsRepository) MarkNotificationRead(ctx context.Context, 
 	return notification, err
 }
 
-func (r *postgresAnalyticsRepository) ListAuditLogs(ctx context.Context) ([]models.AuditLog, error) {
+func (r *postgresAnalyticsRepository) ListAuditLogs(ctx context.Context, page, pageSize int) ([]models.AuditLog, int, error) {
+	if pageSize <= 0 {
+		pageSize = 10
+	}
+	if page <= 0 {
+		page = 1
+	}
+	countQuery := `SELECT COUNT(*) FROM audit_logs`
+	var totalItems int
+	if err := r.db.QueryRowContext(ctx, countQuery).Scan(&totalItems); err != nil {
+		return nil, 0, err
+	}
+	totalPages := (totalItems + pageSize - 1) / pageSize
+	if totalPages < 1 {
+		totalPages = 1
+	}
+	if page > totalPages {
+		page = totalPages
+	}
 	rows, err := r.db.QueryContext(ctx, `
 		SELECT id, actor, action, entity, created_at
 		FROM audit_logs
 		ORDER BY created_at DESC
-	`)
+		LIMIT $1 OFFSET $2
+	`, pageSize, (page-1)*pageSize)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 
@@ -151,9 +170,9 @@ func (r *postgresAnalyticsRepository) ListAuditLogs(ctx context.Context) ([]mode
 	for rows.Next() {
 		var log models.AuditLog
 		if err := rows.Scan(&log.ID, &log.Actor, &log.Action, &log.Entity, &log.CreatedAt); err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		logs = append(logs, log)
 	}
-	return logs, rows.Err()
+	return logs, totalItems, rows.Err()
 }

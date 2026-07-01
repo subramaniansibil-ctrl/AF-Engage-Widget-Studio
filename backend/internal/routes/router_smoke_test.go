@@ -271,14 +271,17 @@ func TestAdvisorClientListAndAuthorization(t *testing.T) {
 		t.Fatalf("expected advisor client list 200, got %d: %s", listRecorder.Code, listRecorder.Body.String())
 	}
 
-	var clients []models.Client
-	if err := json.Unmarshal(listRecorder.Body.Bytes(), &clients); err != nil {
+	var clientPage struct {
+		Items []models.Client `json:"items"`
+		Meta  models.PaginationMeta `json:"meta"`
+	}
+	if err := json.Unmarshal(listRecorder.Body.Bytes(), &clientPage); err != nil {
 		t.Fatalf("decode advisor client list: %v", err)
 	}
-	if len(clients) == 0 {
+	if len(clientPage.Items) == 0 {
 		t.Fatalf("expected advisor client list to contain clients")
 	}
-	for _, client := range clients {
+	for _, client := range clientPage.Items {
 		if client.ID == "client-other-001" {
 			t.Fatalf("advisor should not see clients assigned to another advisor")
 		}
@@ -291,11 +294,14 @@ func TestAdvisorClientListAndAuthorization(t *testing.T) {
 	if searchRecorder.Code != http.StatusOK {
 		t.Fatalf("expected advisor client search 200, got %d: %s", searchRecorder.Code, searchRecorder.Body.String())
 	}
-	var searchResults []models.Client
+	var searchResults struct {
+		Items []models.Client `json:"items"`
+		Meta  models.PaginationMeta `json:"meta"`
+	}
 	if err := json.Unmarshal(searchRecorder.Body.Bytes(), &searchResults); err != nil {
 		t.Fatalf("decode advisor client search: %v", err)
 	}
-	if len(searchResults) == 0 {
+	if len(searchResults.Items) == 0 {
 		t.Fatalf("expected advisor search to return at least one result")
 	}
 

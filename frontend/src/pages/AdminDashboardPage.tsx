@@ -1,18 +1,25 @@
 import { Boxes, FileClock, MousePointerClick, UsersRound } from 'lucide-react';
+import { useState } from 'react';
 import { useGetAdvisorAnalyticsQuery, useGetAuditLogsQuery } from '../features/analytics/analyticsApi';
+import { Pagination } from '../components/ui/Pagination';
 import { KpiCard } from '../components/ui/KpiCard';
+
+const PAGE_SIZE = 5;
 
 export function AdminDashboardPage() {
   const { data: analytics, isLoading: isLoadingAnalytics } = useGetAdvisorAnalyticsQuery();
-  const { data: auditLogs = [], isLoading: isLoadingLogs } = useGetAuditLogsQuery();
+  const [page, setPage] = useState(1);
+  const { data: logPage, isLoading: isLoadingLogs, isFetching: isFetchingLogs } = useGetAuditLogsQuery({ page, pageSize: PAGE_SIZE });
+  const auditLogs = logPage?.items ?? [];
+  const meta = logPage?.meta;
 
   return (
     <div className="space-y-6">
       <section>
-        <p className="text-sm font-semibold text-sage">Admin dashboard</p>
-        <h2 className="mt-1 text-3xl font-bold">Platform control center</h2>
+        <p className="text-sm font-semibold text-sage">Audit logs</p>
+        <h2 className="mt-1 text-3xl font-bold">Platform activity review</h2>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-ink/65">
-          Monitor platform usage, widget adoption, simulations, and operational audit events from an admin-ready workspace.
+          Review platform usage, widget adoption, simulations, and operational audit events from one place.
         </p>
       </section>
 
@@ -55,6 +62,16 @@ export function AdminDashboardPage() {
           </table>
           {isLoadingLogs && <p className="py-5 text-sm text-ink/60">Loading audit logs...</p>}
         </div>
+        {!isLoadingLogs && (
+          <Pagination
+            page={meta?.page ?? page}
+            totalPages={meta?.totalPages ?? 1}
+            totalItems={meta?.totalItems}
+            itemLabel="audit log"
+            isFetching={isFetchingLogs}
+            onChange={setPage}
+          />
+        )}
       </section>
     </div>
   );

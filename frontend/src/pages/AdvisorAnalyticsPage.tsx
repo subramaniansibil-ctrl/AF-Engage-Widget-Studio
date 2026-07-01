@@ -1,10 +1,67 @@
 import { Activity, ChartNoAxesCombined, LayoutDashboard, MousePointerClick, Trophy } from 'lucide-react';
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Bar } from 'react-chartjs-2';
+import { afChartBarColor } from '../components/charts/chartjs';
 import { useGetAdvisorAnalyticsQuery } from '../features/analytics/analyticsApi';
 import { KpiCard } from '../components/ui/KpiCard';
 
 export function AdvisorAnalyticsPage() {
   const { data: analytics, isLoading } = useGetAdvisorAnalyticsQuery();
+  const widgetUsage = analytics?.widgetUsage ?? [];
+  const chartData = {
+    labels: widgetUsage.map((item) => item.widgetName),
+    datasets: [
+      {
+        label: 'Assigned',
+        data: widgetUsage.map((item) => item.assignedCount),
+        backgroundColor: widgetUsage.map((_, index) => afChartBarColor(index)),
+        borderRadius: 4,
+      },
+      {
+        label: 'Published',
+        data: widgetUsage.map((item) => item.publishedCount),
+        backgroundColor: widgetUsage.map((_, index) => afChartBarColor(index, 1)),
+        borderRadius: 4,
+      },
+      {
+        label: 'Simulations',
+        data: widgetUsage.map((item) => item.simulationCount),
+        backgroundColor: widgetUsage.map((_, index) => afChartBarColor(index, 2)),
+        borderRadius: 4,
+      },
+    ],
+  };
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'top' as const,
+      },
+      tooltip: {
+        callbacks: {
+          label: (context: { dataset: { label?: string }; formattedValue: string }) => `${context.dataset.label ?? 'Value'}: ${context.formattedValue}`,
+        },
+      },
+    },
+    scales: {
+      x: {
+        grid: {
+          display: false,
+        },
+        ticks: {
+          font: {
+            size: 12,
+          },
+        },
+      },
+      y: {
+        beginAtZero: true,
+        ticks: {
+          precision: 0,
+        },
+      },
+    },
+  } as const;
 
   if (isLoading) {
     return <p className="text-sm text-ink/60">Loading analytics...</p>;
@@ -33,17 +90,7 @@ export function AdvisorAnalyticsPage() {
           <h3 className="text-lg font-semibold">Widget usage</h3>
           <p className="mt-1 text-sm text-ink/60">Assigned, published, and simulated usage by widget.</p>
           <div className="mt-5 h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={analytics?.widgetUsage ?? []}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="widgetName" tick={{ fontSize: 12 }} interval={0} />
-                <YAxis allowDecimals={false} />
-                <Tooltip />
-                <Bar dataKey="assignedCount" fill="#17212f" name="Assigned" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="publishedCount" fill="#5a7f71" name="Published" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="simulationCount" fill="#c7933d" name="Simulations" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <Bar data={chartData} options={chartOptions} />
           </div>
         </div>
 

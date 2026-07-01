@@ -29,10 +29,13 @@ func (h *AdvisorHandler) Dashboard(c *gin.Context) {
 }
 
 func (h *AdvisorHandler) ListClients(c *gin.Context) {
+	pagination := utils.ParsePagination(c, utils.DefaultPageSize, utils.MaxPageSize)
 	filters := repositories.ClientFilters{
 		Search:          c.Query("search"),
 		RiskProfile:     models.RiskProfile(c.Query("riskProfile")),
 		RetirementStage: models.RetirementStage(c.Query("retirementStage")),
+		Page:            pagination.Page,
+		PageSize:        pagination.PageSize,
 	}
 	if value, exists := c.Get("user"); exists {
 		if user, ok := value.(models.User); ok && user.Role == models.RoleAdvisor {
@@ -40,12 +43,15 @@ func (h *AdvisorHandler) ListClients(c *gin.Context) {
 		}
 	}
 
-	clients, err := h.service.ListClients(c.Request.Context(), filters)
+	clients, totalItems, err := h.service.ListClients(c.Request.Context(), filters)
 	if err != nil {
 		utils.JSONError(c, http.StatusInternalServerError, "failed to load clients")
 		return
 	}
-	c.JSON(http.StatusOK, clients)
+	c.JSON(http.StatusOK, models.PaginatedResponse[models.Client]{
+		Items: clients,
+		Meta:  utils.PaginationMeta(pagination.Page, pagination.PageSize, totalItems),
+	})
 }
 
 func (h *AdvisorHandler) GetClient(c *gin.Context) {

@@ -68,9 +68,9 @@ func TestClientManagementBulkImportKeepsValidRows(t *testing.T) {
 	if response.Imported != 1 || response.Failed != 2 {
 		t.Fatalf("expected 1 imported and 2 failed, got %d and %d", response.Imported, response.Failed)
 	}
-	clients, err := service.ListClients(context.Background(), models.ClientManagementFilters{Search: "client-101"})
-	if err != nil || len(clients) != 1 {
-		t.Fatalf("expected valid row to be persisted, clients=%d err=%v", len(clients), err)
+	clients, totalItems, err := service.ListClients(context.Background(), models.ClientManagementFilters{Search: "client-101"})
+	if err != nil || len(clients) != 1 || totalItems != 1 {
+		t.Fatalf("expected valid row to be persisted, clients=%d total=%d err=%v", len(clients), totalItems, err)
 	}
 }
 

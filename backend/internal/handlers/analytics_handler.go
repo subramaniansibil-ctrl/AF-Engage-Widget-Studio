@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/models"
 	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/repositories"
 	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/services"
 	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/utils"
@@ -59,10 +60,14 @@ func (h *AnalyticsHandler) MarkNotificationRead(c *gin.Context) {
 }
 
 func (h *AnalyticsHandler) AuditLogs(c *gin.Context) {
-	logs, err := h.service.ListAuditLogs(c.Request.Context())
+	pagination := utils.ParsePagination(c, utils.DefaultPageSize, utils.MaxPageSize)
+	logs, totalItems, err := h.service.ListAuditLogs(c.Request.Context(), pagination.Page, pagination.PageSize)
 	if err != nil {
 		utils.JSONError(c, http.StatusInternalServerError, "failed to load audit logs")
 		return
 	}
-	c.JSON(http.StatusOK, logs)
+	c.JSON(http.StatusOK, models.PaginatedResponse[models.AuditLog]{
+		Items: logs,
+		Meta:  utils.PaginationMeta(pagination.Page, pagination.PageSize, totalItems),
+	})
 }

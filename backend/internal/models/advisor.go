@@ -19,8 +19,10 @@ type Advisor struct {
 }
 
 type AdvisorManagementFilters struct {
-	Search string
-	Status AdvisorStatus
+	Search   string
+	Status   AdvisorStatus
+	Page     int
+	PageSize int
 }
 
 type AdvisorUpsertRequest struct {
@@ -92,6 +94,8 @@ type ClientManagementFilters struct {
 	Status          ClientStatus
 	AssignedAdvisor string
 	RecentlyCreated bool
+	Page            int
+	PageSize        int
 }
 
 type ClientUpsertRequest struct {
