@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/config"
@@ -238,6 +239,72 @@ func TestAdminClientManagementPermissionsAndDuplicates(t *testing.T) {
 	router.ServeHTTP(duplicateRecorder, duplicateRequest)
 	if duplicateRecorder.Code != http.StatusConflict {
 		t.Fatalf("expected duplicate client 409, got %d: %s", duplicateRecorder.Code, duplicateRecorder.Body.String())
+	}
+}
+
+func TestAdvisorClientListAndAuthorization(t *testing.T) {
+	cfg := config.Config{Environment: "test", ServiceName: "af-engage-api-test", CORSOrigins: "http://localhost:5173", RateLimitRPM: "1000"}
+	authRepository := repositories.NewMockAuthRepository()
+	advisorRepository := repositories.NewMockAdvisorRepository()
+	widgetRepository := repositories.NewMockWidgetRepository()
+	clientRepository := repositories.NewMockClientRepository()
+	router := NewRouter(cfg, services.NewStatusService(repositories.NewStatusRepository(cfg)), services.NewAuthService(authRepository), services.NewAdvisorService(advisorRepository), services.NewWidgetService(widgetRepository), services.NewClientService(advisorRepository, widgetRepository, clientRepository), services.NewSimulationService(), services.NewAnalyticsService(repositories.NewMockAnalyticsRepository()), services.NewClientManagementService(advisorRepository), services.NewAdvisorManagementService(advisorRepository))
+
+	advisorToken := loginToken(t, router, "advisor@afengage.com")
+	adminToken := loginToken(t, router, "admin@afengage.com")
+
+	clientBody, _ := json.Marshal(models.ClientUpsertRequest{ID: "client-other-001", Name: "Other Client", Email: "other.client@example.com", MobileNumber: "+1 555 0110", AssignedAdvisor: "Other Advisor", Status: models.ClientStatusActive, DateOfBirth: "1980-01-01", RiskProfile: models.RiskModerate, InvestmentGoal: "Test", PortfolioID: "portfolio-other-001", Notes: "Unauthorized client test"})
+	createRequest := httptest.NewRequest(http.MethodPost, "/api/v1/admin/clients", bytes.NewReader(clientBody))
+	createRequest.Header.Set("Authorization", "Bearer "+adminToken)
+	createRequest.Header.Set("Content-Type", "application/json")
+	createRecorder := httptest.NewRecorder()
+	router.ServeHTTP(createRecorder, createRequest)
+	if createRecorder.Code != http.StatusCreated {
+		t.Fatalf("expected client create 201, got %d: %s", createRecorder.Code, createRecorder.Body.String())
+	}
+
+	listRequest := httptest.NewRequest(http.MethodGet, "/api/v1/advisor/clients", nil)
+	listRequest.Header.Set("Authorization", "Bearer "+advisorToken)
+	listRecorder := httptest.NewRecorder()
+	router.ServeHTTP(listRecorder, listRequest)
+	if listRecorder.Code != http.StatusOK {
+		t.Fatalf("expected advisor client list 200, got %d: %s", listRecorder.Code, listRecorder.Body.String())
+	}
+
+	var clients []models.Client
+	if err := json.Unmarshal(listRecorder.Body.Bytes(), &clients); err != nil {
+		t.Fatalf("decode advisor client list: %v", err)
+	}
+	if len(clients) == 0 {
+		t.Fatalf("expected advisor client list to contain clients")
+	}
+	for _, client := range clients {
+		if client.ID == "client-other-001" {
+			t.Fatalf("advisor should not see clients assigned to another advisor")
+		}
+	}
+
+	searchRequest := httptest.NewRequest(http.MethodGet, "/api/v1/advisor/clients?search=Avery", nil)
+	searchRequest.Header.Set("Authorization", "Bearer "+advisorToken)
+	searchRecorder := httptest.NewRecorder()
+	router.ServeHTTP(searchRecorder, searchRequest)
+	if searchRecorder.Code != http.StatusOK {
+		t.Fatalf("expected advisor client search 200, got %d: %s", searchRecorder.Code, searchRecorder.Body.String())
+	}
+	var searchResults []models.Client
+	if err := json.Unmarshal(searchRecorder.Body.Bytes(), &searchResults); err != nil {
+		t.Fatalf("decode advisor client search: %v", err)
+	}
+	if len(searchResults) == 0 {
+		t.Fatalf("expected advisor search to return at least one result")
+	}
+
+	forbiddenRequest := httptest.NewRequest(http.MethodGet, "/api/v1/advisor/clients/client-other-001", nil)
+	forbiddenRequest.Header.Set("Authorization", "Bearer "+advisorToken)
+	forbiddenRecorder := httptest.NewRecorder()
+	router.ServeHTTP(forbiddenRecorder, forbiddenRequest)
+	if forbiddenRecorder.Code != http.StatusForbidden {
+		t.Fatalf("expected advisor to receive 403 for unauthorized client, got %d", forbiddenRecorder.Code)
 	}
 }
 
