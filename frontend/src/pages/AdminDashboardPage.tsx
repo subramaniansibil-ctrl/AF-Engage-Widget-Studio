@@ -9,10 +9,10 @@ export function AdminDashboardPage() {
   return (
     <div className="space-y-6">
       <section>
-        <p className="text-sm font-semibold text-sage">Admin dashboard</p>
-        <h2 className="mt-1 text-3xl font-bold">Platform control center</h2>
+        <p className="text-sm font-semibold text-sage">Audit logs</p>
+        <h2 className="mt-1 text-3xl font-bold">Platform activity review</h2>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-ink/65">
-          Monitor platform usage, widget adoption, simulations, and operational audit events from an admin-ready workspace.
+          Review platform usage, widget adoption, simulations, and operational audit events from one place.
         </p>
       </section>
 
