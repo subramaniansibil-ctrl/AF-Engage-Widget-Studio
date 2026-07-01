@@ -23,15 +23,18 @@ func (r *postgresAuthRepository) Authenticate(ctx context.Context, email string,
 	var storedPassword string
 	var clientID sql.NullString
 	err := r.db.QueryRowContext(ctx, `
-		SELECT id, name, email, role, COALESCE(password_hash, ''), client_id
+		SELECT id, name, email, role, COALESCE(password_hash, ''), client_id, COALESCE(status, 'ACTIVE')
 		FROM users
 		WHERE email = $1
-	`, email).Scan(&user.ID, &user.Name, &user.Email, &user.Role, &storedPassword, &clientID)
+	`, email).Scan(&user.ID, &user.Name, &user.Email, &user.Role, &storedPassword, &clientID, &user.Status)
 	if err == sql.ErrNoRows || storedPassword != password {
 		return models.User{}, "", ErrInvalidCredentials
 	}
 	if err != nil {
 		return models.User{}, "", err
+	}
+	if user.Status == string(models.AdvisorStatusInactive) {
+		return models.User{}, "", ErrInvalidCredentials
 	}
 	if clientID.Valid {
 		user.ClientID = clientID.String

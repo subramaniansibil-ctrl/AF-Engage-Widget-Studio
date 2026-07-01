@@ -46,6 +46,9 @@ const AdminDashboardPage = lazy(() =>
 const AdminClientsPage = lazy(() =>
   import('../pages/AdminClientsPage').then((module) => ({ default: module.AdminClientsPage })),
 );
+const AdminAdvisorsPage = lazy(() =>
+  import('../pages/AdminAdvisorsPage').then((module) => ({ default: module.AdminAdvisorsPage })),
+);
 const NotFoundPage = lazy(() =>
   import('../pages/NotFoundPage').then((module) => ({ default: module.NotFoundPage })),
 );
@@ -100,6 +103,7 @@ export const router = createBrowserRouter([
                 children: [
                   { path: 'admin/dashboard', element: routeElement(AdminDashboardPage) },
                   { path: 'admin/clients', element: routeElement(AdminClientsPage) },
+                  { path: 'admin/advisors', element: routeElement(AdminAdvisorsPage) },
                 ],
               },
             ],

@@ -1,5 +1,6 @@
 import { ChangeEvent, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import { Search } from 'lucide-react';
 import {
   RetirementStage,
@@ -32,7 +33,7 @@ export function AdvisorClientsPage() {
   const [retirementStage, setRetirementStage] = useState<RetirementStage | ''>('');
   const [searchParams] = useSearchParams();
   const filters = useMemo(() => ({ search, riskProfile, retirementStage }), [search, riskProfile, retirementStage]);
-  const { data: clients = [], isFetching } = useGetClientsQuery(filters);
+  const { data: clients = [], isLoading, isFetching, isError, error } = useGetClientsQuery(filters);
   const requestedClientIds = useMemo(() => searchParams.get('clientIds')?.split(',').filter(Boolean) ?? [], [searchParams]);
   const visibleClients = useMemo(() => {
     if (!requestedClientIds.length) {
@@ -94,44 +95,51 @@ export function AdvisorClientsPage() {
           <p className="text-sm font-semibold">{isFetching ? 'Refreshing clients...' : `${visibleClients.length} clients`}</p>
           <p className="text-xs text-ink/55">Pagination-ready list view</p>
         </div>
-        {isFetching && !clients.length ? (
+        {isLoading ? (
           <div className="space-y-3 p-4" data-testid="clients-loading">
             {Array.from({ length: 5 }, (_, index) => `client-skeleton-${index + 1}`).map((skeletonKey) => (
               <Skeleton key={skeletonKey} className="h-14" />
             ))}
           </div>
+        ) : isError ? (
+          <div className="p-4">
+            <EmptyState
+              title="Clients could not be loaded"
+              description={getErrorMessage(error)}
+            />
+          </div>
         ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-ink/10">
-            <thead className="bg-ink/5">
-              <tr>
-                <th className="px-4 py-3 text-left text-sm font-semibold">Client</th>
-                <th className="px-4 py-3 text-left text-sm font-semibold">Age</th>
-                <th className="px-4 py-3 text-left text-sm font-semibold">Risk</th>
-                <th className="px-4 py-3 text-left text-sm font-semibold">Stage</th>
-                <th className="px-4 py-3 text-right text-sm font-semibold">Portfolio</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-ink/10">
-              {visibleClients.map((client) => (
-                <tr key={client.id} className="transition hover:bg-sage/5">
-                  <td className="px-4 py-3">
-                    <Link to={`/advisor/clients/${client.id}`} className="font-semibold text-ink hover:text-sage">
-                      {client.name}
-                    </Link>
-                    <p className="text-sm text-ink/60">{client.email}</p>
-                  </td>
-                  <td className="px-4 py-3 text-sm">{client.age}</td>
-                  <td className="px-4 py-3 text-sm">{formatEnum(client.riskProfile)}</td>
-                  <td className="px-4 py-3 text-sm">{formatEnum(client.retirementStage)}</td>
-                  <td className="px-4 py-3 text-right text-sm font-medium">{currency.format(client.portfolio.totalValue)}</td>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-ink/10">
+              <thead className="bg-ink/5">
+                <tr>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Client</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Age</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Risk</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Stage</th>
+                  <th className="px-4 py-3 text-right text-sm font-semibold">Portfolio</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-ink/10">
+                {visibleClients.map((client) => (
+                  <tr key={client.id} className="transition hover:bg-sage/5">
+                    <td className="px-4 py-3">
+                      <Link to={`/advisor/clients/${client.id}`} className="font-semibold text-ink hover:text-sage">
+                        {client.name}
+                      </Link>
+                      <p className="text-sm text-ink/60">{client.email}</p>
+                    </td>
+                    <td className="px-4 py-3 text-sm">{client.age}</td>
+                    <td className="px-4 py-3 text-sm">{formatEnum(client.riskProfile)}</td>
+                    <td className="px-4 py-3 text-sm">{formatEnum(client.retirementStage)}</td>
+                    <td className="px-4 py-3 text-right text-sm font-medium">{currency.format(client.portfolio.totalValue)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
-        {!isFetching && !visibleClients.length && (
+        {!isLoading && !isError && !visibleClients.length && (
           <div className="p-4">
             <EmptyState
               title="No clients found"
@@ -146,4 +154,12 @@ export function AdvisorClientsPage() {
 
 function formatEnum(value: string) {
   return value.toLowerCase().replace(/_/g, ' ');
+}
+
+function getErrorMessage(error: unknown) {
+  const queryError = error as FetchBaseQueryError;
+  if (typeof queryError?.data === 'object' && queryError.data && 'error' in queryError.data) {
+    return String((queryError.data as { error: string }).error);
+  }
+  return 'Please try again.';
 }
