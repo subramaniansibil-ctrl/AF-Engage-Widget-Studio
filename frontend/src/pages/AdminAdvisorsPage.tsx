@@ -1,9 +1,10 @@
 import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import { Eye, Pencil, Plus, Search, UserRoundX, X } from 'lucide-react';
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { useAppDispatch } from '../app/hooks';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
+import { Pagination } from '../components/ui/Pagination';
 import { Skeleton } from '../components/ui/Skeleton';
 import {
   useCreateAdminAdvisorMutation,
@@ -28,12 +29,12 @@ export function AdminAdvisorsPage() {
   const [panel, setPanel] = useState<Panel>(null);
   const [selected, setSelected] = useState<AdminAdvisor | null>(null);
   const [disableId, setDisableId] = useState<string | null>(null);
-  const { data: advisors = [], isLoading, isFetching, error } = useGetAdminAdvisorsQuery({ search, status });
+  const { data: advisorPage, isLoading, isFetching, error } = useGetAdminAdvisorsQuery({ search, status, page, pageSize });
   const [disableAdvisor, { isLoading: isDisabling }] = useDeactivateAdminAdvisorMutation();
 
   useEffect(() => setPage(1), [search, status]);
-  const pageCount = Math.max(1, Math.ceil(advisors.length / pageSize));
-  const visibleAdvisors = useMemo(() => advisors.slice((page - 1) * pageSize, page * pageSize), [advisors, page]);
+  const advisors = advisorPage?.items ?? [];
+  const meta = advisorPage?.meta;
 
   function openPanel(next: Exclude<Panel, null>, advisor?: AdminAdvisor) {
     setSelected(advisor ?? null);
@@ -96,7 +97,7 @@ export function AdminAdvisorsPage() {
                   <tr><th className="px-4 py-3">Advisor</th><th className="px-4 py-3">Advisor ID</th><th className="px-4 py-3">Clients</th><th className="px-4 py-3">Status</th><th className="px-4 py-3 text-right">Actions</th></tr>
                 </thead>
                 <tbody className="divide-y divide-ink/8 dark:divide-white/8">
-                  {visibleAdvisors.map((advisor) => (
+                  {advisors.map((advisor) => (
                     <tr key={advisor.id} className="transition hover:bg-sage/[0.045]">
                       <td className="px-4 py-3"><p className="font-semibold">{advisor.name}</p><p className="mt-0.5 text-xs text-ink/50 dark:text-white/50">{advisor.email}</p></td>
                       <td className="px-4 py-3 font-mono text-xs text-ink/65 dark:text-white/65">{advisor.id}</td>
@@ -118,10 +119,14 @@ export function AdminAdvisorsPage() {
                 </tbody>
               </table>
             </div>
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-ink/10 px-4 py-3 text-xs text-ink/55 dark:border-white/10 dark:text-white/55">
-              <span>{advisors.length} advisor{advisors.length === 1 ? '' : 's'} {isFetching && '- Refreshing'}</span>
-              <div className="flex items-center gap-2"><Button variant="secondary" disabled={page === 1} onClick={() => setPage((value) => value - 1)}>Previous</Button><span>Page {page} of {pageCount}</span><Button variant="secondary" disabled={page === pageCount} onClick={() => setPage((value) => value + 1)}>Next</Button></div>
-            </div>
+            <Pagination
+              page={meta?.page ?? page}
+              totalPages={meta?.totalPages ?? 1}
+              totalItems={meta?.totalItems}
+              itemLabel="advisor"
+              isFetching={isFetching}
+              onChange={setPage}
+            />
           </div>
         )}
       </section>

@@ -8,13 +8,16 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { KpiCard } from '../components/ui/KpiCard';
 import { zarCurrency as currency } from '../utils/currency';
 
+const DASHBOARD_CLIENT_PAGE_SIZE = 1000;
+
 function metric(value: number | undefined) {
   return value === undefined ? '...' : value.toLocaleString();
 }
 
 export function AdvisorDashboardPage() {
   const { data: stats, isError, isLoading } = useGetAdvisorDashboardQuery();
-  const { data: clients = [] } = useGetClientsQuery();
+  const { data: clientPage } = useGetClientsQuery({ page: 1, pageSize: DASHBOARD_CLIENT_PAGE_SIZE });
+  const clients = clientPage?.items ?? [];
 
   const highRiskClients = clients.filter((client) => client.riskProfile === 'GROWTH' || client.riskProfile === 'AGGRESSIVE');
   const highRiskCount = stats?.highRiskClients ?? highRiskClients.length;

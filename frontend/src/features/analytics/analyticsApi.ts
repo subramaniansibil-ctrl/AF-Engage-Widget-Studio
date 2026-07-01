@@ -1,4 +1,5 @@
 import { apiSlice } from '../api/apiSlice';
+import { normalizePaginatedResponse, type PaginatedResponse } from '../api/pagination';
 
 export interface Notification {
   id: string;
@@ -57,8 +58,15 @@ export const analyticsApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['Notification'],
     }),
-    getAuditLogs: builder.query<AuditLog[], void>({
-      query: () => '/audit-logs',
+    getAuditLogs: builder.query<PaginatedResponse<AuditLog>, { page?: number; pageSize?: number } | void>({
+      query: (pagination) => ({
+        url: '/audit-logs',
+        params: {
+          page: pagination?.page || undefined,
+          pageSize: pagination?.pageSize || undefined,
+        },
+      }),
+      transformResponse: (response: PaginatedResponse<AuditLog> | AuditLog[] | null) => normalizePaginatedResponse(response),
       providesTags: ['AuditLog'],
     }),
   }),

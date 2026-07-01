@@ -17,11 +17,13 @@ type ClientFilters struct {
 	RiskProfile     models.RiskProfile
 	RetirementStage models.RetirementStage
 	AssignedAdvisor string
+	Page            int
+	PageSize        int
 }
 
 type AdvisorRepository interface {
 	GetDashboardStats(ctx context.Context) (models.AdvisorDashboardStats, error)
-	ListClients(ctx context.Context, filters ClientFilters) ([]models.Client, error)
+	ListClients(ctx context.Context, filters ClientFilters) ([]models.Client, int, error)
 	GetClientByID(ctx context.Context, id string) (models.Client, error)
 }
 
@@ -66,7 +68,7 @@ func (r *mockAdvisorRepository) GetDashboardStats(ctx context.Context) (models.A
 	}, nil
 }
 
-func (r *mockAdvisorRepository) ListClients(ctx context.Context, filters ClientFilters) ([]models.Client, error) {
+func (r *mockAdvisorRepository) ListClients(ctx context.Context, filters ClientFilters) ([]models.Client, int, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	results := make([]models.Client, 0, len(r.clients))
@@ -91,7 +93,8 @@ func (r *mockAdvisorRepository) ListClients(ctx context.Context, filters ClientF
 		results = append(results, client)
 	}
 
-	return results, nil
+	pagedResults, _ := paginateSlice(results, filters.Page, filters.PageSize)
+	return pagedResults, len(results), nil
 }
 
 func (r *mockAdvisorRepository) GetClientByID(ctx context.Context, id string) (models.Client, error) {

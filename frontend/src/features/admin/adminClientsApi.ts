@@ -1,4 +1,5 @@
 import { apiSlice } from '../api/apiSlice';
+import { normalizePaginatedResponse, type PaginatedResponse } from '../api/pagination';
 
 export type ClientStatus = 'ACTIVE' | 'INACTIVE';
 export type RiskProfile = 'CONSERVATIVE' | 'MODERATE' | 'GROWTH' | 'AGGRESSIVE';
@@ -39,6 +40,8 @@ export interface ClientFilters {
   status?: ClientStatus | '';
   assignedAdvisor?: string;
   recent?: boolean;
+  page?: number;
+  pageSize?: number;
 }
 
 export interface BulkClientRow {
@@ -65,18 +68,20 @@ function queryString(filters: ClientFilters) {
   if (filters.status) params.set('status', filters.status);
   if (filters.assignedAdvisor) params.set('assignedAdvisor', filters.assignedAdvisor);
   if (filters.recent) params.set('recent', 'true');
+  if (filters.page) params.set('page', String(filters.page));
+  if (filters.pageSize) params.set('pageSize', String(filters.pageSize));
   const query = params.toString();
   return query ? `?${query}` : '';
 }
 
 export const adminClientsApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
-    getAdminClients: builder.query<AdminClient[], ClientFilters>({
+    getAdminClients: builder.query<PaginatedResponse<AdminClient>, ClientFilters>({
       query: (filters) => `/admin/clients${queryString(filters)}`,
-      transformResponse: (response: AdminClient[] | null) => response ?? [],
+      transformResponse: (response: PaginatedResponse<AdminClient> | AdminClient[] | null) => normalizePaginatedResponse(response),
       providesTags: (result) => [
         { type: 'AdminClient' as const, id: 'LIST' },
-        ...(result ?? []).map((client) => ({ type: 'AdminClient' as const, id: client.id })),
+        ...(result?.items ?? []).map((client) => ({ type: 'AdminClient' as const, id: client.id })),
       ],
     }),
     createAdminClient: builder.mutation<AdminClient, ClientUpsertRequest>({

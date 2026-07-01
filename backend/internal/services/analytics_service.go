@@ -12,7 +12,7 @@ type AnalyticsService interface {
 	GetWidgetUsage(ctx context.Context) ([]models.WidgetUsage, error)
 	ListNotifications(ctx context.Context) ([]models.Notification, error)
 	MarkNotificationRead(ctx context.Context, id string) (models.Notification, error)
-	ListAuditLogs(ctx context.Context) ([]models.AuditLog, error)
+	ListAuditLogs(ctx context.Context, page, pageSize int) ([]models.AuditLog, int, error)
 }
 
 type analyticsService struct {
@@ -39,6 +39,6 @@ func (s *analyticsService) MarkNotificationRead(ctx context.Context, id string) 
 	return s.repository.MarkNotificationRead(ctx, id)
 }
 
-func (s *analyticsService) ListAuditLogs(ctx context.Context) ([]models.AuditLog, error) {
-	return s.repository.ListAuditLogs(ctx)
+func (s *analyticsService) ListAuditLogs(ctx context.Context, page, pageSize int) ([]models.AuditLog, int, error) {
+	return s.repository.ListAuditLogs(ctx, page, pageSize)
 }

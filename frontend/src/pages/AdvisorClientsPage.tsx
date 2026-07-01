@@ -1,4 +1,4 @@
-import { ChangeEvent, useMemo, useState } from 'react';
+import { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import { Search } from 'lucide-react';
@@ -9,6 +9,7 @@ import {
 } from '../features/advisor/advisorApi';
 import { Card } from '../components/ui/Card';
 import { EmptyState } from '../components/ui/EmptyState';
+import { Pagination } from '../components/ui/Pagination';
 import { Skeleton } from '../components/ui/Skeleton';
 import { zarCurrency as currency } from '../utils/currency';
 
@@ -27,14 +28,20 @@ const stageOptions: Array<{ label: string; value: RetirementStage | '' }> = [
   { label: 'Retired', value: 'RETIRED' },
 ];
 
+const PAGE_SIZE = 10;
+
 export function AdvisorClientsPage() {
   const [search, setSearch] = useState('');
   const [riskProfile, setRiskProfile] = useState<RiskProfile | ''>('');
   const [retirementStage, setRetirementStage] = useState<RetirementStage | ''>('');
+  const [page, setPage] = useState(1);
   const [searchParams] = useSearchParams();
-  const filters = useMemo(() => ({ search, riskProfile, retirementStage }), [search, riskProfile, retirementStage]);
-  const { data: clients = [], isLoading, isFetching, isError, error } = useGetClientsQuery(filters);
   const requestedClientIds = useMemo(() => searchParams.get('clientIds')?.split(',').filter(Boolean) ?? [], [searchParams]);
+  const effectivePageSize = requestedClientIds.length > 0 ? 1000 : PAGE_SIZE;
+  const filters = useMemo(() => ({ search, riskProfile, retirementStage }), [search, riskProfile, retirementStage]);
+  const { data: clientPage, isLoading, isFetching, isError, error } = useGetClientsQuery({ ...filters, page, pageSize: effectivePageSize });
+  const clients = clientPage?.items ?? [];
+  const meta = clientPage?.meta;
   const visibleClients = useMemo(() => {
     if (!requestedClientIds.length) {
       return clients;
@@ -43,6 +50,8 @@ export function AdvisorClientsPage() {
     const requestedSet = new Set(requestedClientIds);
     return clients.filter((client) => requestedSet.has(client.id));
   }, [clients, requestedClientIds]);
+
+  useEffect(() => setPage(1), [search, riskProfile, retirementStage, requestedClientIds]);
 
   return (
     <div className="space-y-6">
@@ -93,7 +102,7 @@ export function AdvisorClientsPage() {
       <Card className="overflow-hidden">
         <div className="flex items-center justify-between border-b border-ink/10 px-4 py-3">
           <p className="text-sm font-semibold">{isFetching ? 'Refreshing clients...' : `${visibleClients.length} clients`}</p>
-          <p className="text-xs text-ink/55">Pagination-ready list view</p>
+          <p className="text-xs text-ink/55">Page {meta?.page ?? page} of {meta?.totalPages ?? 1}</p>
         </div>
         {isLoading ? (
           <div className="space-y-3 p-4" data-testid="clients-loading">
@@ -138,6 +147,16 @@ export function AdvisorClientsPage() {
               </tbody>
             </table>
           </div>
+        )}
+        {!isLoading && !isError && (
+          <Pagination
+            page={meta?.page ?? page}
+            totalPages={meta?.totalPages ?? 1}
+            totalItems={meta?.totalItems}
+            itemLabel="client"
+            isFetching={isFetching}
+            onChange={setPage}
+          />
         )}
         {!isLoading && !isError && !visibleClients.length && (
           <div className="p-4">

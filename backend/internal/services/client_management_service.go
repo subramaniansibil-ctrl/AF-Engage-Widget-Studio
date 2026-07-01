@@ -12,7 +12,7 @@ import (
 )
 
 type ClientManagementService interface {
-	ListClients(ctx context.Context, filters models.ClientManagementFilters) ([]models.Client, error)
+	ListClients(ctx context.Context, filters models.ClientManagementFilters) ([]models.Client, int, error)
 	GetClient(ctx context.Context, id string) (models.Client, error)
 	CreateClient(ctx context.Context, request models.ClientUpsertRequest) (models.Client, error)
 	UpdateClient(ctx context.Context, id string, request models.ClientUpsertRequest) (models.Client, error)
@@ -37,7 +37,7 @@ func NewClientManagementService(repository repositories.ClientManagementReposito
 	return &clientManagementService{repository: repository}
 }
 
-func (s *clientManagementService) ListClients(ctx context.Context, filters models.ClientManagementFilters) ([]models.Client, error) {
+func (s *clientManagementService) ListClients(ctx context.Context, filters models.ClientManagementFilters) ([]models.Client, int, error) {
 	return s.repository.ListManagedClients(ctx, filters)
 }
 

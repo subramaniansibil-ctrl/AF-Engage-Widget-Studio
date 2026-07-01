@@ -16,7 +16,7 @@ type AnalyticsRepository interface {
 	GetWidgetUsage(ctx context.Context) ([]models.WidgetUsage, error)
 	ListNotifications(ctx context.Context) ([]models.Notification, error)
 	MarkNotificationRead(ctx context.Context, id string) (models.Notification, error)
-	ListAuditLogs(ctx context.Context) ([]models.AuditLog, error)
+	ListAuditLogs(ctx context.Context, page, pageSize int) ([]models.AuditLog, int, error)
 }
 
 type mockAnalyticsRepository struct {
@@ -93,11 +93,13 @@ func (r *mockAnalyticsRepository) MarkNotificationRead(ctx context.Context, id s
 	return models.Notification{}, ErrNotificationNotFound
 }
 
-func (r *mockAnalyticsRepository) ListAuditLogs(ctx context.Context) ([]models.AuditLog, error) {
+func (r *mockAnalyticsRepository) ListAuditLogs(ctx context.Context, page, pageSize int) ([]models.AuditLog, int, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	return append([]models.AuditLog(nil), r.auditLogs...), nil
+	logs := append([]models.AuditLog(nil), r.auditLogs...)
+	pagedLogs, _ := paginateSlice(logs, page, pageSize)
+	return pagedLogs, len(logs), nil
 }
 
 func totalSimulations(usage []models.WidgetUsage) int {

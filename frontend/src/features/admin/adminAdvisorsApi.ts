@@ -1,4 +1,5 @@
 import { apiSlice } from '../api/apiSlice';
+import { normalizePaginatedResponse, type PaginatedResponse } from '../api/pagination';
 
 export type AdvisorStatus = 'ACTIVE' | 'INACTIVE';
 
@@ -22,24 +23,28 @@ export interface AdvisorUpsertRequest {
 export interface AdvisorFilters {
   search?: string;
   status?: AdvisorStatus | '';
+  page?: number;
+  pageSize?: number;
 }
 
 function queryString(filters: AdvisorFilters) {
   const params = new URLSearchParams();
   if (filters.search) params.set('search', filters.search);
   if (filters.status) params.set('status', filters.status);
+  if (filters.page) params.set('page', String(filters.page));
+  if (filters.pageSize) params.set('pageSize', String(filters.pageSize));
   const query = params.toString();
   return query ? `?${query}` : '';
 }
 
 export const adminAdvisorsApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
-    getAdminAdvisors: builder.query<AdminAdvisor[], AdvisorFilters>({
+    getAdminAdvisors: builder.query<PaginatedResponse<AdminAdvisor>, AdvisorFilters>({
       query: (filters) => `/admin/advisors${queryString(filters)}`,
-      transformResponse: (response: AdminAdvisor[] | null) => response ?? [],
+      transformResponse: (response: PaginatedResponse<AdminAdvisor> | AdminAdvisor[] | null) => normalizePaginatedResponse(response),
       providesTags: (result) => [
         { type: 'AdminAdvisor' as const, id: 'LIST' },
-        ...(result ?? []).map((advisor) => ({ type: 'AdminAdvisor' as const, id: advisor.id })),
+        ...(result?.items ?? []).map((advisor) => ({ type: 'AdminAdvisor' as const, id: advisor.id })),
       ],
     }),
     getAdminAdvisor: builder.query<AdminAdvisor, string>({

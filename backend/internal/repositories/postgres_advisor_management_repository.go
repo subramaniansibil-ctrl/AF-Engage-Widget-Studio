@@ -9,7 +9,7 @@ import (
 	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/models"
 )
 
-func (r *postgresAdvisorRepository) ListManagedAdvisors(ctx context.Context, filters models.AdvisorManagementFilters) ([]models.Advisor, error) {
+func (r *postgresAdvisorRepository) ListManagedAdvisors(ctx context.Context, filters models.AdvisorManagementFilters) ([]models.Advisor, int, error) {
 	query := managedAdvisorSelect + " WHERE u.role = 'ADVISOR'"
 	args := []any{}
 	if search := strings.TrimSpace(filters.Search); search != "" {
@@ -21,11 +21,32 @@ func (r *postgresAdvisorRepository) ListManagedAdvisors(ctx context.Context, fil
 		args = append(args, filters.Status)
 		query += " AND u.status = $" + argNumber(len(args))
 	}
-	query += " GROUP BY u.id, u.name, u.email, u.status, u.created_at ORDER BY u.created_at DESC, u.name"
+	query += " GROUP BY u.id, u.name, u.email, u.status, u.created_at"
+	countQuery := "SELECT COUNT(*) FROM (" + query + ") AS advisor_count"
+	query += " ORDER BY u.created_at DESC, u.name"
+	totalItems, err := r.countManagedAdvisors(ctx, countQuery, args...)
+	if err != nil {
+		return nil, 0, err
+	}
+	if filters.PageSize <= 0 {
+		filters.PageSize = 10
+	}
+	if filters.Page <= 0 {
+		filters.Page = 1
+	}
+	totalPages := (totalItems + filters.PageSize - 1) / filters.PageSize
+	if totalPages < 1 {
+		totalPages = 1
+	}
+	if filters.Page > totalPages {
+		filters.Page = totalPages
+	}
+	query += " LIMIT $" + argNumber(len(args)+1) + " OFFSET $" + argNumber(len(args)+2)
+	args = append(args, filters.PageSize, (filters.Page-1)*filters.PageSize)
 
 	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 
@@ -33,11 +54,19 @@ func (r *postgresAdvisorRepository) ListManagedAdvisors(ctx context.Context, fil
 	for rows.Next() {
 		advisor, err := scanManagedAdvisor(rows)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		advisors = append(advisors, advisor)
 	}
-	return advisors, rows.Err()
+	return advisors, totalItems, rows.Err()
+}
+
+func (r *postgresAdvisorRepository) countManagedAdvisors(ctx context.Context, query string, args ...any) (int, error) {
+	var totalItems int
+	if err := r.db.QueryRowContext(ctx, query, args...).Scan(&totalItems); err != nil {
+		return 0, err
+	}
+	return totalItems, nil
 }
 
 func (r *postgresAdvisorRepository) GetManagedAdvisorByID(ctx context.Context, id string) (models.Advisor, error) {

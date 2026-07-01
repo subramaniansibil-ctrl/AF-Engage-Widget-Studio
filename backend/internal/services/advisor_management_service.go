@@ -10,7 +10,7 @@ import (
 )
 
 type AdvisorManagementService interface {
-	ListAdvisors(ctx context.Context, filters models.AdvisorManagementFilters) ([]models.Advisor, error)
+	ListAdvisors(ctx context.Context, filters models.AdvisorManagementFilters) ([]models.Advisor, int, error)
 	GetAdvisor(ctx context.Context, id string) (models.Advisor, error)
 	CreateAdvisor(ctx context.Context, request models.AdvisorUpsertRequest) (models.Advisor, error)
 	UpdateAdvisor(ctx context.Context, id string, request models.AdvisorUpsertRequest) (models.Advisor, error)
@@ -34,7 +34,7 @@ func NewAdvisorManagementService(repository repositories.AdvisorManagementReposi
 	return &advisorManagementService{repository: repository}
 }
 
-func (s *advisorManagementService) ListAdvisors(ctx context.Context, filters models.AdvisorManagementFilters) ([]models.Advisor, error) {
+func (s *advisorManagementService) ListAdvisors(ctx context.Context, filters models.AdvisorManagementFilters) ([]models.Advisor, int, error) {
 	return s.repository.ListManagedAdvisors(ctx, filters)
 }
 
