@@ -30,11 +30,12 @@ func (e *ClientValidationError) Error() string {
 }
 
 type clientManagementService struct {
-	repository repositories.ClientManagementRepository
+	repository     repositories.ClientManagementRepository
+	authRepository repositories.AuthRepository
 }
 
-func NewClientManagementService(repository repositories.ClientManagementRepository) ClientManagementService {
-	return &clientManagementService{repository: repository}
+func NewClientManagementService(repository repositories.ClientManagementRepository, authRepository repositories.AuthRepository) ClientManagementService {
+	return &clientManagementService{repository: repository, authRepository: authRepository}
 }
 
 func (s *clientManagementService) ListClients(ctx context.Context, filters models.ClientManagementFilters) ([]models.Client, error) {
@@ -47,16 +48,41 @@ func (s *clientManagementService) GetClient(ctx context.Context, id string) (mod
 
 func (s *clientManagementService) CreateClient(ctx context.Context, request models.ClientUpsertRequest) (models.Client, error) {
 	normalizeClientRequest(&request)
-	if err := validateClientRequest(request); err != nil {
+	if err := validateClientRequest(request, true); err != nil {
 		return models.Client{}, err
 	}
-	return s.repository.CreateManagedClient(ctx, request)
+	if s.authRepository != nil {
+		exists, err := s.authRepository.EmailExists(ctx, request.Email)
+		if err != nil {
+			return models.Client{}, err
+		}
+		if exists {
+			return models.Client{}, repositories.ErrDuplicateClientEmail
+		}
+	}
+	client, err := s.repository.CreateManagedClient(ctx, request)
+	if err != nil {
+		return models.Client{}, err
+	}
+	if s.authRepository != nil && request.Password != "" {
+		if err := s.authRepository.CreateUser(ctx, models.User{
+			ID:       "user-client-" + request.ID,
+			Name:     request.Name,
+			Email:    request.Email,
+			Role:     models.RoleClient,
+			ClientID: request.ID,
+			Status:   string(models.ClientStatusActive),
+		}, request.Password); err != nil {
+			return models.Client{}, err
+		}
+	}
+	return client, nil
 }
 
 func (s *clientManagementService) UpdateClient(ctx context.Context, id string, request models.ClientUpsertRequest) (models.Client, error) {
 	normalizeClientRequest(&request)
 	request.ID = id
-	if err := validateClientRequest(request); err != nil {
+	if err := validateClientRequest(request, false); err != nil {
 		return models.Client{}, err
 	}
 	return s.repository.UpdateManagedClient(ctx, id, request)
@@ -75,7 +101,7 @@ func (s *clientManagementService) ImportClients(ctx context.Context, request mod
 	for _, row := range request.Rows {
 		normalizeClientRequest(&row.Client)
 		rowErrors := []models.ClientImportError{}
-		if err := validateClientRequest(row.Client); err != nil {
+		if err := validateClientRequest(row.Client, false); err != nil {
 			validationError := err.(*ClientValidationError)
 			rowErrors = append(rowErrors, models.ClientImportError{RowNumber: row.RowNumber, Field: validationError.Field, Message: validationError.Message})
 		}
@@ -124,9 +150,11 @@ func normalizeClientRequest(request *models.ClientUpsertRequest) {
 	request.InvestmentGoal = strings.TrimSpace(request.InvestmentGoal)
 	request.PortfolioID = strings.TrimSpace(request.PortfolioID)
 	request.Notes = strings.TrimSpace(request.Notes)
+	request.Password = strings.TrimSpace(request.Password)
+	request.ConfirmPassword = strings.TrimSpace(request.ConfirmPassword)
 }
 
-func validateClientRequest(request models.ClientUpsertRequest) error {
+func validateClientRequest(request models.ClientUpsertRequest, passwordRequired bool) error {
 	required := []struct{ field, value string }{
 		{"clientId", request.ID}, {"clientName", request.Name}, {"email", request.Email},
 		{"mobileNumber", request.MobileNumber}, {"assignedAdvisor", request.AssignedAdvisor}, {"status", string(request.Status)},
@@ -141,6 +169,14 @@ func validateClientRequest(request models.ClientUpsertRequest) error {
 	}
 	if request.Status != models.ClientStatusActive && request.Status != models.ClientStatusInactive {
 		return &ClientValidationError{Field: "status", Message: "must be ACTIVE or INACTIVE"}
+	}
+	if passwordRequired || request.Password != "" {
+		if passwordRequired && request.Password == "" {
+			return &ClientValidationError{Field: "password", Message: "is required"}
+		}
+		if request.Password != "" && len(request.Password) < 8 {
+			return &ClientValidationError{Field: "password", Message: "must be at least 8 characters"}
+		}
 	}
 	if request.RiskProfile != "" && request.RiskProfile != models.RiskConservative && request.RiskProfile != models.RiskModerate && request.RiskProfile != models.RiskGrowth && request.RiskProfile != models.RiskAggressive {
 		return &ClientValidationError{Field: "riskProfile", Message: "is invalid"}

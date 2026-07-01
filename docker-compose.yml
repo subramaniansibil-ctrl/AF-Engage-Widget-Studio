@@ -64,6 +64,7 @@ services:
     environment:
       CHOKIDAR_USEPOLLING: "true"
       VITE_HOST: 0.0.0.0
+      VITE_API_TARGET: http://backend:8080
     volumes:
       - ./frontend:/app
       - /app/node_modules

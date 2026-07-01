@@ -106,6 +106,8 @@ type ClientUpsertRequest struct {
 	InvestmentGoal  string       `json:"investmentGoal" binding:"max=240"`
 	PortfolioID     string       `json:"portfolioId" binding:"max=80"`
 	Notes           string       `json:"notes" binding:"max=1000"`
+	Password        string       `json:"password" binding:"omitempty,min=8,max=120"`
+	ConfirmPassword string       `json:"confirmPassword" binding:"omitempty"`
 }
 
 type BulkClientRow struct {
