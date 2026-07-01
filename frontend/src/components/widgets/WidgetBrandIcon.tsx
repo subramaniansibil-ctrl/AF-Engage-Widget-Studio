@@ -1,4 +1,4 @@
-import { ChartNoAxesCombined, CircleDollarSign, Landmark, LayoutGrid } from 'lucide-react';
+import { ChartNoAxesCombined, Coins, Landmark, LayoutGrid } from 'lucide-react';
 
 interface WidgetBrandIconProps {
   widgetId?: string;
@@ -10,7 +10,7 @@ export function WidgetBrandIcon({ widgetId, icon, className = '' }: WidgetBrandI
   const Icon = widgetId === 'two-pot-impact' || icon === 'Scale'
     ? Landmark
     : widgetId === 'onefee-wealth-reclaim' || icon === 'RefreshCcw'
-      ? CircleDollarSign
+      ? Coins
       : widgetId === 'income-sustainability' || icon === 'LineChart'
         ? ChartNoAxesCombined
         : LayoutGrid;

@@ -6,12 +6,7 @@ import { Card } from '../components/ui/Card';
 import { DashboardSkeleton } from '../components/ui/Skeleton';
 import { EmptyState } from '../components/ui/EmptyState';
 import { KpiCard } from '../components/ui/KpiCard';
-
-const currency = new Intl.NumberFormat('en-US', {
-  style: 'currency',
-  currency: 'USD',
-  maximumFractionDigits: 0,
-});
+import { zarCurrency as currency } from '../utils/currency';
 
 function metric(value: number | undefined) {
   return value === undefined ? '...' : value.toLocaleString();

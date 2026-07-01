@@ -13,12 +13,7 @@ import { WidgetBrandIcon } from '../components/widgets/WidgetBrandIcon';
 import { EmptyState } from '../components/ui/EmptyState';
 import { useAppDispatch } from '../app/hooks';
 import { addToast } from '../features/ui/uiSlice';
-
-const currency = new Intl.NumberFormat('en-US', {
-  style: 'currency',
-  currency: 'USD',
-  maximumFractionDigits: 0,
-});
+import { zarCurrency as currency } from '../utils/currency';
 
 export function AdvisorClientDetailPage() {
   const { clientId = '' } = useParams();

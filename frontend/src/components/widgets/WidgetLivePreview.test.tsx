@@ -5,9 +5,9 @@ import { WidgetLivePreview } from './WidgetLivePreview';
 describe('WidgetLivePreview', () => {
   it('updates displayed values when configuration changes', () => {
     const { rerender } = render(<WidgetLivePreview widgetId="income-sustainability" name="Income Sustainability" category="Retirement" values={{ monthlyIncomeTarget: '4500', projectionYears: '25', scenario: 'Balanced market' }} />);
-    expect(screen.getByText('$4,500')).toBeInTheDocument();
+    expect(screen.getByText(/R\s*4[\s,]500/)).toBeInTheDocument();
     rerender(<WidgetLivePreview widgetId="income-sustainability" name="Income Sustainability" category="Retirement" values={{ monthlyIncomeTarget: '6200', projectionYears: '30', scenario: 'Conservative market' }} />);
-    expect(screen.getByText('$6,200')).toBeInTheDocument();
+    expect(screen.getByText(/R\s*6[\s,]200/)).toBeInTheDocument();
     expect(screen.getByText('Conservative market')).toBeInTheDocument();
   });
 

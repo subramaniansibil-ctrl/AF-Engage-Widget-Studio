@@ -1,5 +1,6 @@
 import { Eye, TrendingUp } from 'lucide-react';
 import { WidgetBrandIcon } from './WidgetBrandIcon';
+import { formatZAR } from '../../utils/currency';
 
 interface WidgetLivePreviewProps {
   widgetId: string;
@@ -74,7 +75,7 @@ function IncomePreview({ values, compact }: { values: Record<string, string>; co
   const score = scenario.toLowerCase().includes('conservative') ? 64 : scenario.toLowerCase().includes('growth') ? 86 : 78;
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-2"><Metric label="Monthly income" value={currency(income)} /><Metric label="Retirement period" value={`${years} years`} /></div>
+      <div className="grid grid-cols-2 gap-2"><Metric label="Monthly income" value={formatZAR(income)} /><Metric label="Retirement period" value={`${years} years`} /></div>
       {!compact && <div><div className="mb-1.5 flex justify-between text-xs"><span className="text-ink/55 dark:text-white/55">Sustainability illustration</span><strong>{score}/100</strong></div><div className="h-2 overflow-hidden rounded-full bg-ink/8 dark:bg-white/10"><div className="h-full rounded-full bg-sage" style={{ width: `${score}%` }} /></div></div>}
       <p className="text-xs text-ink/55 dark:text-white/55">Scenario: <strong className="text-ink dark:text-white">{scenario}</strong></p>
     </div>
@@ -94,5 +95,4 @@ function ComparisonBars({ labels, values }: { labels: string[]; values: number[]
 }
 
 function numberValue(value: string | undefined, fallback: number) { const parsed = Number(value); return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback; }
-function currency(value: number) { return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value); }
 function humanize(value: string) { return value.replace(/([A-Z])/g, ' $1').replace(/^./, (letter) => letter.toUpperCase()); }
