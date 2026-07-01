@@ -71,10 +71,11 @@ export function AdvisorClientDetailPage() {
             <h2 className="mt-1 text-3xl font-bold">{client.name}</h2>
             <p className="mt-2 text-sm text-ink/60">{client.email}</p>
           </div>
-          <div className="grid gap-2 text-sm sm:grid-cols-3">
+          <div className="grid gap-2 text-sm sm:grid-cols-4">
             <Badge label="Age" value={String(client.age)} />
             <Badge label="Risk" value={formatEnum(client.riskProfile)} />
             <Badge label="Stage" value={formatEnum(client.retirementStage)} />
+            <Badge label="Advisor" value={client.assignedAdvisor} />
           </div>
         </div>
       </section>

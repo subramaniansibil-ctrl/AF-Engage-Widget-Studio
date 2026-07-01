@@ -74,6 +74,70 @@ func TestClientManagementBulkImportKeepsValidRows(t *testing.T) {
 	}
 }
 
+func TestAdminMustAssignAnActiveAdvisor(t *testing.T) {
+	repository := repositories.NewMockAdvisorRepository()
+	service := NewClientManagementService(repository, repositories.NewMockAuthRepository(), repository)
+	request := validClientRequest("client-admin-invalid", "admin-invalid@example.com")
+	request.AssignedAdvisor = "Unknown Advisor"
+
+	_, err := service.CreateClient(context.Background(), request, models.User{Role: models.RoleAdmin, Name: "Admin User"})
+	if validationError, ok := err.(*ClientValidationError); !ok || validationError.Field != "assignedAdvisor" {
+		t.Fatalf("expected active advisor validation error, got %v", err)
+	}
+}
+
+func TestAdvisorCreateForcesOwnAssignment(t *testing.T) {
+	repository := repositories.NewMockAdvisorRepository()
+	service := NewClientManagementService(repository, repositories.NewMockAuthRepository(), repository)
+	request := validClientRequest("client-advisor-create", "advisor-create@example.com")
+	request.AssignedAdvisor = "Another Advisor"
+
+	created, err := service.CreateClient(context.Background(), request, models.User{Role: models.RoleAdvisor, Name: "Advisor User"})
+	if err != nil {
+		t.Fatalf("expected advisor create to succeed, got %v", err)
+	}
+	if created.AssignedAdvisor != "Advisor User" {
+		t.Fatalf("expected logged-in advisor assignment, got %q", created.AssignedAdvisor)
+	}
+}
+
+func TestAdvisorUpdatePreservesAssignmentAndCannotAccessAnotherAdvisorClient(t *testing.T) {
+	repository := repositories.NewMockAdvisorRepository()
+	service := NewClientManagementService(repository, repositories.NewMockAuthRepository(), repository)
+	actor := models.User{Role: models.RoleAdvisor, Name: "Advisor User"}
+	existing, err := service.GetClient(context.Background(), "client-001", actor)
+	if err != nil {
+		t.Fatalf("expected assigned client, got %v", err)
+	}
+	request := validClientRequest(existing.ID, existing.Email)
+	request.Name = "Updated by advisor"
+	request.AssignedAdvisor = "Another Advisor"
+	request.Password = ""
+	request.ConfirmPassword = ""
+	updated, err := service.UpdateClient(context.Background(), existing.ID, request, actor)
+	if err != nil {
+		t.Fatalf("expected assigned client update, got %v", err)
+	}
+	if updated.AssignedAdvisor != actor.Name {
+		t.Fatalf("expected assignment to remain %q, got %q", actor.Name, updated.AssignedAdvisor)
+	}
+
+	if _, err := service.GetClient(context.Background(), "client-002", models.User{Role: models.RoleAdvisor, Name: "Someone Else"}); err != repositories.ErrClientNotFound {
+		t.Fatalf("expected another advisor client to be hidden, got %v", err)
+	}
+}
+
+func TestAdvisorBulkImportForcesOwnAssignment(t *testing.T) {
+	repository := repositories.NewMockAdvisorRepository()
+	service := NewClientManagementService(repository, repositories.NewMockAuthRepository(), repository)
+	row := validClientRequest("client-advisor-bulk", "advisor-bulk@example.com")
+	row.AssignedAdvisor = "Another Advisor"
+	response := service.ImportClients(context.Background(), models.BulkClientImportRequest{Rows: []models.BulkClientRow{{RowNumber: 2, Client: row}}}, models.User{Role: models.RoleAdvisor, Name: "Advisor User"})
+	if response.Imported != 1 || response.Clients[0].AssignedAdvisor != "Advisor User" {
+		t.Fatalf("expected advisor bulk assignment, got %+v", response)
+	}
+}
+
 func validClientRequest(id, email string) models.ClientUpsertRequest {
 	return models.ClientUpsertRequest{
 		ID: id, Name: "Test Client", Email: email, MobileNumber: "+27 82 555 0101",

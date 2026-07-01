@@ -84,6 +84,15 @@ func NewRouter(cfg config.Config, statusService services.StatusService, authServ
 			analytics.GET("/advisor", analyticsHandler.AdvisorAnalytics) // GET /api/v1/analytics/advisor returns advisor engagement analytics.
 			analytics.GET("/widgets", analyticsHandler.WidgetUsage)      // GET /api/v1/analytics/widgets returns widget usage analytics.
 		}
+		clientManagement := v1.Group("/client-management", middleware.AuthMiddleware(authService), middleware.RoleMiddleware(models.RoleAdvisor, models.RoleAdmin))
+		{
+			clientManagement.GET("", clientManagementHandler.List)
+			clientManagement.GET("/:clientId", clientManagementHandler.Get)
+			clientManagement.POST("", clientManagementHandler.Create)
+			clientManagement.PUT("/:clientId", clientManagementHandler.Update)
+			clientManagement.DELETE("/:clientId", clientManagementHandler.Deactivate)
+			clientManagement.POST("/bulk", clientManagementHandler.BulkImport)
+		}
 		adminClients := v1.Group("/admin/clients", middleware.AuthMiddleware(authService), middleware.RoleMiddleware(models.RoleAdmin))
 		{
 			adminClients.GET("", clientManagementHandler.List)                    // GET lists clients for administration with search and filters.

@@ -77,20 +77,20 @@ function queryString(filters: ClientFilters) {
 
 export const adminClientsApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
-    getAdminClients: builder.query<PaginatedResponse<AdminClient>, ClientFilters>({
-      query: (filters) => `/admin/clients${queryString(filters)}`,
-      transformResponse: (response: PaginatedResponse<AdminClient> | AdminClient[] | null) => normalizePaginatedResponse(response),
+    getAdminClients: builder.query<AdminClient[], ClientFilters>({
+      query: (filters) => `/client-management${queryString(filters)}`,
+      transformResponse: (response: AdminClient[] | null) => response ?? [],
       providesTags: (result) => [
         { type: 'AdminClient' as const, id: 'LIST' },
         ...(result?.items ?? []).map((client) => ({ type: 'AdminClient' as const, id: client.id })),
       ],
     }),
     createAdminClient: builder.mutation<AdminClient, ClientUpsertRequest>({
-      query: (body) => ({ url: '/admin/clients', method: 'POST', body }),
+      query: (body) => ({ url: '/client-management', method: 'POST', body }),
       invalidatesTags: ['AdminClient', 'Client', 'AdvisorDashboard'],
     }),
     updateAdminClient: builder.mutation<AdminClient, { id: string; body: ClientUpsertRequest }>({
-      query: ({ id, body }) => ({ url: `/admin/clients/${id}`, method: 'PUT', body }),
+      query: ({ id, body }) => ({ url: `/client-management/${id}`, method: 'PUT', body }),
       invalidatesTags: (_result, _error, args) => [
         { type: 'AdminClient', id: args.id },
         { type: 'AdminClient', id: 'LIST' },
@@ -98,11 +98,11 @@ export const adminClientsApi = apiSlice.injectEndpoints({
       ],
     }),
     deactivateAdminClient: builder.mutation<{ success: boolean }, string>({
-      query: (id) => ({ url: `/admin/clients/${id}`, method: 'DELETE' }),
+      query: (id) => ({ url: `/client-management/${id}`, method: 'DELETE' }),
       invalidatesTags: ['AdminClient', 'Client', 'AdvisorDashboard'],
     }),
     bulkImportClients: builder.mutation<BulkImportResponse, { rows: BulkClientRow[] }>({
-      query: (body) => ({ url: '/admin/clients/bulk', method: 'POST', body }),
+      query: (body) => ({ url: '/client-management/bulk', method: 'POST', body }),
       invalidatesTags: ['AdminClient', 'Client', 'AdvisorDashboard'],
     }),
   }),

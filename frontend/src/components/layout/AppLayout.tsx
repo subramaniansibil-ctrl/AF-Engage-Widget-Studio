@@ -17,6 +17,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { to: '/advisor/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['ADVISOR', 'ADMIN'] },
   { to: '/advisor/clients', label: 'Clients', icon: UsersRound, roles: ['ADVISOR'] },
+  { to: '/advisor/client-management', label: 'Manage clients', icon: UserCog, roles: ['ADVISOR'] },
   { to: '/advisor/widgets', label: 'Widgets', icon: Boxes, roles: ['ADVISOR', 'ADMIN'] },
   { to: '/advisor/analytics', label: 'Analytics', icon: ChartNoAxesCombined, roles: ['ADVISOR', 'ADMIN'] },
   { to: '/client/dashboard', label: 'Overview', icon: UserRound, roles: ['CLIENT', 'ADMIN'] },
