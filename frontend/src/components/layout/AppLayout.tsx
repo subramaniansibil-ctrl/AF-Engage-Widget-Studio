@@ -56,7 +56,7 @@ export function AppLayout() {
           className={[
             'fixed inset-y-0 left-0 z-40 w-[248px] border-r border-white/15 bg-[linear-gradient(180deg,#03111f_0%,#071f35_54%,#063342_100%)] p-3 text-white shadow-[22px_0_70px_rgba(7,31,53,0.18)] transition',
             mobileSidebarOpen ? 'block' : 'hidden',
-            'lg:block',
+            'lg:block print:hidden',
           ].join(' ')}
         >
           <div className="flex h-full flex-col rounded-lg border border-white/10 bg-white/[0.045] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.10)] backdrop-blur-2xl">
@@ -133,8 +133,8 @@ export function AppLayout() {
             </div>
           </div>
         </aside>
-        <div className="flex min-w-0 flex-col lg:pl-[248px]">
-          <header className="border-b border-white/45 bg-white/45 px-4 py-3 shadow-sm backdrop-blur-2xl dark:border-white/10 dark:bg-white/5 sm:px-5">
+        <div className="flex min-w-0 flex-col lg:pl-[248px] print:pl-0">
+          <header className="border-b border-white/45 bg-white/45 px-4 py-3 shadow-sm backdrop-blur-2xl dark:border-white/10 dark:bg-white/5 sm:px-5 print:hidden">
             <div className="flex flex-wrap items-center justify-between gap-2.5">
               <div className="flex items-center gap-2.5">
                 <button
