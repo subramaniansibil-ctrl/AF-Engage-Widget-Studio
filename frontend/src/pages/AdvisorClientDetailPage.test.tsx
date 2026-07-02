@@ -1,12 +1,16 @@
-import { render, screen } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AdvisorClientDetailPage } from './AdvisorClientDetailPage';
 
 const dispatch = vi.fn();
 const refetch = vi.fn();
+let currentRole = 'ADVISOR';
 
-vi.mock('../app/hooks', () => ({ useAppDispatch: () => dispatch }));
+vi.mock('../app/hooks', () => ({
+  useAppDispatch: () => dispatch,
+  useAppSelector: (selector: (state: unknown) => unknown) => selector({ auth: { role: currentRole } }),
+}));
 vi.mock('../features/advisor/advisorApi', () => ({
   useGetClientByIdQuery: () => ({
     data: {
@@ -31,8 +35,10 @@ vi.mock('../features/widgets/widgetsApi', () => ({
   usePublishDashboardMutation: () => [vi.fn(), { isLoading: false }],
 }));
 
+afterEach(cleanup);
+
 describe('Advisor Client Details', () => {
-  beforeEach(() => { dispatch.mockClear(); refetch.mockClear(); });
+  beforeEach(() => { currentRole = 'ADVISOR'; dispatch.mockClear(); refetch.mockClear(); });
 
   it('renders client identity, status, advisor, assigned widgets, and assignment navigation', () => {
     render(
@@ -55,5 +61,20 @@ describe('Advisor Client Details', () => {
     expect(simulateUrl).toContain('clientId=client-001');
     expect(simulateUrl).toContain('widgetId=two-pot-impact');
     expect(simulateUrl).toContain('assignmentId=assignment-1');
+  });
+
+  it('uses the same details workflow with admin-aware back navigation', () => {
+    currentRole = 'ADMIN';
+    const { getByRole } = render(
+      <MemoryRouter initialEntries={['/admin/clients/client-001']}>
+        <Routes><Route path="/admin/clients/:clientId" element={<AdvisorClientDetailPage />} /></Routes>
+      </MemoryRouter>,
+    );
+
+    expect(getByRole('heading', { name: 'Avery Naidoo' })).toBeInTheDocument();
+    expect(getByRole('link', { name: /Back to clients/ })).toHaveAttribute('href', '/admin/clients');
+    expect(getByRole('link', { name: 'Simulate' }).getAttribute('href')).toContain(
+      'returnTo=%2Fadmin%2Fclients%2Fclient-001',
+    );
   });
 });

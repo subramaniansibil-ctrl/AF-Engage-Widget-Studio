@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"errors"
+	"sort"
 	"strings"
 	"time"
 
@@ -43,6 +44,30 @@ func (r *mockAdvisorRepository) ListManagedClients(ctx context.Context, filters 
 		}
 		clients = append(clients, client)
 	}
+	sort.SliceStable(clients, func(i, j int) bool {
+		comparison := 0
+		switch filters.SortBy {
+		case "name":
+			comparison = strings.Compare(strings.ToLower(clients[i].Name), strings.ToLower(clients[j].Name))
+		case "status":
+			comparison = strings.Compare(string(clients[i].Status), string(clients[j].Status))
+		case "advisor":
+			comparison = strings.Compare(strings.ToLower(clients[i].AssignedAdvisor), strings.ToLower(clients[j].AssignedAdvisor))
+		default:
+			if clients[i].CreatedAt.Before(clients[j].CreatedAt) {
+				comparison = -1
+			} else if clients[i].CreatedAt.After(clients[j].CreatedAt) {
+				comparison = 1
+			}
+		}
+		if comparison == 0 {
+			comparison = strings.Compare(strings.ToLower(clients[i].Name), strings.ToLower(clients[j].Name))
+		}
+		if strings.EqualFold(filters.SortOrder, "desc") {
+			return comparison > 0
+		}
+		return comparison < 0
+	})
 	pageClients, _ := paginateSlice(clients, filters.Page, filters.PageSize)
 	return pageClients, len(clients), nil
 }

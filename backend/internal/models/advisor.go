@@ -94,6 +94,8 @@ type ClientManagementFilters struct {
 	Status          ClientStatus
 	AssignedAdvisor string
 	RecentlyCreated bool
+	SortBy          string
+	SortOrder       string
 	Page            int
 	PageSize        int
 }

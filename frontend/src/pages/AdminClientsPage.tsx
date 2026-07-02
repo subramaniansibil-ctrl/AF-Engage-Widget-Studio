@@ -23,8 +23,9 @@ import { addToast } from '../features/ui/uiSlice';
 import { useGetAssignedWidgetsQuery, type DashboardAssignment } from '../features/widgets/widgetsApi';
 import { WidgetBrandIcon } from '../components/widgets/WidgetBrandIcon';
 
-type Panel = 'create' | 'edit' | 'view' | 'bulk' | null;
+type Panel = 'create' | 'edit' | 'bulk' | null;
 const pageSize = 10;
+export const clientTableColumns = ['Client', 'Client ID', 'Contact', 'Advisor', 'Status', 'Actions'] as const;
 const inputClass = 'min-h-10 w-full rounded-md border border-ink/12 bg-white/70 px-3 text-sm text-ink outline-none transition placeholder:text-ink/35 focus:border-sage focus:ring-2 focus:ring-sage/15 dark:border-white/12 dark:bg-white/5 dark:text-white';
 const emptyForm = (assignedAdvisor: string): ClientUpsertRequest => ({
   id: '', name: '', email: '', mobileNumber: '', assignedAdvisor, status: 'ACTIVE',
@@ -43,14 +44,16 @@ export function AdminClientsPage() {
   const [status, setStatus] = useState<'' | 'ACTIVE' | 'INACTIVE'>('');
   const [advisor, setAdvisor] = useState('');
   const [recent, setRecent] = useState(false);
+  const [sort, setSort] = useState('createdAt-desc');
   const [page, setPage] = useState(1);
   const [panel, setPanel] = useState<Panel>(null);
   const [selected, setSelected] = useState<AdminClient | null>(null);
   const [deactivateId, setDeactivateId] = useState<string | null>(null);
-  const { data: clientPage, isLoading, isFetching, error } = useGetAdminClientsQuery({ search, status, assignedAdvisor: advisor, recent, page, pageSize });
+  const [sortBy, sortOrder] = sort.split('-') as ['createdAt' | 'name' | 'status' | 'advisor', 'asc' | 'desc'];
+  const { data: clientPage, isLoading, isFetching, error } = useGetAdminClientsQuery({ search, status, assignedAdvisor: advisor, recent, sortBy, sortOrder, page, pageSize });
   const [deactivate, { isLoading: isDeactivating }] = useDeactivateAdminClientMutation();
 
-  useEffect(() => setPage(1), [search, status, advisor, recent]);
+  useEffect(() => setPage(1), [search, status, advisor, recent, sort]);
   const clients = clientPage?.items ?? [];
   const meta = clientPage?.meta;
 
@@ -93,20 +96,21 @@ export function AdminClientsPage() {
             </div>
             <Button variant="ghost" className="h-9 w-9 px-0" onClick={() => setPanel(null)} aria-label="Close panel"><X className="h-4 w-4" /></Button>
           </div>
-          {panel === 'bulk' ? <BulkUpload onDone={() => setPanel(null)} isAdmin={isAdmin} currentAdvisor={currentAdvisor} advisors={advisorNames} /> : panel === 'view' && selected ? <ClientView client={selected} isAdmin={isAdmin} onEdit={() => openPanel('edit', selected)} /> : <ClientForm client={panel === 'edit' ? selected : null} onDone={() => setPanel(null)} isAdmin={isAdmin} currentAdvisor={currentAdvisor} advisors={advisorNames} />}
+          {panel === 'bulk' ? <BulkUpload onDone={() => setPanel(null)} isAdmin={isAdmin} currentAdvisor={currentAdvisor} advisors={advisorNames} /> : <ClientForm client={panel === 'edit' ? selected : null} onDone={() => setPanel(null)} isAdmin={isAdmin} currentAdvisor={currentAdvisor} advisors={advisorNames} />}
         </section>
       )}
 
       <section className="space-y-3">
-        <div className={`grid gap-2 rounded-md border border-ink/10 bg-white/55 p-3 backdrop-blur-xl dark:border-white/10 dark:bg-white/5 ${isAdmin ? 'md:grid-cols-[minmax(240px,1fr)_160px_190px_auto]' : 'md:grid-cols-[minmax(240px,1fr)_160px_auto]'}`}>
+        <div className="grid gap-2 rounded-md border border-ink/10 bg-white/55 p-3 backdrop-blur-xl dark:border-white/10 dark:bg-white/5 md:grid-cols-2 xl:grid-cols-[minmax(240px,1fr)_150px_180px_180px_auto]">
           <label className="relative">
             <span className="sr-only">Search clients</span><Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-ink/40" />
-            <input className={`${inputClass} pl-9`} value={search} onChange={(event) => setSearch(event.target.value)} placeholder={isAdmin ? 'Name, email, advisor or client ID' : 'Name, email or client ID'} />
+            <input className={`${inputClass} pl-9`} value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Name, email, advisor or client ID" />
           </label>
           <select aria-label="Filter by status" className={inputClass} value={status} onChange={(event) => setStatus(event.target.value as typeof status)}>
             <option value="">All statuses</option><option value="ACTIVE">Active</option><option value="INACTIVE">Inactive</option>
           </select>
-          {isAdmin && <select aria-label="Filter by assigned advisor" className={inputClass} value={advisor} onChange={(event) => setAdvisor(event.target.value)}><option value="">All advisors</option>{advisors.map((item) => <option key={item.id} value={item.name}>{item.name}</option>)}</select>}
+          {isAdmin ? <select aria-label="Filter by assigned advisor" className={inputClass} value={advisor} onChange={(event) => setAdvisor(event.target.value)}><option value="">All advisors</option>{advisors.map((item) => <option key={item.id} value={item.name}>{item.name}</option>)}</select> : <input aria-label="Assigned advisor" className={inputClass} value={currentAdvisor} disabled />}
+          <select aria-label="Sort clients" className={inputClass} value={sort} onChange={(event) => setSort(event.target.value)}><option value="createdAt-desc">Newest first</option><option value="createdAt-asc">Oldest first</option><option value="name-asc">Name A–Z</option><option value="name-desc">Name Z–A</option><option value="status-asc">Status A–Z</option><option value="advisor-asc">Advisor A–Z</option></select>
           <label className="flex min-h-10 items-center gap-2 rounded-md border border-ink/10 bg-white/45 px-3 text-sm font-medium dark:border-white/10 dark:bg-white/5">
             <input type="checkbox" checked={recent} onChange={(event) => setRecent(event.target.checked)} className="h-4 w-4 accent-sage" />Recently created
           </label>
@@ -117,9 +121,9 @@ export function AdminClientsPage() {
         ) : (
           <div className="overflow-hidden rounded-md border border-ink/10 bg-white/65 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
             <div className="overflow-x-auto">
-              <table className={`${isAdmin ? 'min-w-[900px]' : 'min-w-[760px]'} w-full text-left text-sm`}>
+              <table className="min-w-[900px] w-full text-left text-sm">
                 <thead className="border-b border-ink/10 bg-ink/[0.025] text-xs font-semibold uppercase text-ink/50 dark:border-white/10 dark:bg-white/[0.03] dark:text-white/50">
-                  <tr><th className="px-4 py-3">Client</th><th className="px-4 py-3">Client ID</th><th className="px-4 py-3">Contact</th>{isAdmin && <th className="px-4 py-3">Advisor</th>}<th className="px-4 py-3">Status</th><th className="px-4 py-3 text-right">Actions</th></tr>
+                  <tr>{clientTableColumns.map((column) => <th key={column} className={`px-4 py-3 ${column === 'Actions' ? 'text-right' : ''}`}>{column}</th>)}</tr>
                 </thead>
                 <tbody className="divide-y divide-ink/8 dark:divide-white/8">
                   {clients.map((client) => (
@@ -127,14 +131,14 @@ export function AdminClientsPage() {
                       <td className="px-4 py-3"><ClientNameLink client={client} isAdmin={isAdmin} /><p className="mt-0.5 text-xs text-ink/50 dark:text-white/50">{client.riskProfile || 'No risk profile'}</p></td>
                       <td className="px-4 py-3 font-mono text-xs text-ink/65 dark:text-white/65">{client.id}</td>
                       <td className="px-4 py-3"><p>{client.email}</p><p className="mt-0.5 text-xs text-ink/50 dark:text-white/50">{client.mobileNumber}</p></td>
-                      {isAdmin && <td className="px-4 py-3">{client.assignedAdvisor}</td>}
+                      <td className="px-4 py-3">{client.assignedAdvisor}</td>
                       <td className="px-4 py-3"><StatusBadge status={client.status} /></td>
                       <td className="px-4 py-3">
                         {deactivateId === client.id ? (
                           <div className="flex justify-end gap-2"><span className="self-center text-xs font-medium text-coral">Deactivate?</span><Button variant="secondary" onClick={() => setDeactivateId(null)}>Cancel</Button><Button disabled={isDeactivating} onClick={() => confirmDeactivate(client.id)}>Confirm</Button></div>
                         ) : (
                           <div className="flex justify-end gap-1">
-                            {isAdmin ? <IconButton label="View client" onClick={() => openPanel('view', client)}><Eye className="h-4 w-4" /></IconButton> : <Link to={`/advisor/clients/${client.id}`} aria-label={`View ${client.name}`} title={`View ${client.name}`} className="inline-flex h-9 w-9 items-center justify-center rounded-md text-ink/55 transition hover:bg-ink/5 hover:text-ink dark:text-white/55 dark:hover:bg-white/10 dark:hover:text-white"><Eye className="h-4 w-4" /></Link>}
+                            <Link to={clientDetailsPath(client.id, isAdmin)} aria-label={`View ${client.name}`} title={`View ${client.name}`} className="inline-flex h-9 w-9 items-center justify-center rounded-md text-ink/55 transition hover:bg-ink/5 hover:text-ink dark:text-white/55 dark:hover:bg-white/10 dark:hover:text-white"><Eye className="h-4 w-4" /></Link>
                             <IconButton label="Edit client" onClick={() => openPanel('edit', client)}><Pencil className="h-4 w-4" /></IconButton>
                             <IconButton label="Deactivate client" disabled={client.status === 'INACTIVE'} onClick={() => setDeactivateId(client.id)}><UserRoundX className="h-4 w-4" /></IconButton>
                           </div>
@@ -161,10 +165,10 @@ export function AdminClientsPage() {
 }
 
 export function ClientNameLink({ client, isAdmin }: { client: Pick<AdminClient, 'id' | 'name'>; isAdmin: boolean }) {
-  return isAdmin
-    ? <p className="font-semibold">{client.name}</p>
-    : <Link to={`/advisor/clients/${client.id}`} className="font-semibold transition hover:text-sage focus-visible:text-sage">{client.name}</Link>;
+  return <Link to={clientDetailsPath(client.id, isAdmin)} className="font-semibold transition hover:text-sage focus-visible:text-sage">{client.name}</Link>;
 }
+
+function clientDetailsPath(clientId: string, isAdmin: boolean) { return isAdmin ? `/admin/clients/${clientId}` : `/advisor/clients/${clientId}`; }
 
 function ClientForm({ client, onDone, isAdmin, currentAdvisor, advisors }: { client: AdminClient | null; onDone: () => void; isAdmin: boolean; currentAdvisor: string; advisors: string[] }) {
   const dispatch = useAppDispatch();
@@ -280,7 +284,7 @@ function Field({ label, children, wide = false }: { label: string; children: Rea
 function IconButton({ label, children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { label: string }) { return <button type="button" aria-label={label} title={label} className="inline-flex h-9 w-9 items-center justify-center rounded-md text-ink/55 transition hover:bg-ink/5 hover:text-ink disabled:cursor-not-allowed disabled:opacity-30 dark:text-white/55 dark:hover:bg-white/10 dark:hover:text-white" {...props}>{children}</button>; }
 function StatusBadge({ status }: { status: string }) { const positive = status === 'ACTIVE' || status === 'PUBLISHED'; return <span className={`inline-flex rounded-full px-2 py-1 text-[11px] font-bold ${positive ? 'bg-sage/12 text-sage' : 'bg-ink/8 text-ink/55 dark:bg-white/10 dark:text-white/55'}`}>{humanize(status)}</span>; }
 function ClientTableSkeleton() { return <div className="space-y-2 rounded-md border border-ink/10 bg-white/50 p-4 dark:border-white/10 dark:bg-white/5">{Array.from({ length: 6 }).map((_, index) => <Skeleton key={index} className="h-14" />)}</div>; }
-function panelTitle(panel: Exclude<Panel, null>) { return ({ create: 'Create client', edit: 'Edit client', view: 'Client details', bulk: 'Bulk upload clients' } as const)[panel]; }
+function panelTitle(panel: Exclude<Panel, null>) { return ({ create: 'Create client', edit: 'Edit client', bulk: 'Bulk upload clients' } as const)[panel]; }
 function fromClient(client: AdminClient): ClientUpsertRequest { return { id: client.id, name: client.name, email: client.email, mobileNumber: client.mobileNumber ?? '', assignedAdvisor: client.assignedAdvisor ?? '', status: client.status || 'ACTIVE', dateOfBirth: client.dateOfBirth ?? '', riskProfile: client.riskProfile ?? '', investmentGoal: client.investmentGoal ?? '', portfolioId: client.portfolioId ?? '', notes: client.notes ?? '', password: '' }; }
 function errorMessage(error: unknown) { const queryError = error as FetchBaseQueryError; if (typeof queryError?.data === 'object' && queryError.data && 'error' in queryError.data) return String((queryError.data as { error: string }).error); return 'Please try again.'; }
 function humanize(value: string) { return value.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/_/g, ' ').toLowerCase().replace(/^./, (letter) => letter.toUpperCase()); }

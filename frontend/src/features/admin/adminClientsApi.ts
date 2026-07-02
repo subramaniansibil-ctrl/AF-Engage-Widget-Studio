@@ -41,6 +41,8 @@ export interface ClientFilters {
   status?: ClientStatus | '';
   assignedAdvisor?: string;
   recent?: boolean;
+  sortBy?: 'createdAt' | 'name' | 'status' | 'advisor';
+  sortOrder?: 'asc' | 'desc';
   page?: number;
   pageSize?: number;
 }
@@ -69,6 +71,8 @@ function queryString(filters: ClientFilters) {
   if (filters.status) params.set('status', filters.status);
   if (filters.assignedAdvisor) params.set('assignedAdvisor', filters.assignedAdvisor);
   if (filters.recent) params.set('recent', 'true');
+  if (filters.sortBy) params.set('sortBy', filters.sortBy);
+  if (filters.sortOrder) params.set('sortOrder', filters.sortOrder);
   if (filters.page) params.set('page', String(filters.page));
   if (filters.pageSize) params.set('pageSize', String(filters.pageSize));
   const query = params.toString();

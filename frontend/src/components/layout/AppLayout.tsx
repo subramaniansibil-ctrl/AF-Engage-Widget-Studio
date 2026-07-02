@@ -21,7 +21,7 @@ const navItems: NavItem[] = [
   { to: '/advisor/analytics', label: 'Analytics', icon: ChartNoAxesCombined, roles: ['ADVISOR', 'ADMIN'] },
   { to: '/client/dashboard', label: 'Overview', icon: UserRound, roles: ['CLIENT', 'ADMIN'] },
   { to: '/admin/dashboard', label: 'Audit Logs', icon: FileClock, roles: ['ADMIN'] },
-  { to: '/admin/clients', label: 'Client management', icon: UsersRound, roles: ['ADMIN'] },
+  { to: '/admin/clients', label: 'Clients', icon: UsersRound, roles: ['ADMIN'] },
   { to: '/admin/advisors', label: 'Advisors', icon: UserCog, roles: ['ADMIN'] },
 ];
 
