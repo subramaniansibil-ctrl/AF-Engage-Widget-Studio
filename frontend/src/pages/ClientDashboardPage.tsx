@@ -1,7 +1,6 @@
-import { Activity, ArrowRight, Eye, PiggyBank, Target, WalletCards } from 'lucide-react';
+import { Activity, ArrowRight, Eye } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { KpiCard } from '../components/ui/KpiCard';
 import {
   useGetClientDashboardQuery,
   type Simulation,
@@ -38,7 +37,7 @@ export function ClientDashboardPage() {
         </div>
         <div className="rounded-md bg-sage/10 p-5">
           <p className="text-sm font-semibold text-sage">Retirement readiness</p>
-          <p className="mt-3 text-5xl font-bold text-ink">{dashboard.retirementReadinessScore}</p>
+          <p className="mt-3 text-5xl font-bold text-ink">{dashboard.retirementReadinessScore}<span className="text-2xl text-ink/55">/100</span></p>
           <div className="mt-5 h-3 overflow-hidden rounded-full bg-white">
             <div
               className="h-full rounded-full bg-sage"
@@ -50,25 +49,6 @@ export function ClientDashboardPage() {
             {dashboard.retirementGoalProgress.targetAge}.
           </p>
         </div>
-      </section>
-
-      <section className="grid gap-4 md:grid-cols-3">
-        <KpiCard
-          label="Portfolio value"
-          value={currency.format(dashboard.portfolioSummary.totalValue)}
-          icon={<WalletCards className="h-4 w-4" />}
-          tone="success"
-        />
-        <KpiCard
-          label="Savings pot"
-          value={currency.format(dashboard.portfolioSummary.savingsPotBalance)}
-          icon={<PiggyBank className="h-4 w-4" />}
-        />
-        <KpiCard
-          label="Monthly contribution"
-          value={currency.format(dashboard.portfolioSummary.monthlyContribution)}
-          icon={<Target className="h-4 w-4" />}
-        />
       </section>
 
       <section>

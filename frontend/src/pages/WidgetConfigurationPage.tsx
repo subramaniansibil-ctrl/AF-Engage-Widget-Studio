@@ -11,7 +11,7 @@ import {
   UserRound,
   X,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppDispatch } from '../app/hooks';
 import { Button } from '../components/ui/Button';
@@ -20,7 +20,11 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { Skeleton } from '../components/ui/Skeleton';
 import { WidgetBrandIcon } from '../components/widgets/WidgetBrandIcon';
 import { WidgetLivePreview } from '../components/widgets/WidgetLivePreview';
+import { InteractiveWidgetWorkspace, type SimulationSnapshot } from '../components/widgets/InteractiveWidgetWorkspace';
+import { SavedSimulationsPanel } from '../components/widgets/SavedSimulationsPanel';
+import { exportSimulationPdf, SimulationPrintReport, SimulationWorkflowActions } from '../components/widgets/SimulationActions';
 import { useGetClientsQuery, type Client } from '../features/advisor/advisorApi';
+import { type Simulation, useGetAdvisorClientSimulationsQuery, useSaveAdvisorClientSimulationMutation, useUpdateAdvisorClientSimulationMutation } from '../features/client/clientApi';
 import { addToast } from '../features/ui/uiSlice';
 import { filterWidgetCatalog, type WidgetCatalogFilter } from '../features/widgets/widgetCatalog';
 import { assignmentValidationMessage, assignWidgetSet } from '../features/widgets/widgetAssignment';
@@ -48,6 +52,7 @@ interface ConfigurationField {
 
 const PAGE_SIZE = 6;
 const CLIENT_PAGE_SIZE = 1000;
+const emptySimulation: SimulationSnapshot = { inputs: {}, results: {}, summary: '' };
 const configurationFields: Record<string, ConfigurationField[]> = {
   'two-pot-impact': [
     { key: 'projectionYears', label: 'Projection period', type: 'number', suffix: 'years' },
@@ -155,10 +160,17 @@ export function WidgetConfigurationPage() {
   const [validationError, setValidationError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [simulationSnapshot, setSimulationSnapshot] = useState<SimulationSnapshot>(emptySimulation);
+  const [workspaceVersion, setWorkspaceVersion] = useState(0);
+  const [activeSimulation, setActiveSimulation] = useState<Simulation>();
+  const handleSimulationChange = useCallback((snapshot: SimulationSnapshot) => setSimulationSnapshot(snapshot), []);
   const [configureWidget] = useConfigureWidgetMutation();
   const [assignWidget] = useAssignWidgetMutation();
   const [removeAssignedWidget, { isLoading: isRemoving }] = useRemoveAssignedWidgetMutation();
   const [updateAssignedWidget, { isLoading: isUpdating }] = useUpdateAssignedWidgetMutation();
+  const [saveAdvisorSimulation, { isLoading: isSavingSimulation }] = useSaveAdvisorClientSimulationMutation();
+  const [updateAdvisorSimulation, { isLoading: isUpdatingSimulation }] = useUpdateAdvisorClientSimulationMutation();
+  const { data: savedSimulations = [], isLoading: savedSimulationsLoading } = useGetAdvisorClientSimulationsQuery({ clientId, widgetId: initialWidgetId }, { skip: !isEditMode });
   const {
     data: assignedWidgets = [],
     isFetching: assignedWidgetsLoading,
@@ -359,12 +371,52 @@ export function WidgetConfigurationPage() {
   async function handleSaveEdit() {
     if (!editAssignment || !editWidget) return;
     try {
-      await updateAssignedWidget({ clientId, assignmentId: editAssignment.id, options: widgetOptions[editWidget.id] ?? editAssignment.configuration.options }).unwrap();
+      const configuredValues = widgetOptions[editWidget.id] ?? editAssignment.configuration.options;
+      const options = Object.keys(simulationSnapshot.inputs).length ? { ...configuredValues, ...simulationSnapshot.inputs } : configuredValues;
+      await updateAssignedWidget({ clientId, assignmentId: editAssignment.id, options }).unwrap();
       dispatch(addToast({ title: 'Widget updated', description: `${editWidget.name} was updated for ${selectedClient?.name ?? 'the client'}.`, variant: 'success' }));
       navigate(returnTo);
     } catch {
       dispatch(addToast({ title: 'Update failed', description: 'The widget configuration could not be saved. Please try again.', variant: 'error' }));
     }
+  }
+
+  async function handleSaveSimulation(name: string) {
+    if (!editAssignment || !Object.keys(simulationSnapshot.inputs).length) return;
+    try {
+      const saved = await saveAdvisorSimulation({
+        clientId,
+        name,
+        widgetId: editAssignment.widgetId,
+        widgetName: editAssignment.widgetName,
+        inputs: simulationSnapshot.inputs,
+        results: simulationSnapshot.results,
+        result: simulationSnapshot.summary,
+      }).unwrap();
+      setActiveSimulation(saved);
+      dispatch(addToast({ title: 'Simulation saved', description: `${saved.name} is ready to revisit or compare.`, variant: 'success' }));
+    } catch {
+      dispatch(addToast({ title: 'Save failed', description: 'Your simulation could not be saved. Please try again.', variant: 'error' }));
+      throw new Error('simulation save failed');
+    }
+  }
+
+  async function handleUpdateSimulation() {
+    if (!activeSimulation) return;
+    try {
+      const updated = await updateAdvisorSimulation({ clientId, id: activeSimulation.id, name: activeSimulation.name, inputs: simulationSnapshot.inputs, results: simulationSnapshot.results, result: simulationSnapshot.summary }).unwrap();
+      setActiveSimulation(updated);
+      dispatch(addToast({ title: 'Simulation updated', description: `${updated.name} now includes your latest values.`, variant: 'success' }));
+    } catch {
+      dispatch(addToast({ title: 'Update failed', description: 'The simulation changes could not be saved. Please try again.', variant: 'error' }));
+    }
+  }
+
+  function handleResetSimulation() {
+    setSimulationSnapshot(emptySimulation);
+    setActiveSimulation(undefined);
+    setWorkspaceVersion((value) => value + 1);
+    dispatch(addToast({ title: 'Simulation reset', description: 'Values were restored to the last saved widget configuration.', variant: 'info' }));
   }
 
   if (isEditMode) {
@@ -377,16 +429,33 @@ export function WidgetConfigurationPage() {
     const editValues = widgetOptions[editWidget.id] ?? editAssignment.configuration.options;
     return (
       <div className="space-y-5">
-        <Link to={returnTo} className="inline-flex items-center gap-2 text-sm font-semibold text-sage"><ChevronLeft className="h-4 w-4" />Back to {selectedClient.name}</Link>
-        <section><p className="text-sm font-semibold text-sage">Edit assigned widget</p><h2 className="mt-1 text-2xl font-bold sm:text-3xl">{editWidget.name}</h2><p className="mt-2 text-sm text-ink/60 dark:text-white/60">Update the values for {selectedClient.name} and review the client experience before saving.</p></section>
-        <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(360px,0.85fr)]">
-          <Card className="p-5">
-            <div className="flex items-center gap-3"><WidgetBrandIcon widgetId={editWidget.id} icon={editWidget.icon} /><div><p className="text-xs font-semibold text-sage">{editWidget.category}</p><h3 className="font-semibold">Widget configuration</h3></div></div>
-            <div className="mt-5"><WidgetConfigurationForm widget={editWidget} values={editValues} onChange={(key, value) => updateOption(editWidget.id, key, value)} expanded hideInlinePreview /></div>
-          </Card>
-          <div className="xl:sticky xl:top-5"><div className="mb-3 flex items-center gap-2"><Eye className="h-4 w-4 text-sage" /><h3 className="text-sm font-semibold">Live client preview</h3></div><WidgetLivePreview widgetId={editWidget.id} name={editWidget.name} category={editWidget.category} values={editValues} clientName={selectedClient.name} /></div>
-        </div>
-        <div className="flex flex-wrap justify-end gap-2 rounded-md border border-ink/10 bg-white/55 p-4 dark:border-white/10 dark:bg-white/5"><Button variant="secondary" onClick={() => navigate(returnTo)}>Cancel</Button><Button onClick={handleSaveEdit} disabled={isUpdating}><Save className="h-4 w-4" />{isUpdating ? 'Saving changes…' : 'Save changes'}</Button></div>
+        <Link to={returnTo} className="inline-flex items-center gap-2 text-sm font-semibold text-sage print:hidden"><ChevronLeft className="h-4 w-4" />Back to {selectedClient.name}</Link>
+        <section className="print:hidden"><p className="text-sm font-semibold text-sage">Widget configuration and simulation</p><h2 className="mt-1 text-2xl font-bold sm:text-3xl">{editWidget.name}</h2><p className="mt-2 text-sm text-ink/60 dark:text-white/60">Update the values for {selectedClient.name}, review the live simulation using those same values, and save when ready.</p></section>
+        <SimulationWorkflowActions
+          canSave={Object.keys(simulationSnapshot.inputs).length > 0}
+          saving={isSavingSimulation}
+          updating={isUpdatingSimulation}
+          activeName={activeSimulation?.name}
+          onExport={exportSimulationPdf}
+          onSaveAsNew={handleSaveSimulation}
+          onUpdate={handleUpdateSimulation}
+          onReset={handleResetSimulation}
+        />
+        <SimulationPrintReport clientName={selectedClient.name} clientEmail={selectedClient.email} advisorName={selectedClient.assignedAdvisor} widgetName={editWidget.name} simulationName={activeSimulation?.name} values={Object.keys(simulationSnapshot.inputs).length ? simulationSnapshot.inputs : editValues} />
+        <Card className="p-5 print:hidden">
+          <div className="flex items-center gap-3"><WidgetBrandIcon widgetId={editWidget.id} icon={editWidget.icon} /><div><p className="text-xs font-semibold text-sage">{editWidget.category}</p><h3 className="font-semibold">Configuration, simulation, and graph</h3><p className="mt-1 text-xs text-ink/50 dark:text-white/50">Change any value below to update the results and graph immediately.</p></div></div>
+        </Card>
+        <InteractiveWidgetWorkspace
+          key={`${editAssignment.id}-${workspaceVersion}-${JSON.stringify(editValues)}`}
+          assignment={{ ...editAssignment, configuration: { ...editAssignment.configuration, options: editValues } }}
+          portfolio={selectedClient.portfolio}
+          retirementGoal={selectedClient.retirementGoal}
+          clientAge={selectedClient.age}
+          loadedSimulation={activeSimulation}
+          onSnapshotChange={handleSimulationChange}
+        />
+        <div className="print:hidden"><SavedSimulationsPanel simulations={savedSimulations} loading={savedSimulationsLoading} activeSimulation={activeSimulation} currentSnapshot={simulationSnapshot} advisorClientId={clientId} ownerLabel={`${selectedClient.name}'s`} onOpen={(simulation) => { setActiveSimulation(simulation); setWorkspaceVersion((value) => value + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }} /></div>
+        <div className="flex flex-wrap justify-end gap-2 rounded-md border border-ink/10 bg-white/55 p-4 dark:border-white/10 dark:bg-white/5 print:hidden"><Button variant="secondary" onClick={() => navigate(returnTo)}>Cancel</Button><Button onClick={handleSaveEdit} disabled={isUpdating}><Save className="h-4 w-4" />{isUpdating ? 'Saving configuration…' : 'Save widget configuration'}</Button></div>
       </div>
     );
   }

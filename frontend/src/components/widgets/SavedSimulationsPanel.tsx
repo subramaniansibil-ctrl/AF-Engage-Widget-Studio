@@ -1,4 +1,4 @@
-import { Copy, GitCompareArrows, Pencil, Play, Save, Trash2 } from 'lucide-react';
+import { Copy, GitCompareArrows, Pencil, Play, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useAppDispatch } from '../../app/hooks';
 import {
@@ -34,7 +34,7 @@ type UpdatePayload = {
   result: string;
 };
 
-export function SavedSimulationsPanel({ simulations, loading, activeSimulation, currentSnapshot, onOpen, advisorClientId, ownerLabel = 'Your' }: SavedSimulationsPanelProps) {
+export function SavedSimulationsPanel({ simulations, loading, activeSimulation, onOpen, advisorClientId, ownerLabel = 'Your' }: SavedSimulationsPanelProps) {
   const dispatch = useAppDispatch();
   const [renameId, setRenameId] = useState<string>();
   const [renameValue, setRenameValue] = useState('');
@@ -65,17 +65,6 @@ export function SavedSimulationsPanel({ simulations, loading, activeSimulation, 
     }
   }
 
-  async function updateActive() {
-    if (!activeSimulation) return;
-    try {
-      const updated = await updateExistingSimulation({ id: activeSimulation.id, name: activeSimulation.name, inputs: currentSnapshot.inputs, results: currentSnapshot.results, result: currentSnapshot.summary });
-      onOpen(updated);
-      dispatch(addToast({ title: 'Simulation updated', description: `${updated.name} now includes your latest values.`, variant: 'success' }));
-    } catch {
-      dispatch(addToast({ title: 'Update failed', variant: 'error' }));
-    }
-  }
-
   async function duplicate(simulation: Simulation) {
     try {
       if (advisorClientId) await duplicateAdvisorSimulation({ clientId: advisorClientId, id: simulation.id }).unwrap();
@@ -103,7 +92,7 @@ export function SavedSimulationsPanel({ simulations, loading, activeSimulation, 
   }
 
   return <section className="space-y-4">
-    <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end"><div><p className="text-sm font-semibold text-sage">Saved simulations</p><h3 className="mt-1 text-xl font-bold">{ownerLabel} planning scenarios</h3><p className="mt-1 text-sm text-ink/55 dark:text-white/55">Reopen, refine, duplicate, or compare previous ideas.</p></div>{activeSimulation && <Button onClick={updateActive} disabled={busyUpdating}><Save className="h-4 w-4" />{busyUpdating ? 'Updating...' : `Update ${activeSimulation.name}`}</Button>}</div>
+    <div><p className="text-sm font-semibold text-sage">Saved simulations</p><h3 className="mt-1 text-xl font-bold">{ownerLabel} planning scenarios</h3><p className="mt-1 text-sm text-ink/55 dark:text-white/55">Open a scenario to continue editing, rename it, duplicate it, or compare two options.</p></div>
     {loading ? <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">{Array.from({ length: 3 }).map((_, index) => <Skeleton key={index} className="h-48" />)}</div> : !simulations.length ? <EmptyState title="No saved simulations" description="Adjust the widget, then save your first named scenario." /> : <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">{simulations.map((simulation) => <article key={simulation.id} className={['rounded-md border bg-white/60 p-4 shadow-sm dark:bg-white/5', activeSimulation?.id === simulation.id ? 'border-sage ring-2 ring-sage/10' : 'border-ink/10 dark:border-white/10'].join(' ')}>
       <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate text-sm font-semibold">{simulation.name}</p><p className="mt-1 text-xs text-sage">{simulation.widgetName}</p></div><label className="flex items-center gap-1.5 text-[11px] text-ink/50 dark:text-white/50"><input type="checkbox" checked={compareIds.includes(simulation.id)} onChange={() => toggleCompare(simulation.id)} className="accent-sage" />Compare</label></div>
       <p className="mt-3 line-clamp-2 min-h-10 text-sm leading-5 text-ink/60 dark:text-white/60">{simulation.result}</p>

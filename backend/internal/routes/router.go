@@ -22,7 +22,7 @@ func NewRouter(cfg config.Config, statusService services.StatusService, authServ
 	statusHandler := handlers.NewStatusHandler(statusService)
 	authHandler := handlers.NewAuthHandler(authService)
 	advisorHandler := handlers.NewAdvisorHandler(advisorService)
-	widgetHandler := handlers.NewWidgetHandler(widgetService)
+	widgetHandler := handlers.NewWidgetHandler(widgetService, clientManagementService)
 	clientHandler := handlers.NewClientHandler(clientService)
 	simulationHandler := handlers.NewSimulationHandler(simulationService)
 	analyticsHandler := handlers.NewAnalyticsHandler(analyticsService)

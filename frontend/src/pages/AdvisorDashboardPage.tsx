@@ -80,7 +80,7 @@ export function AdvisorDashboardPage() {
       actionLabel: highRiskCount === 1 ? 'Open client profile' : 'View matched clients',
       actionHref: highRiskCount === 1 && highRiskClients[0]
         ? `/advisor/clients/${highRiskClients[0].id}`
-        : `/advisor/clients?clientIds=${highRiskClients.map((client) => client.id).join(',')}`,
+        : '/advisor/client-management',
     },
     {
       label: 'Refresh published dashboards',
@@ -90,7 +90,7 @@ export function AdvisorDashboardPage() {
       actionLabel: dashboardRefreshCount === 1 ? 'Open client profile' : 'View matched clients',
       actionHref: dashboardRefreshCount === 1 && dashboardRefreshClients[0]
         ? `/advisor/clients/${dashboardRefreshClients[0].id}`
-        : `/advisor/clients?clientIds=${dashboardRefreshClients.map((client) => client.id).join(',')}`,
+        : '/advisor/client-management',
     },
     {
       label: 'Prepare retirement reviews',
@@ -100,7 +100,7 @@ export function AdvisorDashboardPage() {
       actionLabel: preRetirementCount === 1 ? 'Open client profile' : 'View matched clients',
       actionHref: preRetirementCount === 1 && preRetirementClients[0]
         ? `/advisor/clients/${preRetirementClients[0].id}`
-        : `/advisor/clients?clientIds=${preRetirementClients.map((client) => client.id).join(',')}`,
+        : '/advisor/client-management',
     },
   ];
 
@@ -119,7 +119,7 @@ export function AdvisorDashboardPage() {
           </p>
         </div>
         <Link
-          to="/advisor/clients"
+          to="/advisor/client-management"
           className="rounded-md bg-ink px-4 py-3 text-sm font-semibold text-white transition hover:bg-ink/90"
         >
           View clients
