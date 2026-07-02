@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { Boxes, ChartNoAxesCombined, FileClock, LayoutDashboard, LogOut, Menu, Sparkles, UserCog, UserRound, UsersRound } from 'lucide-react';
+import { Boxes, ChartNoAxesCombined, FileClock, LayoutDashboard, LogOut, Menu, Sparkles, UserCog, UsersRound } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { useLogoutMutation } from '../../features/api/apiSlice';
@@ -15,14 +15,15 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { to: '/advisor/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['ADVISOR', 'ADMIN'] },
+  { to: '/advisor/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['ADVISOR'] },
   { to: '/advisor/client-management', label: 'Clients', icon: UsersRound, roles: ['ADVISOR'] },
+  { to: '/admin/analytics', label: 'Dashboard', icon: ChartNoAxesCombined, roles: ['ADMIN'] },
   { to: '/advisor/widgets', label: 'Widgets', icon: Boxes, roles: ['ADVISOR', 'ADMIN'] },
-  { to: '/advisor/analytics', label: 'Analytics', icon: ChartNoAxesCombined, roles: ['ADVISOR', 'ADMIN'] },
-  { to: '/client/dashboard', label: 'Overview', icon: UserRound, roles: ['CLIENT', 'ADMIN'] },
-  { to: '/admin/dashboard', label: 'Audit Logs', icon: FileClock, roles: ['ADMIN'] },
-  { to: '/admin/clients', label: 'Clients', icon: UsersRound, roles: ['ADMIN'] },
-  { to: '/admin/advisors', label: 'Advisors', icon: UserCog, roles: ['ADMIN'] },
+  { to: '/advisor/analytics', label: 'Analytics', icon: ChartNoAxesCombined, roles: ['ADVISOR'] },
+  { to: '/client/dashboard', label: 'Overview', icon: UsersRound, roles: ['CLIENT'] },
+  { to: '/admin/audit-logs', label: 'Audit Log', icon: FileClock, roles: ['ADMIN'] },
+  { to: '/admin/clients', label: 'Client Management', icon: UsersRound, roles: ['ADMIN'] },
+  { to: '/admin/advisors', label: 'Advisor Management', icon: UserCog, roles: ['ADMIN'] },
 ];
 
 export function AppLayout() {

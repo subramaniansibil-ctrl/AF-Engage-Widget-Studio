@@ -19,8 +19,32 @@ func NewAnalyticsHandler(service services.AnalyticsService) *AnalyticsHandler {
 	return &AnalyticsHandler{service: service}
 }
 
+func (h *AnalyticsHandler) AdminAnalytics(c *gin.Context) {
+	analytics, err := h.service.GetAdminAnalytics(c.Request.Context())
+	if err != nil {
+		utils.JSONError(c, http.StatusInternalServerError, "failed to load admin analytics")
+		return
+	}
+	c.JSON(http.StatusOK, analytics)
+}
+
 func (h *AnalyticsHandler) AdvisorAnalytics(c *gin.Context) {
-	analytics, err := h.service.GetAdvisorAnalytics(c.Request.Context())
+	user, ok := currentUser(c)
+	if !ok {
+		utils.JSONError(c, http.StatusUnauthorized, "authentication required")
+		return
+	}
+	if user.Role != models.RoleAdvisor {
+		analytics, err := h.service.GetAdminAnalytics(c.Request.Context())
+		if err != nil {
+			utils.JSONError(c, http.StatusInternalServerError, "failed to load advisor analytics")
+			return
+		}
+		c.JSON(http.StatusOK, analytics)
+		return
+	}
+
+	analytics, err := h.service.GetAdvisorAnalytics(c.Request.Context(), user.Name)
 	if err != nil {
 		utils.JSONError(c, http.StatusInternalServerError, "failed to load advisor analytics")
 		return
@@ -29,6 +53,21 @@ func (h *AnalyticsHandler) AdvisorAnalytics(c *gin.Context) {
 }
 
 func (h *AnalyticsHandler) WidgetUsage(c *gin.Context) {
+	user, ok := currentUser(c)
+	if !ok {
+		utils.JSONError(c, http.StatusUnauthorized, "authentication required")
+		return
+	}
+	if user.Role == models.RoleAdvisor {
+		analytics, err := h.service.GetAdvisorAnalytics(c.Request.Context(), user.Name)
+		if err != nil {
+			utils.JSONError(c, http.StatusInternalServerError, "failed to load widget usage")
+			return
+		}
+		c.JSON(http.StatusOK, analytics.WidgetUsage)
+		return
+	}
+
 	usage, err := h.service.GetWidgetUsage(c.Request.Context())
 	if err != nil {
 		utils.JSONError(c, http.StatusInternalServerError, "failed to load widget usage")
@@ -70,4 +109,13 @@ func (h *AnalyticsHandler) AuditLogs(c *gin.Context) {
 		Items: logs,
 		Meta:  utils.PaginationMeta(pagination.Page, pagination.PageSize, totalItems),
 	})
+}
+
+func currentUser(c *gin.Context) (models.User, bool) {
+	value, exists := c.Get("user")
+	if !exists {
+		return models.User{}, false
+	}
+	user, ok := value.(models.User)
+	return user, ok
 }

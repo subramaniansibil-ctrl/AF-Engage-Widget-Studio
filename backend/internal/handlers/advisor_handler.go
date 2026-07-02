@@ -20,7 +20,13 @@ func NewAdvisorHandler(service services.AdvisorService) *AdvisorHandler {
 }
 
 func (h *AdvisorHandler) Dashboard(c *gin.Context) {
-	stats, err := h.service.GetDashboardStats(c.Request.Context())
+	advisorName := ""
+	if value, exists := c.Get("user"); exists {
+		if user, ok := value.(models.User); ok && user.Role == models.RoleAdvisor {
+			advisorName = user.Name
+		}
+	}
+	stats, err := h.service.GetDashboardStats(c.Request.Context(), advisorName)
 	if err != nil {
 		utils.JSONError(c, http.StatusInternalServerError, "failed to load advisor dashboard")
 		return

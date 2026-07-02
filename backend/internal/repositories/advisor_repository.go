@@ -22,7 +22,7 @@ type ClientFilters struct {
 }
 
 type AdvisorRepository interface {
-	GetDashboardStats(ctx context.Context) (models.AdvisorDashboardStats, error)
+	GetDashboardStats(ctx context.Context, advisorName string) (models.AdvisorDashboardStats, error)
 	ListClients(ctx context.Context, filters ClientFilters) ([]models.Client, int, error)
 	GetClientByID(ctx context.Context, id string) (models.Client, error)
 }
@@ -37,17 +37,22 @@ func NewMockAdvisorRepository() *mockAdvisorRepository {
 	return &mockAdvisorRepository{clients: mockClients(), advisors: mockAdvisors()}
 }
 
-func (r *mockAdvisorRepository) GetDashboardStats(ctx context.Context) (models.AdvisorDashboardStats, error) {
+func (r *mockAdvisorRepository) GetDashboardStats(ctx context.Context, advisorName string) (models.AdvisorDashboardStats, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	totalAssets := int64(0)
 	highRiskClients := 0
 	activeClients := 0
+	activeDashboards := 0
 	for _, client := range r.clients {
 		if client.Status == models.ClientStatusInactive {
 			continue
 		}
+		if advisorName != "" && client.AssignedAdvisor != advisorName {
+			continue
+		}
 		activeClients++
+		activeDashboards++
 		totalAssets += client.Portfolio.TotalValue
 		if client.RiskProfile == models.RiskAggressive || client.RiskProfile == models.RiskGrowth {
 			highRiskClients++
@@ -58,7 +63,7 @@ func (r *mockAdvisorRepository) GetDashboardStats(ctx context.Context) (models.A
 		TotalClients:           activeClients,
 		TotalAssetsUnderAdvice: totalAssets,
 		HighRiskClients:        highRiskClients,
-		ActiveDashboards:       16,
+		ActiveDashboards:       activeDashboards,
 		WidgetUsageSummary: []models.WidgetUsageSummary{
 			{Name: "Retirement Readiness", Count: 14},
 			{Name: "Risk Comfort Check", Count: 11},

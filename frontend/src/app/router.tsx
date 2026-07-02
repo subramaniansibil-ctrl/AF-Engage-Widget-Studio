@@ -34,6 +34,12 @@ const ClientWidgetDetailPage = lazy(() =>
 const AdminDashboardPage = lazy(() =>
   import('../pages/AdminDashboardPage').then((module) => ({ default: module.AdminDashboardPage })),
 );
+const AdminAnalyticsPage = lazy(() =>
+  import('../pages/AdminAnalyticsPage').then((module) => ({ default: module.AdminAnalyticsPage })),
+);
+const AdminAuditPage = lazy(() =>
+  import('../pages/AdminAuditPage').then((module) => ({ default: module.AdminAuditPage })),
+);
 const AdminClientsPage = lazy(() =>
   import('../pages/AdminClientsPage').then((module) => ({ default: module.AdminClientsPage })),
 );
@@ -92,6 +98,8 @@ export const router = createBrowserRouter([
                 element: <AdminRoute />,
                 children: [
                   { path: 'admin/dashboard', element: routeElement(AdminDashboardPage) },
+                  { path: 'admin/analytics', element: routeElement(AdminAnalyticsPage) },
+                  { path: 'admin/audit-logs', element: routeElement(AdminAuditPage) },
                   { path: 'admin/clients', element: routeElement(AdminClientsPage) },
                   { path: 'admin/clients/:clientId', element: routeElement(AdvisorClientDetailPage) },
                   { path: 'admin/advisors', element: routeElement(AdminAdvisorsPage) },

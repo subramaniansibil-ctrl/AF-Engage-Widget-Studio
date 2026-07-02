@@ -23,15 +23,25 @@ func NewPostgresAnalyticsRepository(db *sql.DB) AnalyticsRepository {
 	return &postgresAnalyticsRepository{db: db}
 }
 
-func (r *postgresAnalyticsRepository) GetAdvisorAnalytics(ctx context.Context) (models.AnalyticsSummary, error) {
+func (r *postgresAnalyticsRepository) GetAdminAnalytics(ctx context.Context) (models.AnalyticsSummary, error) {
 	var summary models.AnalyticsSummary
 	err := r.db.QueryRowContext(ctx, `
 		SELECT
 			(SELECT COUNT(*) FROM users),
-			(SELECT COUNT(*) FROM clients),
+			(SELECT COUNT(*) FROM clients WHERE status = 'ACTIVE'),
 			(SELECT COUNT(*) FROM widgets),
-			(SELECT COUNT(*) FROM simulation_history),
-			(SELECT COUNT(DISTINCT client_id) FROM dashboard_assignments WHERE published = TRUE)
+			(
+				SELECT COUNT(*)
+				FROM simulation_history sh
+				JOIN clients c ON c.id = sh.client_id
+				WHERE c.status = 'ACTIVE'
+			),
+			(
+				SELECT COUNT(DISTINCT da.client_id)
+				FROM dashboard_assignments da
+				JOIN clients c ON c.id = da.client_id
+				WHERE da.published = TRUE AND c.status = 'ACTIVE'
+			)
 	`).Scan(&summary.TotalUsers, &summary.TotalClients, &summary.TotalWidgets, &summary.TotalSimulations, &summary.PublishedDashboards)
 	if err != nil {
 		return models.AnalyticsSummary{}, err
@@ -42,9 +52,47 @@ func (r *postgresAnalyticsRepository) GetAdvisorAnalytics(ctx context.Context) (
 	}
 	summary.WidgetUsage = usage
 	summary.MostUsedWidget = mostUsedWidget(usage)
-	if summary.TotalClients > 0 {
-		summary.ClientEngagement = int(float64(summary.PublishedDashboards) / float64(summary.TotalClients) * 100)
+	return summary, nil
+}
+
+func (r *postgresAnalyticsRepository) GetAdvisorAnalytics(ctx context.Context, advisorName string) (models.AnalyticsSummary, error) {
+	var summary models.AnalyticsSummary
+	totalClientsInSystem := 0
+	err := r.db.QueryRowContext(ctx, `
+		SELECT
+			(SELECT COUNT(*) FROM users WHERE role = 'ADVISOR' AND name = $1),
+			(SELECT COUNT(*) FROM clients WHERE assigned_advisor = $1 AND status = 'ACTIVE'),
+			(SELECT COUNT(*) FROM widgets),
+			(
+				SELECT COUNT(*)
+				FROM simulation_history sh
+				JOIN clients c ON c.id = sh.client_id
+				WHERE c.assigned_advisor = $1 AND c.status = 'ACTIVE'
+			),
+			(
+				SELECT COUNT(DISTINCT da.client_id)
+				FROM dashboard_assignments da
+				JOIN clients c ON c.id = da.client_id
+				WHERE da.published = TRUE AND c.assigned_advisor = $1 AND c.status = 'ACTIVE'
+			),
+			(SELECT COUNT(*) FROM clients WHERE status = 'ACTIVE')
+	`, advisorName).Scan(&summary.TotalUsers, &summary.TotalClients, &summary.TotalWidgets, &summary.TotalSimulations, &summary.PublishedDashboards, &totalClientsInSystem)
+	if err != nil {
+		return models.AnalyticsSummary{}, err
 	}
+
+	if totalClientsInSystem > 0 {
+		summary.ClientEngagement = clientEngagementPercentage(summary.TotalClients, totalClientsInSystem)
+	} else {
+		summary.ClientEngagement = 0
+	}
+
+	usage, err := r.getAdvisorWidgetUsage(ctx, advisorName)
+	if err != nil {
+		return models.AnalyticsSummary{}, err
+	}
+	summary.WidgetUsage = usage
+	summary.MostUsedWidget = mostUsedWidget(usage)
 	return summary, nil
 }
 
@@ -56,17 +104,67 @@ func (r *postgresAnalyticsRepository) GetWidgetUsage(ctx context.Context) ([]mod
 			COALESCE(simulation_counts.simulation_count, 0)
 		FROM widgets w
 		LEFT JOIN (
-			SELECT widget_id, COUNT(*) AS assigned_count, COUNT(*) FILTER (WHERE published = TRUE) AS published_count
-			FROM dashboard_assignments
-			GROUP BY widget_id
+			SELECT da.widget_id, COUNT(*) AS assigned_count, COUNT(*) FILTER (WHERE da.published = TRUE) AS published_count
+			FROM dashboard_assignments da
+			JOIN clients c ON c.id = da.client_id
+			WHERE c.status = 'ACTIVE'
+			GROUP BY da.widget_id
 		) assigned_counts ON assigned_counts.widget_id = w.id
 		LEFT JOIN (
-			SELECT widget_id, COUNT(*) AS simulation_count
-			FROM simulation_history
-			GROUP BY widget_id
+			SELECT sh.widget_id, COUNT(*) AS simulation_count
+			FROM simulation_history sh
+			JOIN clients c ON c.id = sh.client_id
+			WHERE c.status = 'ACTIVE'
+			GROUP BY sh.widget_id
 		) simulation_counts ON simulation_counts.widget_id = w.id
 		ORDER BY COALESCE(simulation_counts.simulation_count, 0) DESC, w.name
 	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	usageRows := []widgetUsageRow{}
+	for rows.Next() {
+		var item widgetUsageRow
+		if err := rows.Scan(&item.WidgetID, &item.WidgetName, &item.AssignedCount, &item.PublishedCount, &item.SimulationCount); err != nil {
+			return nil, err
+		}
+		usageRows = append(usageRows, item)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return widgetUsageRowsToModels(usageRows), nil
+}
+
+func (r *postgresAnalyticsRepository) getAdvisorWidgetUsage(ctx context.Context, advisorName string) ([]models.WidgetUsage, error) {
+	rows, err := r.db.QueryContext(ctx, `
+		SELECT w.id, w.name,
+			COALESCE(assigned_counts.assigned_count, 0),
+			COALESCE(assigned_counts.published_count, 0),
+			COALESCE(simulation_counts.simulation_count, 0)
+		FROM widgets w
+		LEFT JOIN (
+			SELECT da.widget_id, COUNT(*) AS assigned_count, COUNT(*) FILTER (WHERE da.published = TRUE) AS published_count
+			FROM dashboard_assignments da
+			JOIN clients c ON c.id = da.client_id
+			WHERE c.assigned_advisor = $1 AND c.status = 'ACTIVE'
+			GROUP BY da.widget_id
+		) assigned_counts ON assigned_counts.widget_id = w.id
+		LEFT JOIN (
+			SELECT sh.widget_id, COUNT(*) AS simulation_count
+			FROM simulation_history sh
+			JOIN clients c ON c.id = sh.client_id
+			WHERE c.assigned_advisor = $1 AND c.status = 'ACTIVE'
+			GROUP BY sh.widget_id
+		) simulation_counts ON simulation_counts.widget_id = w.id
+		ORDER BY (
+			COALESCE(simulation_counts.simulation_count, 0) +
+			COALESCE(assigned_counts.published_count, 0) +
+			COALESCE(assigned_counts.assigned_count, 0)
+		) DESC, w.name
+	`, advisorName)
 	if err != nil {
 		return nil, err
 	}

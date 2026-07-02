@@ -8,7 +8,8 @@ import (
 )
 
 type AnalyticsService interface {
-	GetAdvisorAnalytics(ctx context.Context) (models.AnalyticsSummary, error)
+	GetAdminAnalytics(ctx context.Context) (models.AnalyticsSummary, error)
+	GetAdvisorAnalytics(ctx context.Context, advisorName string) (models.AnalyticsSummary, error)
 	GetWidgetUsage(ctx context.Context) ([]models.WidgetUsage, error)
 	ListNotifications(ctx context.Context) ([]models.Notification, error)
 	MarkNotificationRead(ctx context.Context, id string) (models.Notification, error)
@@ -23,8 +24,12 @@ func NewAnalyticsService(repository repositories.AnalyticsRepository) AnalyticsS
 	return &analyticsService{repository: repository}
 }
 
-func (s *analyticsService) GetAdvisorAnalytics(ctx context.Context) (models.AnalyticsSummary, error) {
-	return s.repository.GetAdvisorAnalytics(ctx)
+func (s *analyticsService) GetAdminAnalytics(ctx context.Context) (models.AnalyticsSummary, error) {
+	return s.repository.GetAdminAnalytics(ctx)
+}
+
+func (s *analyticsService) GetAdvisorAnalytics(ctx context.Context, advisorName string) (models.AnalyticsSummary, error) {
+	return s.repository.GetAdvisorAnalytics(ctx, advisorName)
 }
 
 func (s *analyticsService) GetWidgetUsage(ctx context.Context) ([]models.WidgetUsage, error) {
