@@ -32,6 +32,7 @@ func (h *ClientManagementHandler) List(c *gin.Context) {
 	clients, totalItems, err := h.service.ListClients(c.Request.Context(), models.ClientManagementFilters{
 		Search: c.Query("search"), Status: models.ClientStatus(c.Query("status")),
 		AssignedAdvisor: c.Query("assignedAdvisor"), RecentlyCreated: recent,
+		SortBy: c.Query("sortBy"), SortOrder: c.Query("sortOrder"),
 		Page: pagination.Page, PageSize: pagination.PageSize,
 	}, actor)
 	if err != nil {

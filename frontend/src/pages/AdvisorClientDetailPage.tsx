@@ -11,13 +11,16 @@ import {
 import { WidgetBrandIcon } from '../components/widgets/WidgetBrandIcon';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Skeleton } from '../components/ui/Skeleton';
-import { useAppDispatch } from '../app/hooks';
+import { useAppDispatch, useAppSelector } from '../app/hooks';
 import { addToast } from '../features/ui/uiSlice';
 import { assignedWidgetConfigurationUrl } from '../features/widgets/widgetNavigation';
 
 export function AdvisorClientDetailPage() {
   const { clientId = '' } = useParams();
   const dispatch = useAppDispatch();
+  const isAdmin = useAppSelector((state) => state.auth.role === 'ADMIN');
+  const clientsPath = isAdmin ? '/admin/clients' : '/advisor/client-management';
+  const clientPath = isAdmin ? `/admin/clients/${clientId}` : `/advisor/clients/${clientId}`;
   const publishInFlight = useRef(false);
   const { data: client, isLoading, isError } = useGetClientByIdQuery(clientId);
   const { data: assignedWidgets = [], isLoading: widgetsLoading, isError: widgetsError, refetch: refetchAssignedWidgets } = useGetAssignedWidgetsQuery(clientId, { skip: !clientId });
@@ -50,7 +53,7 @@ export function AdvisorClientDetailPage() {
     return (
       <div className="rounded-lg border border-ink/10 bg-white p-6 shadow-panel">
         <p className="font-semibold">Client not found</p>
-        <Link to="/advisor/client-management" className="mt-4 inline-flex text-sm font-semibold text-sage">
+        <Link to={clientsPath} className="mt-4 inline-flex text-sm font-semibold text-sage">
           Back to clients
         </Link>
       </div>
@@ -59,7 +62,7 @@ export function AdvisorClientDetailPage() {
 
   return (
     <div className="space-y-6">
-      <Link to="/advisor/client-management" className="inline-flex items-center gap-2 text-sm font-semibold text-sage">
+      <Link to={clientsPath} className="inline-flex items-center gap-2 text-sm font-semibold text-sage">
         <ArrowLeft className="h-4 w-4" />
         Back to clients
       </Link>
@@ -110,7 +113,7 @@ export function AdvisorClientDetailPage() {
         <div className="mt-4 grid gap-3 md:grid-cols-3" aria-live="polite">
           {widgetsLoading && [0, 1, 2].map((item) => <Skeleton key={item} className="h-40" />)}
           {!widgetsLoading && !widgetsError && assignedWidgets.map((assignment) => (
-            <AssignedWidgetCard key={assignment.id} assignment={assignment} />
+            <AssignedWidgetCard key={assignment.id} assignment={assignment} returnTo={clientPath} />
           ))}
           {!widgetsLoading && widgetsError && (
             <div className="md:col-span-3"><EmptyState title="Assigned widgets could not be loaded" description="Please try again. Your saved widget assignments have not been changed." action={<button type="button" className="text-sm font-semibold text-sage" onClick={() => refetchAssignedWidgets()}>Try again</button>} /></div>
@@ -133,8 +136,8 @@ function Badge({ label, value }: Readonly<{ label: string; value: string }>) {
   );
 }
 
-function AssignedWidgetCard({ assignment }: Readonly<{ assignment: DashboardAssignment }>) {
-  const configurationUrl = assignedWidgetConfigurationUrl(assignment);
+function AssignedWidgetCard({ assignment, returnTo }: Readonly<{ assignment: DashboardAssignment; returnTo: string }>) {
+  const configurationUrl = assignedWidgetConfigurationUrl(assignment, returnTo);
   return (
     <article className="rounded-md border border-ink/10 p-4 transition hover:border-sage/40 hover:bg-sage/[0.035] dark:border-white/10">
       <div className="flex items-center gap-3"><WidgetBrandIcon widgetId={assignment.widgetId} /><p className="font-semibold">{assignment.widgetName}</p><span className={`ml-auto rounded-full px-2 py-1 text-[11px] font-bold ${assignment.published ? 'bg-sage/12 text-sage' : 'bg-ink/8 text-ink/55 dark:bg-white/10 dark:text-white/55'}`}>{assignment.published ? 'Published' : 'Draft'}</span></div>

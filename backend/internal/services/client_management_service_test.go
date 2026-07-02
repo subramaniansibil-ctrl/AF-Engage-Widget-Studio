@@ -20,6 +20,19 @@ func TestClientManagementCreateRejectsDuplicates(t *testing.T) {
 	}
 }
 
+func TestClientManagementListUsesSharedSorting(t *testing.T) {
+	service := NewClientManagementService(repositories.NewMockAdvisorRepository(), repositories.NewMockAuthRepository())
+	clients, _, err := service.ListClients(context.Background(), models.ClientManagementFilters{SortBy: "name", SortOrder: "asc", Page: 1, PageSize: 100})
+	if err != nil {
+		t.Fatalf("list clients: %v", err)
+	}
+	for index := 1; index < len(clients); index++ {
+		if clients[index-1].Name > clients[index].Name {
+			t.Fatalf("clients are not sorted by name: %q before %q", clients[index-1].Name, clients[index].Name)
+		}
+	}
+}
+
 func TestClientManagementCreateCreatesLoginAccount(t *testing.T) {
 	authRepository := repositories.NewMockAuthRepository()
 	service := NewClientManagementService(repositories.NewMockAdvisorRepository(), authRepository)

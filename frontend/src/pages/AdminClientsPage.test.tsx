@@ -1,8 +1,8 @@
-import { render, screen } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { DashboardAssignment } from '../features/widgets/widgetsApi';
-import { ClientAssignedWidgets, ClientNameLink } from './AdminClientsPage';
+import { clientTableColumns, ClientAssignedWidgets, ClientNameLink } from './AdminClientsPage';
 
 const assignment: DashboardAssignment = {
   id: 'assignment-1', clientId: 'client-001', widgetId: 'two-pot-impact',
@@ -11,15 +11,20 @@ const assignment: DashboardAssignment = {
   configuration: { id: 'configuration-1', clientId: 'client-001', widgetId: 'two-pot-impact', options: { savingsPotBalance: '35000', projectionYears: '20' } },
 };
 
+afterEach(cleanup);
+
 describe('Client management assigned widgets', () => {
+  it('uses one shared client table column structure for both roles', () => {
+    expect(clientTableColumns).toEqual(['Client', 'Client ID', 'Contact', 'Advisor', 'Status', 'Actions']);
+  });
   it('opens the dedicated details route when an advisor clicks a client name', () => {
     render(<MemoryRouter><ClientNameLink client={{ id: 'client-001', name: 'Avery Naidoo' }} isAdmin={false} /></MemoryRouter>);
     expect(screen.getByRole('link', { name: 'Avery Naidoo' })).toHaveAttribute('href', '/advisor/clients/client-001');
   });
 
-  it('keeps the admin client name in the admin management workflow', () => {
-    const { container } = render(<MemoryRouter><ClientNameLink client={{ id: 'client-001', name: 'Avery Naidoo' }} isAdmin /></MemoryRouter>);
-    expect(container.querySelector('a')).not.toBeInTheDocument();
+  it('opens the dedicated details route when an admin clicks a client name', () => {
+    const { getByRole } = render(<MemoryRouter><ClientNameLink client={{ id: 'client-001', name: 'Avery Naidoo' }} isAdmin /></MemoryRouter>);
+    expect(getByRole('link', { name: 'Avery Naidoo' })).toHaveAttribute('href', '/admin/clients/client-001');
   });
 
   it('renders widget metadata and assigned configuration for the selected client', () => {

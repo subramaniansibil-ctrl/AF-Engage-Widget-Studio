@@ -29,7 +29,20 @@ func (r *postgresAdvisorRepository) ListManagedClients(ctx context.Context, filt
 		query += " AND c.created_at >= NOW() - INTERVAL '30 days'"
 	}
 	countQuery := "SELECT COUNT(*) FROM (" + query + ") AS managed_clients_count"
-	query += " ORDER BY c.created_at DESC, c.name"
+	orderBy := "c.created_at"
+	switch filters.SortBy {
+	case "name":
+		orderBy = "LOWER(c.name)"
+	case "status":
+		orderBy = "c.status"
+	case "advisor":
+		orderBy = "LOWER(c.assigned_advisor)"
+	}
+	direction := "DESC"
+	if strings.EqualFold(filters.SortOrder, "asc") {
+		direction = "ASC"
+	}
+	query += " ORDER BY " + orderBy + " " + direction + ", LOWER(c.name) ASC"
 	totalItems, err := r.countManagedClients(ctx, countQuery, args...)
 	if err != nil {
 		return nil, 0, err
