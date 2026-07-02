@@ -39,6 +39,10 @@ export interface AnalyticsSummary {
 
 export const analyticsApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
+    getAdminAnalytics: builder.query<AnalyticsSummary, void>({
+      query: () => '/analytics/admin',
+      providesTags: ['Analytics'],
+    }),
     getAdvisorAnalytics: builder.query<AnalyticsSummary, void>({
       query: () => '/analytics/advisor',
       providesTags: ['Analytics'],
@@ -73,6 +77,7 @@ export const analyticsApi = apiSlice.injectEndpoints({
 });
 
 export const {
+  useGetAdminAnalyticsQuery,
   useGetAdvisorAnalyticsQuery,
   useGetAuditLogsQuery,
   useGetNotificationsQuery,

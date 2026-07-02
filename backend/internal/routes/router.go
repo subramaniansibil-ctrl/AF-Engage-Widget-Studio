@@ -79,6 +79,7 @@ func NewRouter(cfg config.Config, statusService services.StatusService, authServ
 			simulations.POST("/onefee", simulationHandler.Onefee)                              // POST /api/v1/simulations/onefee calculates fee comparison illustration outputs.
 			simulations.POST("/income-sustainability", simulationHandler.IncomeSustainability) // POST /api/v1/simulations/income-sustainability calculates income longevity outputs.
 		}
+		v1.GET("/analytics/admin", middleware.AuthMiddleware(authService), middleware.RoleMiddleware(models.RoleAdmin), analyticsHandler.AdminAnalytics) // GET /api/v1/analytics/admin returns system-wide admin analytics.
 		analytics := v1.Group("/analytics", middleware.AuthMiddleware(authService), middleware.RoleMiddleware(models.RoleAdvisor, models.RoleAdmin))
 		{
 			analytics.GET("/advisor", analyticsHandler.AdvisorAnalytics) // GET /api/v1/analytics/advisor returns advisor engagement analytics.
