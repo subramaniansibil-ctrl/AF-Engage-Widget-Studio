@@ -17,14 +17,13 @@ interface NavItem {
 const navItems: NavItem[] = [
   { to: '/advisor/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['ADVISOR'] },
   { to: '/advisor/client-management', label: 'Clients', icon: UsersRound, roles: ['ADVISOR'] },
+  { to: '/admin/analytics', label: 'Dashboard', icon: ChartNoAxesCombined, roles: ['ADMIN'] },
   { to: '/advisor/widgets', label: 'Widgets', icon: Boxes, roles: ['ADVISOR', 'ADMIN'] },
-  { to: '/admin/clients', label: 'Clients', icon: UsersRound, roles: ['ADMIN'] },
   { to: '/advisor/analytics', label: 'Analytics', icon: ChartNoAxesCombined, roles: ['ADVISOR'] },
   { to: '/client/dashboard', label: 'Overview', icon: UsersRound, roles: ['CLIENT'] },
-  { to: '/admin/analytics', label: 'Analytics', icon: ChartNoAxesCombined, roles: ['ADMIN'] },
   { to: '/admin/audit-logs', label: 'Audit Log', icon: FileClock, roles: ['ADMIN'] },
-  { to: '/admin/clients', label: 'Client management', icon: UsersRound, roles: ['ADMIN'] },
-  { to: '/admin/advisors', label: 'Advisors', icon: UserCog, roles: ['ADMIN'] },
+  { to: '/admin/clients', label: 'Client Management', icon: UsersRound, roles: ['ADMIN'] },
+  { to: '/admin/advisors', label: 'Advisor Management', icon: UserCog, roles: ['ADMIN'] },
 ];
 
 export function AppLayout() {

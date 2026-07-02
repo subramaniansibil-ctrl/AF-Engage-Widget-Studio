@@ -13,7 +13,7 @@ function dashboardForRole(role?: Role) {
     case 'CLIENT':
       return '/client/dashboard';
     case 'ADMIN':
-      return '/admin/dashboard';
+      return '/admin/analytics';
     default:
       return '/login';
   }
