@@ -354,6 +354,14 @@ func TestAdvisorClientListAndAuthorization(t *testing.T) {
 	if managedForbiddenRecorder.Code != http.StatusNotFound {
 		t.Fatalf("expected advisor client-management unauthorized client to be hidden with 404, got %d", managedForbiddenRecorder.Code)
 	}
+
+	widgetsForbiddenRequest := httptest.NewRequest(http.MethodGet, "/api/v1/advisor/clients/client-other-001/assigned-widgets", nil)
+	widgetsForbiddenRequest.Header.Set("Authorization", "Bearer "+advisorToken)
+	widgetsForbiddenRecorder := httptest.NewRecorder()
+	router.ServeHTTP(widgetsForbiddenRecorder, widgetsForbiddenRequest)
+	if widgetsForbiddenRecorder.Code != http.StatusNotFound {
+		t.Fatalf("expected another advisor's widget assignments to be hidden with 404, got %d", widgetsForbiddenRecorder.Code)
+	}
 }
 
 func TestAdminAdvisorManagementPermissionsAndCrud(t *testing.T) {

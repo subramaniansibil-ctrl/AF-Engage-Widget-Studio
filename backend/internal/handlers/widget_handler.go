@@ -12,11 +12,12 @@ import (
 )
 
 type WidgetHandler struct {
-	service services.WidgetService
+	service       services.WidgetService
+	clientService services.ClientManagementService
 }
 
-func NewWidgetHandler(service services.WidgetService) *WidgetHandler {
-	return &WidgetHandler{service: service}
+func NewWidgetHandler(service services.WidgetService, clientService services.ClientManagementService) *WidgetHandler {
+	return &WidgetHandler{service: service, clientService: clientService}
 }
 
 func (h *WidgetHandler) ListWidgets(c *gin.Context) {
@@ -42,6 +43,9 @@ func (h *WidgetHandler) GetWidget(c *gin.Context) {
 }
 
 func (h *WidgetHandler) ConfigureWidget(c *gin.Context) {
+	if !h.authorizeClient(c) {
+		return
+	}
 	var request models.ConfigureWidgetRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		utils.JSONValidationError(c, err)
@@ -61,6 +65,9 @@ func (h *WidgetHandler) ConfigureWidget(c *gin.Context) {
 }
 
 func (h *WidgetHandler) AssignWidget(c *gin.Context) {
+	if !h.authorizeClient(c) {
+		return
+	}
 	var request models.AssignWidgetRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		utils.JSONValidationError(c, err)
@@ -84,6 +91,9 @@ func (h *WidgetHandler) AssignWidget(c *gin.Context) {
 }
 
 func (h *WidgetHandler) RemoveAssignedWidget(c *gin.Context) {
+	if !h.authorizeClient(c) {
+		return
+	}
 	err := h.service.RemoveAssignedWidget(c.Request.Context(), c.Param("clientId"), c.Param("assignmentId"))
 	if err != nil {
 		if errors.Is(err, repositories.ErrAssignmentNotFound) {
@@ -97,6 +107,9 @@ func (h *WidgetHandler) RemoveAssignedWidget(c *gin.Context) {
 }
 
 func (h *WidgetHandler) ListAssignedWidgets(c *gin.Context) {
+	if !h.authorizeClient(c) {
+		return
+	}
 	assignments, err := h.service.ListAssignedWidgets(c.Request.Context(), c.Param("clientId"))
 	if err != nil {
 		utils.JSONError(c, http.StatusInternalServerError, "failed to load assigned widgets")
@@ -106,6 +119,9 @@ func (h *WidgetHandler) ListAssignedWidgets(c *gin.Context) {
 }
 
 func (h *WidgetHandler) UpdateAssignedWidget(c *gin.Context) {
+	if !h.authorizeClient(c) {
+		return
+	}
 	var request models.UpdateAssignedWidgetRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		utils.JSONValidationError(c, err)
@@ -124,10 +140,31 @@ func (h *WidgetHandler) UpdateAssignedWidget(c *gin.Context) {
 }
 
 func (h *WidgetHandler) PublishDashboard(c *gin.Context) {
+	if !h.authorizeClient(c) {
+		return
+	}
 	assignments, err := h.service.PublishDashboard(c.Request.Context(), c.Param("clientId"))
 	if err != nil {
 		utils.JSONError(c, http.StatusInternalServerError, "failed to publish dashboard")
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "assignedWidgets": assignments})
+}
+
+func (h *WidgetHandler) authorizeClient(c *gin.Context) bool {
+	actor, ok := userFromContext(c)
+	if !ok {
+		utils.JSONError(c, http.StatusUnauthorized, "authentication required")
+		return false
+	}
+	_, err := h.clientService.GetClient(c.Request.Context(), c.Param("clientId"), actor)
+	if err != nil {
+		if errors.Is(err, repositories.ErrClientNotFound) {
+			utils.JSONError(c, http.StatusNotFound, "client not found")
+		} else {
+			utils.JSONError(c, http.StatusInternalServerError, "failed to verify client access")
+		}
+		return false
+	}
+	return true
 }

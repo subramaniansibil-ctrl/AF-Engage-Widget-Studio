@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { CircleHelp, Lightbulb, MoveRight } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Bar, Line } from 'react-chartjs-2';
 import { afChartBarColor, afChartColors } from '../charts/chartjs';
 import type { Portfolio, RetirementGoal } from '../../features/advisor/advisorApi';
@@ -90,6 +90,10 @@ function TwoPotEditor({ assignment, portfolio, retirementGoal, clientAge, loaded
     },
     scales: {
       x: {
+        title: {
+          display: true,
+          text: 'Scenario',
+        },
         grid: {
           display: false,
         },
@@ -100,6 +104,10 @@ function TwoPotEditor({ assignment, portfolio, retirementGoal, clientAge, loaded
         },
       },
       y: {
+        title: {
+          display: true,
+          text: 'Projected retirement value (ZAR)',
+        },
         beginAtZero: true,
         ticks: {
           callback: (value) => compactCurrency.format(Number(value)),
@@ -170,6 +178,10 @@ function OnefeeEditor({ assignment, portfolio, loadedSimulation, onSnapshotChang
     },
     scales: {
       x: {
+        title: {
+          display: true,
+          text: 'Years invested',
+        },
         grid: {
           display: false,
         },
@@ -180,6 +192,10 @@ function OnefeeEditor({ assignment, portfolio, loadedSimulation, onSnapshotChang
         },
       },
       y: {
+        title: {
+          display: true,
+          text: 'Investment value (ZAR)',
+        },
         beginAtZero: true,
         ticks: {
           callback: (value) => compactCurrency.format(Number(value)),
@@ -242,6 +258,10 @@ function IncomeEditor({ assignment, portfolio, retirementGoal, loadedSimulation,
     },
     scales: {
       x: {
+        title: {
+          display: true,
+          text: 'Years into retirement',
+        },
         grid: {
           display: false,
         },
@@ -252,6 +272,10 @@ function IncomeEditor({ assignment, portfolio, retirementGoal, loadedSimulation,
         },
       },
       y: {
+        title: {
+          display: true,
+          text: 'Savings remaining (ZAR)',
+        },
         beginAtZero: true,
         ticks: {
           callback: (value) => compactCurrency.format(Number(value)),
@@ -290,7 +314,7 @@ function WorkspaceLayout({ controls, metrics, chart, chartTitle, chartDescriptio
       <div className="min-w-0 space-y-4 print:space-y-2">
         <motion.section layout aria-live="polite" className="rounded-md border border-sage/25 bg-gradient-to-br from-sage/15 to-white p-5 shadow-sm dark:to-ink print:break-inside-avoid print:p-3 print:shadow-none print:bg-white"><p className="text-xs font-bold uppercase tracking-wide text-sage">Most important result</p><p className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl print:mt-1 print:text-2xl">{mainResult.value}</p><p className="mt-1 text-sm font-semibold text-ink/70 dark:text-white/70">{mainResult.label}</p><p className="mt-2 text-sm leading-6 text-ink/55 dark:text-white/55 print:mt-1 print:text-xs print:leading-5">{mainResult.detail}</p></motion.section>
         <motion.div layout className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4 print:grid-cols-2 print:gap-2">{metrics}</motion.div>
-        {progress !== undefined && <section aria-label="Sustainability score" className="rounded-md border border-ink/10 bg-white/60 p-4 dark:border-white/10 dark:bg-white/5 print:hidden"><div className="flex items-center justify-between gap-3"><div><p className="text-sm font-semibold">Plan sustainability score</p><p className="mt-1 text-xs text-ink/50">Higher means the selected income is more likely to last for the full period.</p></div><strong className="text-2xl text-sage">{progress}/100</strong></div><div className="mt-3 h-3 overflow-hidden rounded-full bg-ink/8 dark:bg-white/10"><motion.div className="h-full rounded-full bg-sage" animate={{ width: `${progress}%` }} transition={{ duration: 0.35 }} /></div></section>}
+        {progress !== undefined && <section aria-label="Sustainability score" className="rounded-md border border-ink/10 bg-white/60 p-4 dark:border-white/10 dark:bg-white/5 print:break-inside-avoid"><div className="flex items-center justify-between gap-3"><div><p className="text-sm font-semibold">Plan sustainability score</p><p className="mt-1 text-xs text-ink/50">Higher means the selected income is more likely to last for the full period.</p></div><strong className="text-2xl text-sage">{progress}/100</strong></div><div className="mt-3 h-3 overflow-hidden rounded-full bg-ink/8 dark:bg-white/10"><motion.div className="h-full rounded-full bg-sage" animate={{ width: `${progress}%` }} transition={{ duration: 0.35 }} /></div></section>}
         <motion.section layout className="rounded-md border border-ink/10 bg-white/60 p-4 shadow-sm dark:border-white/10 dark:bg-white/5 print:break-inside-avoid print:p-3 print:shadow-none print:bg-white"><h3 className="text-base font-semibold print:text-sm">{chartTitle}</h3><p className="mt-1 text-xs leading-5 text-ink/50 dark:text-white/50 print:mt-0.5 print:leading-4">{chartDescription}</p><div className="mt-4 h-72 min-w-0 sm:h-80 print:mt-2 print:h-60">{chart}</div></motion.section>
         <section className="grid gap-3 md:grid-cols-2 print:hidden"><div className="rounded-md border border-sage/20 bg-sage/8 p-4"><p className="text-xs font-bold uppercase tracking-wide text-sage">What this means</p><p className="mt-2 text-sm leading-6 text-ink/70 dark:text-white/70">{insight}</p></div><div className="rounded-md border border-gold/25 bg-gold/8 p-4"><p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-ink/60 dark:text-white/60">What to do next <MoveRight className="h-4 w-4" /></p><p className="mt-2 text-sm leading-6 text-ink/70 dark:text-white/70">{nextStep}</p></div></section>
       </div>
@@ -303,8 +327,26 @@ function ControlGroup({ title, description, children }: { title: string; descrip
 }
 
 interface NumberControlProps { label: string; description: string; tooltip?: string; value: number; min: number; max: number; step: number; prefix?: string; suffix?: string; onChange: (value: number) => void }
-function NumberControl({ label, description, tooltip, value, min, max, step, prefix, suffix, onChange }: NumberControlProps) {
-  return <label className="block rounded-md border border-ink/10 bg-white/40 p-3 transition focus-within:border-sage/60 dark:border-white/10 dark:bg-white/5"><span className="flex items-center gap-1.5 text-sm font-semibold text-ink/75 dark:text-white/75">{label}{tooltip && <span className="group/help relative inline-flex" title={tooltip}><CircleHelp className="h-3.5 w-3.5 text-sage" aria-label={tooltip} /><span role="tooltip" className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 hidden w-56 -translate-x-1/2 rounded-md bg-ink px-3 py-2 text-xs font-normal leading-5 text-white shadow-panel group-hover/help:block group-focus-within/help:block">{tooltip}</span></span>}</span><span className="mt-1 block text-xs leading-5 text-ink/50 dark:text-white/50">{description}</span><span className="mt-3 flex items-center gap-2"><span className="text-xs text-ink/45">{prefix}</span><input aria-label={label} type="number" min={min} max={max} step={step} value={value} onChange={(event) => onChange(clamp(Number(event.target.value), min, max))} className="min-h-10 min-w-0 flex-1 rounded-md border border-ink/10 bg-white px-2 text-sm font-semibold outline-none focus:border-sage dark:border-white/10 dark:bg-ink" /><span className="shrink-0 text-xs text-ink/45">{suffix}</span></span><input aria-label={`${label} slider`} type="range" min={min} max={max} step={step} value={value} onChange={(event) => onChange(Number(event.target.value))} className="mt-3 w-full accent-sage" /><span className="mt-1 flex justify-between text-[10px] text-ink/35"><span>{prefix}{min}{suffix}</span><span>{prefix}{max}{suffix}</span></span></label>;
+export function NumberControl({ label, description, tooltip, value, min, max, step, prefix, suffix, onChange }: NumberControlProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [draft, setDraft] = useState(String(value));
+  useEffect(() => {
+    if (document.activeElement !== inputRef.current) setDraft(String(value));
+  }, [value]);
+  function commit() {
+    const parsed = Number(draft);
+    const next = clamp(Number.isFinite(parsed) ? parsed : value, min, max);
+    setDraft(String(next));
+    onChange(next);
+  }
+  function typeValue(next: string) {
+    if (!/^-?\d*\.?\d*$/.test(next)) return;
+    setDraft(next);
+    const parsed = Number(next);
+    if (next !== '' && Number.isFinite(parsed) && parsed >= min && parsed <= max) onChange(parsed);
+  }
+  function slide(next: number) { setDraft(String(next)); onChange(next); }
+  return <label className="block rounded-md border border-ink/10 bg-white/40 p-3 transition focus-within:border-sage/60 dark:border-white/10 dark:bg-white/5"><span className="flex items-center gap-1.5 text-sm font-semibold text-ink/75 dark:text-white/75">{label}{tooltip && <span className="group/help relative inline-flex" title={tooltip}><CircleHelp className="h-3.5 w-3.5 text-sage" aria-label={tooltip} /><span role="tooltip" className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 hidden w-56 -translate-x-1/2 rounded-md bg-ink px-3 py-2 text-xs font-normal leading-5 text-white shadow-panel group-hover/help:block group-focus-within/help:block">{tooltip}</span></span>}</span><span className="mt-1 block text-xs leading-5 text-ink/50 dark:text-white/50">{description}</span><span className="mt-3 flex items-center gap-2"><span className="text-xs text-ink/45">{prefix}</span><input ref={inputRef} aria-label={label} type="text" inputMode="decimal" value={draft} onChange={(event) => typeValue(event.target.value)} onBlur={commit} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); commit(); inputRef.current?.blur(); } }} className="min-h-10 min-w-0 flex-1 rounded-md border border-ink/10 bg-white px-2 text-sm font-semibold outline-none focus:border-sage dark:border-white/10 dark:bg-ink" /><span className="shrink-0 text-xs text-ink/45">{suffix}</span></span><input aria-label={`${label} slider`} type="range" min={min} max={max} step={step} value={value} onChange={(event) => slide(Number(event.target.value))} className="mt-3 w-full accent-sage" /><span className="mt-1 flex justify-between text-[10px] text-ink/35"><span>{prefix}{min}{suffix}</span><span>{prefix}{max}{suffix}</span></span></label>;
 }
 
 function ScenarioSelect({ label, description, value, options, onChange }: { label: string; description: string; value: string; options: string[]; onChange: (value: string) => void }) {

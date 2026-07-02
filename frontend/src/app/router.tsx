@@ -10,17 +10,8 @@ const LoginPage = lazy(() =>
 const AdvisorDashboardPage = lazy(() =>
   import('../pages/AdvisorDashboardPage').then((module) => ({ default: module.AdvisorDashboardPage })),
 );
-const AdvisorClientsPage = lazy(() =>
-  import('../pages/AdvisorClientsPage').then((module) => ({ default: module.AdvisorClientsPage })),
-);
 const AdvisorClientDetailPage = lazy(() =>
   import('../pages/AdvisorClientDetailPage').then((module) => ({ default: module.AdvisorClientDetailPage })),
-);
-const AdvisorClientWidgetsPage = lazy(() =>
-  import('../pages/AdvisorClientWidgetsPage').then((module) => ({ default: module.AdvisorClientWidgetsPage })),
-);
-const AdvisorClientSimulationPage = lazy(() =>
-  import('../pages/AdvisorClientSimulationPage').then((module) => ({ default: module.AdvisorClientSimulationPage })),
 );
 const WidgetLibraryPage = lazy(() =>
   import('../pages/WidgetLibraryPage').then((module) => ({ default: module.WidgetLibraryPage })),
@@ -80,11 +71,9 @@ export const router = createBrowserRouter([
                 element: <AdvisorRoute />,
                 children: [
                   { path: 'advisor/dashboard', element: routeElement(AdvisorDashboardPage) },
-                  { path: 'advisor/clients', element: routeElement(AdvisorClientsPage) },
+                  { path: 'advisor/clients', element: <Navigate to="/advisor/client-management" replace /> },
                   { path: 'advisor/client-management', element: routeElement(AdminClientsPage) },
                   { path: 'advisor/clients/:clientId', element: routeElement(AdvisorClientDetailPage) },
-                  { path: 'advisor/clients/:clientId/widgets', element: routeElement(AdvisorClientWidgetsPage) },
-                  { path: 'advisor/clients/:clientId/widgets/:widgetId/simulations', element: routeElement(AdvisorClientSimulationPage) },
                   { path: 'advisor/widgets', element: routeElement(WidgetLibraryPage) },
                   { path: 'advisor/widgets/:widgetId', element: routeElement(WidgetDetailPage) },
                   { path: 'advisor/widgets/configure', element: routeElement(WidgetConfigurationPage) },

@@ -22,7 +22,9 @@ export interface Client {
   name: string;
   age: number;
   email: string;
+  mobileNumber?: string;
   assignedAdvisor: string;
+  status?: 'ACTIVE' | 'INACTIVE';
   riskProfile: RiskProfile;
   retirementStage: RetirementStage;
   portfolio: Portfolio;

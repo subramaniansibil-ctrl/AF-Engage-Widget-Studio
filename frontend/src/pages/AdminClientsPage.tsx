@@ -1,5 +1,6 @@
 import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
-import { Download, Eye, FileUp, Pencil, Plus, Search, UserRoundX, X } from 'lucide-react';
+import { Boxes, Download, Eye, FileUp, Pencil, Plus, Search, UserRoundX, X } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useEffect, useState, type FormEvent } from 'react';
 import { useAppDispatch, useAppSelector } from '../app/hooks';
 import { Button } from '../components/ui/Button';
@@ -19,6 +20,8 @@ import {
 import { clientTemplateCsv, parseClientCsv } from '../features/admin/clientCsv';
 import { useGetAdminAdvisorsQuery } from '../features/admin/adminAdvisorsApi';
 import { addToast } from '../features/ui/uiSlice';
+import { useGetAssignedWidgetsQuery, type DashboardAssignment } from '../features/widgets/widgetsApi';
+import { WidgetBrandIcon } from '../components/widgets/WidgetBrandIcon';
 
 type Panel = 'create' | 'edit' | 'view' | 'bulk' | null;
 const pageSize = 10;
@@ -121,7 +124,7 @@ export function AdminClientsPage() {
                 <tbody className="divide-y divide-ink/8 dark:divide-white/8">
                   {clients.map((client) => (
                     <tr key={client.id} className="transition hover:bg-sage/[0.045]">
-                      <td className="px-4 py-3"><p className="font-semibold">{client.name}</p><p className="mt-0.5 text-xs text-ink/50 dark:text-white/50">{client.riskProfile || 'No risk profile'}</p></td>
+                      <td className="px-4 py-3"><ClientNameLink client={client} isAdmin={isAdmin} /><p className="mt-0.5 text-xs text-ink/50 dark:text-white/50">{client.riskProfile || 'No risk profile'}</p></td>
                       <td className="px-4 py-3 font-mono text-xs text-ink/65 dark:text-white/65">{client.id}</td>
                       <td className="px-4 py-3"><p>{client.email}</p><p className="mt-0.5 text-xs text-ink/50 dark:text-white/50">{client.mobileNumber}</p></td>
                       {isAdmin && <td className="px-4 py-3">{client.assignedAdvisor}</td>}
@@ -131,7 +134,7 @@ export function AdminClientsPage() {
                           <div className="flex justify-end gap-2"><span className="self-center text-xs font-medium text-coral">Deactivate?</span><Button variant="secondary" onClick={() => setDeactivateId(null)}>Cancel</Button><Button disabled={isDeactivating} onClick={() => confirmDeactivate(client.id)}>Confirm</Button></div>
                         ) : (
                           <div className="flex justify-end gap-1">
-                            <IconButton label="View client" onClick={() => openPanel('view', client)}><Eye className="h-4 w-4" /></IconButton>
+                            {isAdmin ? <IconButton label="View client" onClick={() => openPanel('view', client)}><Eye className="h-4 w-4" /></IconButton> : <Link to={`/advisor/clients/${client.id}`} aria-label={`View ${client.name}`} title={`View ${client.name}`} className="inline-flex h-9 w-9 items-center justify-center rounded-md text-ink/55 transition hover:bg-ink/5 hover:text-ink dark:text-white/55 dark:hover:bg-white/10 dark:hover:text-white"><Eye className="h-4 w-4" /></Link>}
                             <IconButton label="Edit client" onClick={() => openPanel('edit', client)}><Pencil className="h-4 w-4" /></IconButton>
                             <IconButton label="Deactivate client" disabled={client.status === 'INACTIVE'} onClick={() => setDeactivateId(client.id)}><UserRoundX className="h-4 w-4" /></IconButton>
                           </div>
@@ -155,6 +158,12 @@ export function AdminClientsPage() {
       </section>
     </div>
   );
+}
+
+export function ClientNameLink({ client, isAdmin }: { client: Pick<AdminClient, 'id' | 'name'>; isAdmin: boolean }) {
+  return isAdmin
+    ? <p className="font-semibold">{client.name}</p>
+    : <Link to={`/advisor/clients/${client.id}`} className="font-semibold transition hover:text-sage focus-visible:text-sage">{client.name}</Link>;
 }
 
 function ClientForm({ client, onDone, isAdmin, currentAdvisor, advisors }: { client: AdminClient | null; onDone: () => void; isAdmin: boolean; currentAdvisor: string; advisors: string[] }) {
@@ -234,14 +243,44 @@ function BulkUpload({ onDone, isAdmin, currentAdvisor, advisors }: { onDone: () 
 }
 
 function ClientView({ client, isAdmin, onEdit }: { client: AdminClient; isAdmin: boolean; onEdit: () => void }) {
+  const { data: assignedWidgets = [], isLoading, isError, refetch } = useGetAssignedWidgetsQuery(client.id);
   const details = [['Client ID', client.id], ['Email', client.email], ['Mobile', client.mobileNumber], ...(isAdmin ? [['Assigned advisor', client.assignedAdvisor]] : []), ['Status', client.status], ['Date of birth', client.dateOfBirth || 'Not provided'], ['Risk profile', client.riskProfile || 'Not set'], ['Investment goal', client.investmentGoal || 'Not provided'], ['Portfolio ID', client.portfolioId || 'Not provided'], ['Notes', client.notes || 'No notes']];
-  return <div><div className="grid gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">{details.map(([label, value]) => <div key={label}><p className="text-xs font-semibold uppercase text-ink/45 dark:text-white/45">{label}</p><p className="mt-1 text-sm font-medium">{value}</p></div>)}</div><div className="mt-5 flex justify-end"><Button onClick={onEdit}><Pencil className="h-4 w-4" />Edit client</Button></div></div>;
+  return <div className="space-y-6">
+    <div className="grid gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">{details.map(([label, value]) => <div key={label}><p className="text-xs font-semibold uppercase text-ink/45 dark:text-white/45">{label}</p><p className="mt-1 text-sm font-medium">{value}</p></div>)}</div>
+    <ClientAssignedWidgets clientId={client.id} assignments={assignedWidgets} isLoading={isLoading} isError={isError} onRetry={refetch} />
+    <div className="flex justify-end"><Button onClick={onEdit}><Pencil className="h-4 w-4" />Edit client</Button></div>
+  </div>;
+}
+
+export function ClientAssignedWidgets({ clientId, assignments, isLoading = false, isError = false, onRetry }: { clientId: string; assignments: DashboardAssignment[]; isLoading?: boolean; isError?: boolean; onRetry?: () => void }) {
+  const assignUrl = `/advisor/widgets/configure?clientId=${encodeURIComponent(clientId)}`;
+  return <section className="border-t border-ink/10 pt-5 dark:border-white/10" aria-labelledby="assigned-widgets-title">
+    <div className="flex flex-wrap items-start justify-between gap-3">
+      <div><h4 id="assigned-widgets-title" className="font-semibold">Assigned widgets</h4><p className="mt-1 text-xs text-ink/55 dark:text-white/55">Widgets and saved configurations linked to this client.</p></div>
+      <Link to={assignUrl} className="inline-flex min-h-9 items-center gap-2 rounded-md border border-ink/10 px-3 py-2 text-sm font-semibold transition hover:border-sage/30 hover:text-sage dark:border-white/10"><Boxes className="h-4 w-4" />Assign widgets</Link>
+    </div>
+    {isLoading ? <div className="mt-4 grid gap-3 md:grid-cols-2">{[0, 1].map((item) => <Skeleton key={item} className="h-40" />)}</div>
+      : isError ? <div className="mt-4"><EmptyState title="Assigned widgets could not be loaded" description="Please try again. Your saved assignments have not been changed." action={onRetry ? <Button variant="secondary" onClick={onRetry}>Try again</Button> : undefined} /></div>
+      : assignments.length === 0 ? <div className="mt-4"><EmptyState title="No widgets assigned yet." description="Assign a widget to start building this client’s personalized experience." action={<Link className="text-sm font-semibold text-sage" to={assignUrl}>Browse widgets</Link>} /></div>
+      : <div className="mt-4 grid gap-3 md:grid-cols-2">{assignments.map((assignment) => <ManagementAssignedWidgetCard key={assignment.id} assignment={assignment} />)}</div>}
+  </section>;
+}
+
+function ManagementAssignedWidgetCard({ assignment }: { assignment: DashboardAssignment }) {
+  const editParams = new URLSearchParams({ clientId: assignment.clientId, widgetId: assignment.widgetId, assignmentId: assignment.id, mode: 'edit', returnTo: '/advisor/client-management' });
+  const options = Object.entries(assignment.configuration?.options ?? {});
+  return <article className="rounded-md border border-ink/10 p-4 dark:border-white/10">
+    <div className="flex items-start gap-3"><WidgetBrandIcon widgetId={assignment.widgetId} icon={assignment.widgetIcon} /><div className="min-w-0 flex-1"><div className="flex flex-wrap items-start justify-between gap-2"><div><p className="font-semibold">{assignment.widgetName}</p><p className="mt-0.5 text-xs font-medium text-sage">{assignment.widgetCategory || 'Financial planning'}</p></div><StatusBadge status={assignment.published ? 'PUBLISHED' : 'DRAFT'} /></div><p className="mt-2 text-sm leading-5 text-ink/60 dark:text-white/60">{assignment.widgetDescription || 'No description available.'}</p></div></div>
+    <div className="mt-3 rounded-md bg-ink/[0.035] p-3 dark:bg-white/[0.04]"><p className="text-xs font-semibold uppercase text-ink/45 dark:text-white/45">Assigned configuration</p>{options.length ? <dl className="mt-2 grid gap-x-4 gap-y-2 sm:grid-cols-2">{options.map(([key, value]) => <div key={key}><dt className="text-xs text-ink/50 dark:text-white/50">{humanize(key)}</dt><dd className="mt-0.5 break-words text-sm font-medium">{value || 'Not set'}</dd></div>)}</dl> : <p className="mt-2 text-sm text-ink/55 dark:text-white/55">Default configuration</p>}</div>
+    <Link to={`/advisor/widgets/configure?${editParams.toString()}`} className="mt-3 inline-flex text-xs font-semibold text-sage">Edit configuration</Link>
+  </article>;
 }
 
 function Field({ label, children, wide = false }: { label: string; children: React.ReactNode; wide?: boolean }) { return <label className={wide ? 'md:col-span-2 xl:col-span-2' : ''}><span className="mb-1.5 block text-xs font-semibold text-ink/60 dark:text-white/60">{label}</span>{children}</label>; }
 function IconButton({ label, children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { label: string }) { return <button type="button" aria-label={label} title={label} className="inline-flex h-9 w-9 items-center justify-center rounded-md text-ink/55 transition hover:bg-ink/5 hover:text-ink disabled:cursor-not-allowed disabled:opacity-30 dark:text-white/55 dark:hover:bg-white/10 dark:hover:text-white" {...props}>{children}</button>; }
-function StatusBadge({ status }: { status: string }) { return <span className={`inline-flex rounded-full px-2 py-1 text-[11px] font-bold ${status === 'ACTIVE' ? 'bg-sage/12 text-sage' : 'bg-ink/8 text-ink/55 dark:bg-white/10 dark:text-white/55'}`}>{status === 'ACTIVE' ? 'Active' : 'Inactive'}</span>; }
+function StatusBadge({ status }: { status: string }) { const positive = status === 'ACTIVE' || status === 'PUBLISHED'; return <span className={`inline-flex rounded-full px-2 py-1 text-[11px] font-bold ${positive ? 'bg-sage/12 text-sage' : 'bg-ink/8 text-ink/55 dark:bg-white/10 dark:text-white/55'}`}>{humanize(status)}</span>; }
 function ClientTableSkeleton() { return <div className="space-y-2 rounded-md border border-ink/10 bg-white/50 p-4 dark:border-white/10 dark:bg-white/5">{Array.from({ length: 6 }).map((_, index) => <Skeleton key={index} className="h-14" />)}</div>; }
 function panelTitle(panel: Exclude<Panel, null>) { return ({ create: 'Create client', edit: 'Edit client', view: 'Client details', bulk: 'Bulk upload clients' } as const)[panel]; }
 function fromClient(client: AdminClient): ClientUpsertRequest { return { id: client.id, name: client.name, email: client.email, mobileNumber: client.mobileNumber ?? '', assignedAdvisor: client.assignedAdvisor ?? '', status: client.status || 'ACTIVE', dateOfBirth: client.dateOfBirth ?? '', riskProfile: client.riskProfile ?? '', investmentGoal: client.investmentGoal ?? '', portfolioId: client.portfolioId ?? '', notes: client.notes ?? '', password: '' }; }
 function errorMessage(error: unknown) { const queryError = error as FetchBaseQueryError; if (typeof queryError?.data === 'object' && queryError.data && 'error' in queryError.data) return String((queryError.data as { error: string }).error); return 'Please try again.'; }
+function humanize(value: string) { return value.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/_/g, ' ').toLowerCase().replace(/^./, (letter) => letter.toUpperCase()); }
