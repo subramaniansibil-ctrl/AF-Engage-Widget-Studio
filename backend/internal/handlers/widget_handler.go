@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"log/slog"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -14,10 +15,12 @@ import (
 type WidgetHandler struct {
 	service       services.WidgetService
 	clientService services.ClientManagementService
+	emailService  services.EmailService
+	dashboardURL  string
 }
 
-func NewWidgetHandler(service services.WidgetService, clientService services.ClientManagementService) *WidgetHandler {
-	return &WidgetHandler{service: service, clientService: clientService}
+func NewWidgetHandler(service services.WidgetService, clientService services.ClientManagementService, emailService services.EmailService, dashboardURL string) *WidgetHandler {
+	return &WidgetHandler{service: service, clientService: clientService, emailService: emailService, dashboardURL: dashboardURL}
 }
 
 func (h *WidgetHandler) ListWidgets(c *gin.Context) {
@@ -143,12 +146,32 @@ func (h *WidgetHandler) PublishDashboard(c *gin.Context) {
 	if !h.authorizeClient(c) {
 		return
 	}
-	assignments, err := h.service.PublishDashboard(c.Request.Context(), c.Param("clientId"))
+	clientID := c.Param("clientId")
+	assignments, err := h.service.PublishDashboard(c.Request.Context(), clientID)
 	if err != nil {
 		utils.JSONError(c, http.StatusInternalServerError, "failed to publish dashboard")
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"success": true, "assignedWidgets": assignments})
+
+	emailStatus := "skipped"
+	client, hasClient := c.Get("authorizedClient")
+	clientRecord, validClient := client.(models.Client)
+	if hasClient && validClient && h.emailService != nil {
+		emailErr := h.emailService.SendDashboardPublished(c.Request.Context(), services.DashboardPublishedEmail{
+			ClientName: clientRecord.Name, ClientEmail: clientRecord.Email,
+			AdvisorName: clientRecord.AssignedAdvisor, DashboardURL: h.dashboardURL,
+		})
+		if emailErr == nil {
+			emailStatus = "sent"
+			slog.Info("dashboard_publish_email_sent", "client_id", clientID, "advisor", clientRecord.AssignedAdvisor)
+		} else if errors.Is(emailErr, services.ErrEmailNotConfigured) {
+			slog.Warn("dashboard_publish_email_skipped", "client_id", clientID, "reason", emailErr)
+		} else {
+			emailStatus = "failed"
+			slog.Warn("dashboard_publish_email_failed", "client_id", clientID, "error", emailErr)
+		}
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "assignedWidgets": assignments, "emailNotification": emailStatus})
 }
 
 func (h *WidgetHandler) authorizeClient(c *gin.Context) bool {
@@ -157,7 +180,7 @@ func (h *WidgetHandler) authorizeClient(c *gin.Context) bool {
 		utils.JSONError(c, http.StatusUnauthorized, "authentication required")
 		return false
 	}
-	_, err := h.clientService.GetClient(c.Request.Context(), c.Param("clientId"), actor)
+	client, err := h.clientService.GetClient(c.Request.Context(), c.Param("clientId"), actor)
 	if err != nil {
 		if errors.Is(err, repositories.ErrClientNotFound) {
 			utils.JSONError(c, http.StatusNotFound, "client not found")
@@ -166,5 +189,6 @@ func (h *WidgetHandler) authorizeClient(c *gin.Context) bool {
 		}
 		return false
 	}
+	c.Set("authorizedClient", client)
 	return true
 }

@@ -11,6 +11,15 @@ type Config struct {
 	MigrationsPath string
 	CORSOrigins    string
 	RateLimitRPM   string
+	FrontendURL    string
+	EmailProvider  string
+	SMTPHost       string
+	SMTPPort       string
+	SMTPUsername   string
+	SMTPPassword   string
+	SMTPFromEmail  string
+	SMTPFromName   string
+	SMTPTLSMode    string
 }
 
 func Load() Config {
@@ -23,6 +32,15 @@ func Load() Config {
 		MigrationsPath: getEnv("MIGRATIONS_PATH", "migrations"),
 		CORSOrigins:    getEnv("CORS_ALLOWED_ORIGINS", "http://localhost:5173"),
 		RateLimitRPM:   getEnv("RATE_LIMIT_RPM", "120"),
+		FrontendURL:    getEnv("FRONTEND_URL", "http://localhost:5173"),
+		EmailProvider:  getEnv("EMAIL_PROVIDER", "disabled"),
+		SMTPHost:       getEnv("SMTP_HOST", ""),
+		SMTPPort:       getEnv("SMTP_PORT", "587"),
+		SMTPUsername:   getEnv("SMTP_USERNAME", ""),
+		SMTPPassword:   getEnv("SMTP_PASSWORD", ""),
+		SMTPFromEmail:  getEnv("SMTP_FROM_EMAIL", ""),
+		SMTPFromName:   getEnv("SMTP_FROM_NAME", "Alexforbes Widget Studio"),
+		SMTPTLSMode:    getEnv("SMTP_TLS_MODE", "starttls"),
 	}
 }
 

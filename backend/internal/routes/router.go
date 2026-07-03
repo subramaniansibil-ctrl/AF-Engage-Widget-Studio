@@ -2,6 +2,7 @@ package routes
 
 import (
 	"log/slog"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/config"
@@ -22,7 +23,8 @@ func NewRouter(cfg config.Config, statusService services.StatusService, authServ
 	statusHandler := handlers.NewStatusHandler(statusService)
 	authHandler := handlers.NewAuthHandler(authService)
 	advisorHandler := handlers.NewAdvisorHandler(advisorService)
-	widgetHandler := handlers.NewWidgetHandler(widgetService, clientManagementService)
+	dashboardURL := strings.TrimRight(cfg.FrontendURL, "/") + "/client/dashboard"
+	widgetHandler := handlers.NewWidgetHandler(widgetService, clientManagementService, services.NewEmailService(cfg), dashboardURL)
 	clientHandler := handlers.NewClientHandler(clientService)
 	simulationHandler := handlers.NewSimulationHandler(simulationService)
 	analyticsHandler := handlers.NewAnalyticsHandler(analyticsService)

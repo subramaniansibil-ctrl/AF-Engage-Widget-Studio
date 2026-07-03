@@ -47,6 +47,7 @@ export interface AssignWidgetRequest {
 export interface PublishDashboardResponse {
   success: boolean;
   assignedWidgets: DashboardAssignment[];
+  emailNotification: 'sent' | 'failed' | 'skipped';
 }
 
 export interface RemoveAssignedWidgetRequest {

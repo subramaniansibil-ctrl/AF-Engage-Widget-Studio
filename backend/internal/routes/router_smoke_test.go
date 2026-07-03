@@ -66,6 +66,30 @@ func TestAPISmokeHealthLoginAndAdvisorDashboard(t *testing.T) {
 		t.Fatalf("expected advisor dashboard 200, got %d: %s", dashboardRecorder.Code, dashboardRecorder.Body.String())
 	}
 
+	publishRequest := httptest.NewRequest(http.MethodPost, "/api/v1/advisor/clients/client-001/publish-dashboard", nil)
+	publishRequest.Header.Set("Authorization", "Bearer "+loginResponse.Token)
+	publishRecorder := httptest.NewRecorder()
+	router.ServeHTTP(publishRecorder, publishRequest)
+	if publishRecorder.Code != http.StatusOK {
+		t.Fatalf("expected publish to succeed when email is disabled, got %d: %s", publishRecorder.Code, publishRecorder.Body.String())
+	}
+	var publishResponse struct {
+		Success           bool                         `json:"success"`
+		EmailNotification string                       `json:"emailNotification"`
+		AssignedWidgets   []models.DashboardAssignment `json:"assignedWidgets"`
+	}
+	if err := json.Unmarshal(publishRecorder.Body.Bytes(), &publishResponse); err != nil {
+		t.Fatalf("decode publish response: %v", err)
+	}
+	if !publishResponse.Success || publishResponse.EmailNotification != "skipped" || len(publishResponse.AssignedWidgets) == 0 {
+		t.Fatalf("expected successful publish with non-blocking skipped email, got %+v", publishResponse)
+	}
+	for _, assignment := range publishResponse.AssignedWidgets {
+		if !assignment.Published {
+			t.Fatalf("expected assignment %s to be published", assignment.ID)
+		}
+	}
+
 	clientToken := loginToken(t, router, "client@afengage.com")
 	clientWidgetRequest := httptest.NewRequest(http.MethodGet, "/api/v1/client/widgets/two-pot-impact", nil)
 	clientWidgetRequest.Header.Set("Authorization", "Bearer "+clientToken)

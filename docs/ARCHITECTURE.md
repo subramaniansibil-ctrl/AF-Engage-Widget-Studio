@@ -45,6 +45,8 @@ Client management uses one shared advisor repository in each mode. Admin mutatio
 - Configurable CORS with `CORS_ALLOWED_ORIGINS`
 - Per-IP rate limiting with `RATE_LIMIT_RPM`
 - Graceful shutdown on `SIGINT` and `SIGTERM`
+- Provider-neutral email service with an SMTP implementation configured entirely through environment variables
+- Non-blocking dashboard publish notifications: assignment publication is never rolled back when email delivery fails
 
 ## Demo Flow
 

@@ -127,6 +127,25 @@ Default local URLs:
 - Backend: `http://localhost:8080`
 - Health: `http://localhost:8080/health`
 
+## Dashboard publish emails
+
+Dashboard publishing supports any SMTP provider, including Brevo SMTP and Gmail SMTP. Email delivery is disabled by default, so local publishing works without credentials. To enable it:
+
+```bash
+EMAIL_PROVIDER=smtp \
+SMTP_HOST=smtp-relay.brevo.com \
+SMTP_PORT=587 \
+SMTP_USERNAME="your-smtp-username" \
+SMTP_PASSWORD="your-smtp-key" \
+SMTP_FROM_EMAIL="verified-sender@example.com" \
+SMTP_FROM_NAME="Alexforbes Widget Studio" \
+SMTP_TLS_MODE=starttls \
+FRONTEND_URL="http://localhost:5173" \
+go run ./cmd/server
+```
+
+Use `SMTP_TLS_MODE=implicit` for providers requiring implicit TLS (commonly port 465), or `none` only for a trusted local development mail server. Never commit SMTP credentials. Publishing remains successful if email delivery is disabled or fails; the backend records a structured warning and returns `emailNotification` as `sent`, `failed`, or `skipped`.
+
 ## Docker Setup
 
 Build and run both services:

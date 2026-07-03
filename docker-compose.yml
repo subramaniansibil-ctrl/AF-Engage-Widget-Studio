@@ -38,6 +38,15 @@ services:
       APP_DATA_MODE: ${APP_DATA_MODE:-postgres}
       DATABASE_URL: postgres://af_engage:af_engage_password@postgres:5432/af_engage?sslmode=disable
       MIGRATIONS_PATH: /app/migrations
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-disabled}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM_EMAIL: ${SMTP_FROM_EMAIL:-}
+      SMTP_FROM_NAME: ${SMTP_FROM_NAME:-Alexforbes Widget Studio}
+      SMTP_TLS_MODE: ${SMTP_TLS_MODE:-starttls}
     volumes:
       - ./backend:/app
       - go-mod-cache:/go/pkg/mod
