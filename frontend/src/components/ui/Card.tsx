@@ -8,7 +8,7 @@ export function Card({ children, className = '', ...props }: CardProps) {
   return (
     <div
       className={[
-        'af-glass rounded-md transition duration-200 hover:-translate-y-0.5 hover:shadow-glass',
+        'af-glass rounded-xl transition duration-200 hover:-translate-y-0.5 hover:border-sage/20 hover:shadow-glass',
         className,
       ].join(' ')}
       {...props}

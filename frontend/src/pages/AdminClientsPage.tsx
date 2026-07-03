@@ -88,7 +88,7 @@ export function AdminClientsPage() {
       </section>
 
       {panel && (
-        <section className="rounded-md border border-ink/10 bg-white/65 p-4 shadow-panel backdrop-blur-xl dark:border-white/10 dark:bg-white/5 sm:p-5">
+        <section className="rounded-xl border border-ink/10 bg-white/90 p-5 shadow-panel backdrop-blur-xl dark:border-white/10 dark:bg-white/5 sm:p-6">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
               <h3 className="text-lg font-semibold">{panelTitle(panel)}</h3>
@@ -101,7 +101,7 @@ export function AdminClientsPage() {
       )}
 
       <section className="space-y-3">
-        <div className="grid gap-2 rounded-md border border-ink/10 bg-white/55 p-3 backdrop-blur-xl dark:border-white/10 dark:bg-white/5 md:grid-cols-2 xl:grid-cols-[minmax(240px,1fr)_150px_180px_180px_auto]">
+        <div className="grid gap-3 rounded-xl border border-ink/10 bg-white/80 p-4 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/5 md:grid-cols-2 xl:grid-cols-[minmax(240px,1fr)_150px_180px_180px_auto]">
           <label className="relative">
             <span className="sr-only">Search clients</span><Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-ink/40" />
             <input className={`${inputClass} pl-9`} value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Name, email, advisor or client ID" />
@@ -119,15 +119,15 @@ export function AdminClientsPage() {
         {isLoading ? <ClientTableSkeleton /> : error ? <EmptyState title="Clients could not be loaded" description={errorMessage(error)} /> : clients.length === 0 ? (
           <EmptyState title="No clients found" description="Adjust the filters or create the first client record." action={<Button onClick={() => openPanel('create')}><Plus className="h-4 w-4" />Create client</Button>} />
         ) : (
-          <div className="overflow-hidden rounded-md border border-ink/10 bg-white/65 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
+          <div className="overflow-hidden rounded-xl border border-ink/10 bg-white/90 shadow-[0_10px_30px_rgba(6,38,61,0.07)] backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
             <div className="overflow-x-auto">
               <table className="min-w-[900px] w-full text-left text-sm">
-                <thead className="border-b border-ink/10 bg-ink/[0.025] text-xs font-semibold uppercase text-ink/50 dark:border-white/10 dark:bg-white/[0.03] dark:text-white/50">
+                <thead className="border-b border-ink/10 bg-ink/[0.035] text-[11px] font-extrabold uppercase text-ink/50 dark:border-white/10 dark:bg-white/[0.03] dark:text-white/50">
                   <tr>{clientTableColumns.map((column) => <th key={column} className={`px-4 py-3 ${column === 'Actions' ? 'text-right' : ''}`}>{column}</th>)}</tr>
                 </thead>
                 <tbody className="divide-y divide-ink/8 dark:divide-white/8">
                   {clients.map((client) => (
-                    <tr key={client.id} className="transition hover:bg-sage/[0.045]">
+                    <tr key={client.id} className="transition hover:bg-sage/[0.055]">
                       <td className="px-4 py-3"><ClientNameLink client={client} isAdmin={isAdmin} /><p className="mt-0.5 text-xs text-ink/50 dark:text-white/50">{client.riskProfile || 'No risk profile'}</p></td>
                       <td className="px-4 py-3 font-mono text-xs text-ink/65 dark:text-white/65">{client.id}</td>
                       <td className="px-4 py-3"><p>{client.email}</p><p className="mt-0.5 text-xs text-ink/50 dark:text-white/50">{client.mobileNumber}</p></td>

@@ -25,7 +25,7 @@ export function SimulationWorkflowActions({ canSave, saving, updating, activeNam
   const [saveOpen, setSaveOpen] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
   const busy = saving || updating;
-  return <section className="rounded-md border border-ink/10 bg-white/60 p-4 shadow-sm dark:border-white/10 dark:bg-white/5 print:hidden" aria-label="Simulation actions">
+  return <section className="rounded-xl border border-ink/10 bg-white/90 p-4 shadow-[0_8px_24px_rgba(6,38,61,0.06)] dark:border-white/10 dark:bg-white/5 print:hidden sm:p-5" aria-label="Simulation actions">
     <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
       <div>{activeName ? <><p className="text-xs font-semibold uppercase text-sage">Editing saved simulation</p><p className="mt-1 font-semibold">{activeName}</p></> : <><p className="font-semibold">Current simulation</p><p className="mt-1 text-xs text-ink/50 dark:text-white/50">Adjust the values, then save when the scenario is ready.</p></>}</div>
       <div className="flex flex-wrap gap-2">

@@ -27,7 +27,7 @@ export function WidgetLibraryPage() {
 export function WidgetCard({ widget }: { widget: Widget }) {
   return (
     <Link to={`/advisor/widgets/${widget.id}`} aria-label={`Open ${widget.name}`} className="group block h-full rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage focus-visible:ring-offset-2">
-      <article className="flex h-full cursor-pointer flex-col rounded-md border border-ink/10 bg-white/70 p-5 shadow-sm backdrop-blur-xl transition duration-200 group-hover:-translate-y-0.5 group-hover:border-sage/40 group-hover:shadow-panel dark:border-white/10 dark:bg-white/5">
+      <article className="flex h-full cursor-pointer flex-col rounded-xl border border-ink/10 bg-white/90 p-5 shadow-[0_8px_24px_rgba(6,38,61,0.06)] backdrop-blur-xl transition duration-200 group-hover:-translate-y-1 group-hover:border-sage/35 group-hover:shadow-panel dark:border-white/10 dark:bg-white/5 sm:p-6">
         <div className="flex items-start gap-3"><WidgetBrandIcon widgetId={widget.id} icon={widget.icon} /><div className="min-w-0"><p className="text-xs font-semibold text-sage">{widget.category}</p><h3 className="mt-1 text-lg font-bold">{widget.name}</h3></div><span className="ml-auto rounded-full bg-sage/10 px-2 py-1 text-[11px] font-bold text-sage">{widget.status}</span></div>
         <p className="mt-4 flex-1 text-sm leading-6 text-ink/65 dark:text-white/65">{widget.description}</p>
         <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-sage">Open widget <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" /></span>

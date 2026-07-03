@@ -78,53 +78,64 @@ export function LoginPage() {
   }
 
   return (
-    <main className="af-page-shell grid min-h-screen text-ink dark:text-white lg:grid-cols-[1.05fr_0.95fr]">
-      <section className="hidden min-h-screen bg-[radial-gradient(circle_at_18%_18%,rgba(0,168,120,0.28),transparent_34%),radial-gradient(circle_at_86%_8%,rgba(0,106,142,0.32),transparent_30%),linear-gradient(135deg,#03111f,#071f35_55%,#064254)] px-10 py-10 text-white lg:flex lg:flex-col lg:justify-between">
+    <main className="af-page-shell grid min-h-screen text-ink dark:text-white lg:grid-cols-[1.08fr_0.92fr]">
+      <section className="relative hidden min-h-screen overflow-hidden bg-[radial-gradient(circle_at_16%_16%,rgba(0,167,111,0.28),transparent_34%),radial-gradient(circle_at_88%_4%,rgba(0,111,132,0.34),transparent_34%),linear-gradient(145deg,#041c2c,#06263d_54%,#064754)] px-12 py-12 text-white lg:flex lg:flex-col lg:justify-between xl:px-16 xl:py-14">
+        <div className="pointer-events-none absolute -bottom-32 -right-28 h-[420px] w-[420px] rounded-full border border-white/10" />
+        <div className="pointer-events-none absolute -bottom-16 -right-12 h-[260px] w-[260px] rounded-full border border-sage/20" />
         <div>
-          <p className="text-sm font-semibold text-sage">AF Engage</p>
-          <h1 className="mt-2 text-4xl font-bold">Widget Studio</h1>
+          <div className="flex items-center gap-3">
+            <span className="grid h-11 w-11 place-items-center rounded-xl bg-sage text-sm font-black text-ink shadow-[0_12px_30px_rgba(0,167,111,0.28)]">AF</span>
+            <div>
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-sage">Alexforbes</p>
+              <h1 className="text-lg font-bold">Widget Studio</h1>
+            </div>
+          </div>
         </div>
-        <div className="max-w-xl">
-          <p className="text-sm uppercase text-white/55">Hackathon demo workspace</p>
-          <h2 className="mt-4 text-5xl font-bold leading-tight">Personalized financial journeys, assembled in minutes.</h2>
-          <p className="mt-5 text-base leading-7 text-white/70">
+        <div className="relative z-10 max-w-2xl pb-10">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-sage">Financial engagement platform</p>
+          <h2 className="mt-5 text-5xl font-extrabold leading-[1.08] tracking-[-0.035em] xl:text-6xl">Personalized financial journeys, assembled in minutes.</h2>
+          <p className="mt-6 max-w-xl text-base leading-8 text-white/68">
             Advisors configure reusable simulation widgets, publish client dashboards, and track engagement from one polished portal.
           </p>
         </div>
       </section>
-      <section className="grid min-h-screen place-items-center px-6 py-10">
+      <section className="grid min-h-screen place-items-center px-5 py-10 sm:px-8 lg:px-12">
       <motion.form
         onSubmit={handleSubmit}
-        className="af-glass w-full max-w-md rounded-lg p-8"
+        className="af-glass w-full max-w-[460px] rounded-2xl p-7 sm:p-10"
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.24 }}
       >
-        <p className="text-sm font-semibold text-sage">AF Engage</p>
-        <h1 className="mt-2 text-3xl font-bold">Sign in</h1>
-        <p className="mt-3 text-sm leading-6 text-ink/65">
+        <div className="mb-8 flex items-center gap-3 lg:hidden">
+          <span className="grid h-10 w-10 place-items-center rounded-[10px] bg-sage text-xs font-black text-ink">AF</span>
+          <div><p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-sage">Alexforbes</p><p className="text-sm font-bold">Widget Studio</p></div>
+        </div>
+        <p className="text-xs font-extrabold uppercase tracking-[0.12em] text-sage">Secure workspace</p>
+        <h1 className="mt-2 text-3xl font-extrabold tracking-[-0.025em] sm:text-4xl">Welcome back</h1>
+        <p className="mt-3 text-sm leading-6 text-ink/60">
           Use a mock account to enter the advisor, client, or admin workspace.
         </p>
 
-        <div className="mt-6 space-y-4">
+        <div className="mt-8 space-y-5">
           <label className="block">
-            <span className="text-sm font-medium text-ink/75">Email</span>
+            <span className="text-sm font-bold text-ink/75">Email</span>
             <input
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className="af-focus-ring mt-2 w-full rounded-md border border-ink/15 bg-white/55 px-3 py-3 text-sm dark:border-white/15 dark:bg-white/10"
+              className="af-focus-ring mt-2 w-full border border-ink/15 bg-white px-4 py-3.5 text-sm shadow-sm dark:border-white/15 dark:bg-white/10"
               autoComplete="email"
               required
             />
           </label>
           <label className="block">
-            <span className="text-sm font-medium text-ink/75">Password</span>
+            <span className="text-sm font-bold text-ink/75">Password</span>
             <input
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="af-focus-ring mt-2 w-full rounded-md border border-ink/15 bg-white/55 px-3 py-3 text-sm dark:border-white/15 dark:bg-white/10"
+              className="af-focus-ring mt-2 w-full border border-ink/15 bg-white px-4 py-3.5 text-sm shadow-sm dark:border-white/15 dark:bg-white/10"
               autoComplete="current-password"
               required
             />
@@ -140,7 +151,7 @@ export function LoginPage() {
         <Button
           type="submit"
           disabled={isLoading}
-          className="mt-6 w-full py-3"
+          className="mt-7 w-full py-3.5"
         >
           {isLoading ? 'Signing in...' : 'Sign in'}
         </Button>

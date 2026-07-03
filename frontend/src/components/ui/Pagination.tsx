@@ -19,17 +19,17 @@ export function Pagination({ page, totalPages, totalItems, itemLabel, isFetching
     : `${totalItems} ${itemLabel}${totalItems === 1 ? '' : 's'}`;
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-ink/10 px-4 py-3 text-xs text-ink/55 dark:border-white/10 dark:text-white/55">
-      <span>
+    <div className="flex flex-wrap items-center justify-between gap-4 border-t border-ink/10 bg-ink/[0.015] px-5 py-4 text-xs text-ink/55 dark:border-white/10 dark:bg-white/[0.02] dark:text-white/55">
+      <span className="font-semibold">
         {countLabel}
         {isFetching ? ' • Refreshing' : ''}
       </span>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
         <Button variant="secondary" disabled={safePage <= 1} onClick={() => onChange(safePage - 1)}>
           <ChevronLeft className="h-4 w-4" />
           Previous
         </Button>
-        <span>Page {safePage} of {safeTotalPages}</span>
+        <span className="min-w-[84px] text-center font-semibold text-ink/65 dark:text-white/65">Page {safePage} of {safeTotalPages}</span>
         <Button variant="secondary" disabled={safePage >= safeTotalPages} onClick={() => onChange(safePage + 1)}>
           Next
           <ChevronRight className="h-4 w-4" />

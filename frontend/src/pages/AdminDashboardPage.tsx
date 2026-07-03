@@ -51,7 +51,7 @@ export function AdminDashboardPage() {
     <div className="space-y-6">
       <section>
         <p className="text-sm font-semibold text-sage">Admin dashboard</p>
-        <h2 className="mt-1 text-3xl font-bold">Platform performance overview</h2>
+        <h2 className="mt-1 text-3xl font-extrabold tracking-[-0.025em] sm:text-4xl">Platform performance overview</h2>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-ink/65">
           Monitor system-wide clients, widgets, dashboards, and simulation activity across the full platform.
         </p>
@@ -69,7 +69,7 @@ export function AdminDashboardPage() {
         <KpiCard label="Most used widget" value={analytics?.mostUsedWidget || (isLoading ? '...' : 'No usage yet')} icon={<Trophy className="h-4 w-4" />} compact tone="warning" />
       </section>
 
-      <section className="rounded-lg border border-ink/10 bg-white p-5 shadow-panel">
+      <section className="rounded-xl border border-ink/10 bg-white p-5 shadow-panel sm:p-6">
         <div className="mb-5 flex items-center justify-between gap-3">
           <div>
             <h3 className="text-lg font-semibold">System widget usage</h3>
