@@ -6,17 +6,17 @@ export default {
   theme: {
     extend: {
       colors: {
-        ink: '#071f35',
-        mist: '#f3f8fb',
-        sage: '#00a878',
-        coral: '#ef5b5b',
-        gold: '#f2b84b',
-        ocean: '#006a8e',
-        sky: '#d7f1f4',
+        ink: '#06263d',
+        mist: '#f4f8f8',
+        sage: '#00a76f',
+        coral: '#df4f5f',
+        gold: '#e7ad35',
+        ocean: '#006f84',
+        sky: '#dff3f1',
       },
       boxShadow: {
-        panel: '0 22px 70px rgba(7, 31, 53, 0.14)',
-        glass: '0 20px 60px rgba(7, 31, 53, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.62)',
+        panel: '0 12px 36px rgba(6, 38, 61, 0.09)',
+        glass: '0 16px 42px rgba(6, 38, 61, 0.11), inset 0 1px 0 rgba(255, 255, 255, 0.72)',
       },
     },
   },

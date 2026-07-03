@@ -10,15 +10,15 @@ interface WidgetCardProps {
 
 export function WidgetCard({ title, description, status = 'Illustration', children }: WidgetCardProps) {
   return (
-    <article className="af-glass rounded-md p-4 transition duration-200 hover:-translate-y-0.5 hover:shadow-glass">
+    <article className="af-glass rounded-xl p-5 transition duration-200 hover:-translate-y-0.5 hover:border-sage/20 hover:shadow-glass sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-2.5">
         <div>
-          <p className="text-xs font-semibold uppercase text-sage">{status}</p>
-          <h3 className="mt-1 text-lg font-bold">{title}</h3>
-          <p className="mt-1.5 max-w-3xl text-sm leading-5 text-ink/65">{description}</p>
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-sage">{status}</p>
+          <h3 className="mt-1.5 text-xl font-extrabold tracking-[-0.015em]">{title}</h3>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-ink/60">{description}</p>
         </div>
       </div>
-      <div className="mt-4">{children}</div>
+      <div className="mt-5">{children}</div>
     </article>
   );
 }
@@ -47,7 +47,7 @@ export function SliderField({
   onChange: (value: number) => void;
 }) {
   return (
-    <label className="block rounded-md border border-ink/10 bg-white/30 p-3 backdrop-blur-xl dark:bg-white/5">
+    <label className="block rounded-xl border border-ink/10 bg-white/70 p-4 shadow-sm backdrop-blur-xl transition hover:border-sage/20 dark:bg-white/5">
       <div className="flex items-center justify-between gap-2">
         <span className="text-sm font-semibold text-ink/75">{label}</span>
         <span className="text-sm font-bold text-ink">

@@ -64,7 +64,7 @@ export function AdminAdvisorsPage() {
       </section>
 
       {panel && (
-        <section className="rounded-md border border-ink/10 bg-white/65 p-4 shadow-panel backdrop-blur-xl dark:border-white/10 dark:bg-white/5 sm:p-5">
+        <section className="rounded-xl border border-ink/10 bg-white/90 p-5 shadow-panel backdrop-blur-xl dark:border-white/10 dark:bg-white/5 sm:p-6">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
               <h3 className="text-lg font-semibold">{panelTitle(panel)}</h3>
@@ -77,7 +77,7 @@ export function AdminAdvisorsPage() {
       )}
 
       <section className="space-y-3">
-        <div className="grid gap-2 rounded-md border border-ink/10 bg-white/55 p-3 backdrop-blur-xl dark:border-white/10 dark:bg-white/5 md:grid-cols-[minmax(240px,1fr)_170px]">
+        <div className="grid gap-3 rounded-xl border border-ink/10 bg-white/80 p-4 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/5 md:grid-cols-[minmax(240px,1fr)_170px]">
           <label className="relative">
             <span className="sr-only">Search advisors</span><Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-ink/40" />
             <input className={`${inputClass} pl-9`} value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Name, email or advisor ID" />
@@ -90,7 +90,7 @@ export function AdminAdvisorsPage() {
         {isLoading ? <AdvisorTableSkeleton /> : error ? <EmptyState title="Advisors could not be loaded" description={errorMessage(error)} /> : advisors.length === 0 ? (
           <EmptyState title="No advisors found" description="Adjust the filters or create the first advisor record." action={<Button onClick={() => openPanel('create')}><Plus className="h-4 w-4" />Create advisor</Button>} />
         ) : (
-          <div className="overflow-hidden rounded-md border border-ink/10 bg-white/65 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
+          <div className="overflow-hidden rounded-xl border border-ink/10 bg-white/90 shadow-[0_10px_30px_rgba(6,38,61,0.07)] backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
             <div className="overflow-x-auto">
               <table className="min-w-[760px] w-full text-left text-sm">
                 <thead className="border-b border-ink/10 bg-ink/[0.025] text-xs font-semibold uppercase text-ink/50 dark:border-white/10 dark:bg-white/[0.03] dark:text-white/50">

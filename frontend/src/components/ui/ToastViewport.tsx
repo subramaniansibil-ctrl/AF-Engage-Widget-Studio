@@ -19,9 +19,9 @@ export function ToastViewport() {
   }, [dispatch, toasts]);
 
   return (
-    <div className="fixed right-4 top-4 z-50 w-[min(380px,calc(100vw-2rem))] space-y-3">
+    <div className="fixed right-4 top-4 z-50 w-[min(400px,calc(100vw-2rem))] space-y-3" aria-live="polite">
       {toasts.map((toast) => (
-        <div key={toast.id} className={['rounded-lg border p-4 shadow-panel backdrop-blur', styles[toast.variant]].join(' ')}>
+        <div key={toast.id} className={['rounded-xl border p-4 shadow-[0_18px_50px_rgba(6,38,61,0.16)] backdrop-blur-xl', styles[toast.variant]].join(' ')}>
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-sm font-semibold">{toast.title}</p>

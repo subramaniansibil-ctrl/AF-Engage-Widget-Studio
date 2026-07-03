@@ -3,7 +3,7 @@ interface SkeletonProps {
 }
 
 export function Skeleton({ className = '' }: SkeletonProps) {
-  return <div className={['animate-pulse rounded-md bg-white/55 shadow-sm backdrop-blur-xl dark:bg-white/10', className].join(' ')} />;
+  return <div className={['animate-pulse rounded-xl bg-gradient-to-r from-ink/[0.045] via-white/80 to-ink/[0.045] bg-[length:200%_100%] shadow-sm dark:from-white/5 dark:via-white/10 dark:to-white/5', className].join(' ')} />;
 }
 
 export function DashboardSkeleton() {
