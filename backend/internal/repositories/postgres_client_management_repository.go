@@ -132,9 +132,14 @@ func (r *postgresAdvisorRepository) CreateManagedClient(ctx context.Context, req
 	_, err = tx.ExecContext(ctx, `
 		INSERT INTO portfolios (
 			id, client_id, total_value, savings_pot_balance, retirement_pot_balance, monthly_contribution,
+			monthly_income, monthly_expenses, monthly_savings, net_worth,
 			retirement_goal_target_amount, retirement_goal_target_age, retirement_goal_progress
-		) VALUES ($1, $2, 0, 0, 0, 0, 0, 65, 0)
-	`, "portfolio-"+request.ID, request.ID)
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 0, 65, 0)
+	`, "portfolio-"+request.ID, request.ID, nonNegativeInt64(request.Portfolio.TotalValue),
+		nonNegativeInt64(request.Portfolio.SavingsPotBalance), nonNegativeInt64(request.Portfolio.RetirementPotBalance),
+		nonNegativeInt64(request.Portfolio.MonthlyContribution), nonNegativeInt64(request.Portfolio.MonthlyIncome),
+		nonNegativeInt64(request.Portfolio.MonthlyExpenses), nonNegativeInt64(request.Portfolio.MonthlySavings),
+		nonNegativeInt64(request.Portfolio.NetWorth))
 	if err != nil {
 		return models.Client{}, err
 	}
@@ -169,6 +174,38 @@ func (r *postgresAdvisorRepository) UpdateManagedClient(ctx context.Context, id 
 		request.AssignedAdvisor, request.Status, dateOfBirth, risk, request.InvestmentGoal, request.PortfolioID, request.Notes)
 	if err != nil {
 		return models.Client{}, err
+	}
+	updateResult, err := r.db.ExecContext(ctx, `
+		UPDATE portfolios SET
+			total_value = $2, savings_pot_balance = $3, retirement_pot_balance = $4, monthly_contribution = $5,
+			monthly_income = $6, monthly_expenses = $7, monthly_savings = $8, net_worth = $9
+		WHERE client_id = $1
+	`, id, nonNegativeInt64(request.Portfolio.TotalValue), nonNegativeInt64(request.Portfolio.SavingsPotBalance),
+		nonNegativeInt64(request.Portfolio.RetirementPotBalance), nonNegativeInt64(request.Portfolio.MonthlyContribution),
+		nonNegativeInt64(request.Portfolio.MonthlyIncome), nonNegativeInt64(request.Portfolio.MonthlyExpenses),
+		nonNegativeInt64(request.Portfolio.MonthlySavings), nonNegativeInt64(request.Portfolio.NetWorth))
+	if err != nil {
+		return models.Client{}, err
+	}
+	rowsAffected, err := updateResult.RowsAffected()
+	if err != nil {
+		return models.Client{}, err
+	}
+	if rowsAffected == 0 {
+		_, err = r.db.ExecContext(ctx, `
+			INSERT INTO portfolios (
+				id, client_id, total_value, savings_pot_balance, retirement_pot_balance, monthly_contribution,
+				monthly_income, monthly_expenses, monthly_savings, net_worth,
+				retirement_goal_target_amount, retirement_goal_target_age, retirement_goal_progress
+			) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 0, 65, 0)
+		`, "portfolio-"+id, id, nonNegativeInt64(request.Portfolio.TotalValue),
+			nonNegativeInt64(request.Portfolio.SavingsPotBalance), nonNegativeInt64(request.Portfolio.RetirementPotBalance),
+			nonNegativeInt64(request.Portfolio.MonthlyContribution), nonNegativeInt64(request.Portfolio.MonthlyIncome),
+			nonNegativeInt64(request.Portfolio.MonthlyExpenses), nonNegativeInt64(request.Portfolio.MonthlySavings),
+			nonNegativeInt64(request.Portfolio.NetWorth))
+		if err != nil {
+			return models.Client{}, err
+		}
 	}
 	return r.GetManagedClientByID(ctx, id)
 }
@@ -211,9 +248,10 @@ func (r *postgresAdvisorRepository) ensureUniqueClient(ctx context.Context, id, 
 const managedClientSelect = `
 	SELECT c.id, c.name, c.age, c.email, c.mobile_number, c.assigned_advisor, c.status,
 		COALESCE(TO_CHAR(c.date_of_birth, 'YYYY-MM-DD'), ''), c.risk_profile, c.retirement_stage,
-		c.investment_goal, COALESCE(NULLIF(c.portfolio_reference, ''), p.id), c.notes, c.created_at,
-		p.total_value, p.savings_pot_balance, p.retirement_pot_balance, p.monthly_contribution,
-		p.retirement_goal_target_amount, p.retirement_goal_target_age, p.retirement_goal_progress
+		c.investment_goal, COALESCE(NULLIF(c.portfolio_reference, ''), p.id, ''), c.notes, c.created_at,
+		COALESCE(p.total_value, 0), COALESCE(p.savings_pot_balance, 0), COALESCE(p.retirement_pot_balance, 0), COALESCE(p.monthly_contribution, 0),
+		COALESCE(p.monthly_income, 0), COALESCE(p.monthly_expenses, 0), COALESCE(p.monthly_savings, 0), COALESCE(p.net_worth, 0),
+		COALESCE(p.retirement_goal_target_amount, 0), COALESCE(p.retirement_goal_target_age, 65), COALESCE(p.retirement_goal_progress, 0)
 	FROM clients c
 	LEFT JOIN portfolios p ON p.client_id = c.id
 `
@@ -226,7 +264,16 @@ func scanManagedClient(row scanner) (models.Client, error) {
 		&client.RetirementStage, &client.InvestmentGoal, &client.PortfolioID, &client.Notes,
 		&client.CreatedAt, &client.Portfolio.TotalValue, &client.Portfolio.SavingsPotBalance,
 		&client.Portfolio.RetirementPotBalance, &client.Portfolio.MonthlyContribution,
+		&client.Portfolio.MonthlyIncome, &client.Portfolio.MonthlyExpenses,
+		&client.Portfolio.MonthlySavings, &client.Portfolio.NetWorth,
 		&client.RetirementGoal.TargetAmount, &client.RetirementGoal.TargetAge, &client.RetirementGoal.Progress,
 	)
 	return client, err
+}
+
+func nonNegativeInt64(value int64) int64 {
+	if value < 0 {
+		return 0
+	}
+	return value
 }

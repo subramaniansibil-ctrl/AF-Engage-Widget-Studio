@@ -14,6 +14,7 @@ import { Skeleton } from '../components/ui/Skeleton';
 import { useAppDispatch, useAppSelector } from '../app/hooks';
 import { addToast } from '../features/ui/uiSlice';
 import { assignedWidgetConfigurationUrl } from '../features/widgets/widgetNavigation';
+import { ClientPortfolioSection } from '../components/portfolio/ClientPortfolioSection';
 
 export function AdvisorClientDetailPage() {
   const { clientId = '' } = useParams();
@@ -83,6 +84,8 @@ export function AdvisorClientDetailPage() {
           </div>
         </div>
       </section>
+
+      <ClientPortfolioSection portfolio={client.portfolio} />
 
       <section className="rounded-lg border border-ink/10 bg-white p-5 shadow-panel">
         <div className="flex flex-wrap items-center justify-between gap-3">

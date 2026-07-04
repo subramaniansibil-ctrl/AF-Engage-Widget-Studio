@@ -9,6 +9,10 @@ export interface Portfolio {
   savingsPotBalance: number;
   retirementPotBalance: number;
   monthlyContribution: number;
+  monthlyIncome: number;
+  monthlyExpenses: number;
+  monthlySavings: number;
+  netWorth: number;
 }
 
 export interface RetirementGoal {

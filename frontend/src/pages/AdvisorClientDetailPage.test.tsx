@@ -16,7 +16,16 @@ vi.mock('../features/advisor/advisorApi', () => ({
     data: {
       id: 'client-001', name: 'Avery Naidoo', email: 'avery@example.com', age: 44,
       assignedAdvisor: 'Advisor User', status: 'ACTIVE', riskProfile: 'MODERATE', retirementStage: 'ACCUMULATION',
-      portfolio: { totalValue: 1200000, savingsPotBalance: 85000, retirementPotBalance: 1115000, monthlyContribution: 12000 },
+      portfolio: {
+        totalValue: 1200000,
+        savingsPotBalance: 85000,
+        retirementPotBalance: 1115000,
+        monthlyContribution: 12000,
+        monthlyIncome: 68000,
+        monthlyExpenses: 41000,
+        monthlySavings: 27000,
+        netWorth: 1500000,
+      },
       retirementGoal: { targetAmount: 5000000, targetAge: 65, progress: 24 },
     },
     isLoading: false, isError: false,
@@ -51,6 +60,9 @@ describe('Advisor Client Details', () => {
     expect(screen.getByText('Advisor User')).toBeInTheDocument();
     expect(screen.getByText('active')).toBeInTheDocument();
     expect(screen.getByText('Two-Pot Impact')).toBeInTheDocument();
+    expect(screen.getByText('Client portfolio')).toBeInTheDocument();
+    expect(screen.getByText('Monthly Income')).toBeInTheDocument();
+    expect(screen.getByText('Net Worth')).toBeInTheDocument();
     expect(screen.getByText('Published')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Assign widgets/ })).toHaveAttribute('href', '/advisor/widgets/configure?clientId=client-001');
     expect(screen.getByRole('link', { name: /Back to clients/ })).toHaveAttribute('href', '/advisor/client-management');

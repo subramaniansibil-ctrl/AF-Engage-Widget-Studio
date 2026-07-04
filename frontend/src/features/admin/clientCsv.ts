@@ -40,7 +40,19 @@ export function parseClientCsv(source: string, options: ClientCsvOptions = {}): 
       id: get('Client ID'), name: get('Client Name'), email: get('Email').toLowerCase(),
       mobileNumber: get('Mobile Number'), assignedAdvisor: options.forcedAdvisor ?? get('Assigned Advisor'), status,
       dateOfBirth: get('Date of Birth'), riskProfile, investmentGoal: get('Investment Goal'),
-      portfolioId: get('Portfolio ID'), notes: '', password: '',
+      portfolioId: get('Portfolio ID'),
+      portfolio: {
+        totalValue: 0,
+        savingsPotBalance: 0,
+        retirementPotBalance: 0,
+        monthlyContribution: 0,
+        monthlyIncome: 0,
+        monthlyExpenses: 0,
+        monthlySavings: 0,
+        netWorth: 0,
+      },
+      notes: '',
+      password: '',
     };
     const required: Array<[string, string]> = [
       ['Client Name', client.name], ['Client ID', client.id], ['Email', client.email],

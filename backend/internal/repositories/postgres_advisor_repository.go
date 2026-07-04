@@ -100,11 +100,12 @@ func (r *postgresAdvisorRepository) ListClients(ctx context.Context, filters Cli
 	query := `
 		SELECT c.id, c.name, c.age, c.email, c.mobile_number, c.assigned_advisor, c.status,
 			COALESCE(TO_CHAR(c.date_of_birth, 'YYYY-MM-DD'), ''), c.risk_profile, c.retirement_stage,
-			c.investment_goal, COALESCE(NULLIF(c.portfolio_reference, ''), p.id), c.notes, c.created_at,
-			p.total_value, p.savings_pot_balance, p.retirement_pot_balance, p.monthly_contribution,
-			p.retirement_goal_target_amount, p.retirement_goal_target_age, p.retirement_goal_progress
+			c.investment_goal, COALESCE(NULLIF(c.portfolio_reference, ''), p.id, ''), c.notes, c.created_at,
+			COALESCE(p.total_value, 0), COALESCE(p.savings_pot_balance, 0), COALESCE(p.retirement_pot_balance, 0), COALESCE(p.monthly_contribution, 0),
+			COALESCE(p.monthly_income, 0), COALESCE(p.monthly_expenses, 0), COALESCE(p.monthly_savings, 0), COALESCE(p.net_worth, 0),
+			COALESCE(p.retirement_goal_target_amount, 0), COALESCE(p.retirement_goal_target_age, 65), COALESCE(p.retirement_goal_progress, 0)
 		FROM clients c
-		JOIN portfolios p ON p.client_id = c.id
+		LEFT JOIN portfolios p ON p.client_id = c.id
 		WHERE c.status = 'ACTIVE'
 	`
 	args := []any{}
@@ -175,11 +176,12 @@ func (r *postgresAdvisorRepository) GetClientByID(ctx context.Context, id string
 	row := r.db.QueryRowContext(ctx, `
 		SELECT c.id, c.name, c.age, c.email, c.mobile_number, c.assigned_advisor, c.status,
 			COALESCE(TO_CHAR(c.date_of_birth, 'YYYY-MM-DD'), ''), c.risk_profile, c.retirement_stage,
-			c.investment_goal, COALESCE(NULLIF(c.portfolio_reference, ''), p.id), c.notes, c.created_at,
-			p.total_value, p.savings_pot_balance, p.retirement_pot_balance, p.monthly_contribution,
-			p.retirement_goal_target_amount, p.retirement_goal_target_age, p.retirement_goal_progress
+			c.investment_goal, COALESCE(NULLIF(c.portfolio_reference, ''), p.id, ''), c.notes, c.created_at,
+			COALESCE(p.total_value, 0), COALESCE(p.savings_pot_balance, 0), COALESCE(p.retirement_pot_balance, 0), COALESCE(p.monthly_contribution, 0),
+			COALESCE(p.monthly_income, 0), COALESCE(p.monthly_expenses, 0), COALESCE(p.monthly_savings, 0), COALESCE(p.net_worth, 0),
+			COALESCE(p.retirement_goal_target_amount, 0), COALESCE(p.retirement_goal_target_age, 65), COALESCE(p.retirement_goal_progress, 0)
 		FROM clients c
-		JOIN portfolios p ON p.client_id = c.id
+		LEFT JOIN portfolios p ON p.client_id = c.id
 		WHERE c.id = $1 AND c.status = 'ACTIVE'
 	`, id)
 	client, err := scanClient(row)
@@ -217,6 +219,10 @@ func scanClient(row scanner) (models.Client, error) {
 		&client.Portfolio.SavingsPotBalance,
 		&client.Portfolio.RetirementPotBalance,
 		&client.Portfolio.MonthlyContribution,
+		&client.Portfolio.MonthlyIncome,
+		&client.Portfolio.MonthlyExpenses,
+		&client.Portfolio.MonthlySavings,
+		&client.Portfolio.NetWorth,
 		&client.RetirementGoal.TargetAmount,
 		&client.RetirementGoal.TargetAge,
 		&client.RetirementGoal.Progress,

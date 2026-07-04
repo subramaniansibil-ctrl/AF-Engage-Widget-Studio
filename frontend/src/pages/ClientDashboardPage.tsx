@@ -8,6 +8,7 @@ import {
 import type { DashboardAssignment } from '../features/widgets/widgetsApi';
 import { WidgetBrandIcon } from '../components/widgets/WidgetBrandIcon';
 import { zarCurrency as currency } from '../utils/currency';
+import { ClientPortfolioSection } from '../components/portfolio/ClientPortfolioSection';
 
 export function ClientDashboardPage() {
   const { data: dashboard, isLoading, isError } = useGetClientDashboardQuery();
@@ -50,6 +51,8 @@ export function ClientDashboardPage() {
           </p>
         </div>
       </section>
+
+      <ClientPortfolioSection portfolio={dashboard.portfolioSummary} />
 
       <section>
         <div className="rounded-lg border border-ink/10 bg-white p-5 shadow-panel">
