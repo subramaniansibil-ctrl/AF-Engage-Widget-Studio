@@ -55,6 +55,10 @@ type Portfolio struct {
 	SavingsPotBalance    int64 `json:"savingsPotBalance"`
 	RetirementPotBalance int64 `json:"retirementPotBalance"`
 	MonthlyContribution  int64 `json:"monthlyContribution"`
+	MonthlyIncome        int64 `json:"monthlyIncome"`
+	MonthlyExpenses      int64 `json:"monthlyExpenses"`
+	MonthlySavings       int64 `json:"monthlySavings"`
+	NetWorth             int64 `json:"netWorth"`
 }
 
 type RetirementGoal struct {
@@ -111,6 +115,7 @@ type ClientUpsertRequest struct {
 	RiskProfile     RiskProfile  `json:"riskProfile" binding:"omitempty,oneof=CONSERVATIVE MODERATE GROWTH AGGRESSIVE"`
 	InvestmentGoal  string       `json:"investmentGoal" binding:"max=240"`
 	PortfolioID     string       `json:"portfolioId" binding:"max=80"`
+	Portfolio       Portfolio    `json:"portfolio"`
 	Notes           string       `json:"notes" binding:"max=1000"`
 	Password        string       `json:"password" binding:"omitempty,min=8,max=120"`
 	ConfirmPassword string       `json:"confirmPassword" binding:"omitempty"`

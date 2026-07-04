@@ -27,9 +27,19 @@ type Panel = 'create' | 'edit' | 'bulk' | null;
 const pageSize = 10;
 export const clientTableColumns = ['Client', 'Client ID', 'Contact', 'Advisor', 'Status', 'Actions'] as const;
 const inputClass = 'min-h-10 w-full rounded-md border border-ink/12 bg-white/70 px-3 text-sm text-ink outline-none transition placeholder:text-ink/35 focus:border-sage focus:ring-2 focus:ring-sage/15 dark:border-white/12 dark:bg-white/5 dark:text-white';
+const emptyPortfolio = {
+  totalValue: 0,
+  savingsPotBalance: 0,
+  retirementPotBalance: 0,
+  monthlyContribution: 0,
+  monthlyIncome: 0,
+  monthlyExpenses: 0,
+  monthlySavings: 0,
+  netWorth: 0,
+};
 const emptyForm = (assignedAdvisor: string): ClientUpsertRequest => ({
   id: '', name: '', email: '', mobileNumber: '', assignedAdvisor, status: 'ACTIVE',
-  dateOfBirth: '', riskProfile: 'MODERATE', investmentGoal: '', portfolioId: '', notes: '', password: '',
+  dateOfBirth: '', riskProfile: 'MODERATE', investmentGoal: '', portfolioId: '', portfolio: emptyPortfolio, notes: '', password: '',
 });
 
 export function AdminClientsPage() {
@@ -177,6 +187,9 @@ function ClientForm({ client, onDone, isAdmin, currentAdvisor, advisors }: { cli
   const [updateClient, updateState] = useUpdateAdminClientMutation();
   const saving = createState.isLoading || updateState.isLoading;
   function set<K extends keyof ClientUpsertRequest>(field: K, value: ClientUpsertRequest[K]) { setForm((current) => ({ ...current, [field]: value })); }
+  function setPortfolio(field: keyof ClientUpsertRequest['portfolio'], value: string) {
+    setForm((current) => ({ ...current, portfolio: { ...current.portfolio, [field]: Math.max(Number(value) || 0, 0) } }));
+  }
   async function submit(event: FormEvent) {
     event.preventDefault();
     try {
@@ -202,6 +215,13 @@ function ClientForm({ client, onDone, isAdmin, currentAdvisor, advisors }: { cli
         <Field label="Risk profile"><select className={inputClass} value={form.riskProfile} onChange={(e) => set('riskProfile', e.target.value as ClientUpsertRequest['riskProfile'])}><option value="">Not set</option><option value="CONSERVATIVE">Conservative</option><option value="MODERATE">Moderate</option><option value="GROWTH">Growth</option><option value="AGGRESSIVE">Aggressive</option></select></Field>
         <Field label="Investment goal"><input className={inputClass} value={form.investmentGoal} onChange={(e) => set('investmentGoal', e.target.value)} /></Field>
         <Field label="Portfolio ID"><input className={inputClass} value={form.portfolioId} onChange={(e) => set('portfolioId', e.target.value)} /></Field>
+        <Field label="Total portfolio value"><input type="number" min={0} className={inputClass} value={form.portfolio.totalValue} onChange={(e) => setPortfolio('totalValue', e.target.value)} /></Field>
+        <Field label="Savings pot balance"><input type="number" min={0} className={inputClass} value={form.portfolio.savingsPotBalance} onChange={(e) => setPortfolio('savingsPotBalance', e.target.value)} /></Field>
+        <Field label="Retirement pot balance"><input type="number" min={0} className={inputClass} value={form.portfolio.retirementPotBalance} onChange={(e) => setPortfolio('retirementPotBalance', e.target.value)} /></Field>
+        <Field label="Monthly income"><input type="number" min={0} className={inputClass} value={form.portfolio.monthlyIncome} onChange={(e) => setPortfolio('monthlyIncome', e.target.value)} /></Field>
+        <Field label="Monthly expenses"><input type="number" min={0} className={inputClass} value={form.portfolio.monthlyExpenses} onChange={(e) => setPortfolio('monthlyExpenses', e.target.value)} /></Field>
+        <Field label="Monthly savings"><input type="number" min={0} className={inputClass} value={form.portfolio.monthlySavings} onChange={(e) => setPortfolio('monthlySavings', e.target.value)} /></Field>
+        <Field label="Net worth"><input type="number" min={0} className={inputClass} value={form.portfolio.netWorth} onChange={(e) => setPortfolio('netWorth', e.target.value)} /></Field>
         <Field label="Notes" wide><textarea rows={3} className={`${inputClass} py-2`} value={form.notes} onChange={(e) => set('notes', e.target.value)} /></Field>
       </div>
       <div className="flex justify-end gap-2"><Button type="button" variant="secondary" onClick={onDone}>Cancel</Button><Button disabled={saving} type="submit">{saving ? 'Saving…' : client ? 'Save changes' : 'Create client'}</Button></div>
@@ -285,6 +305,6 @@ function IconButton({ label, children, ...props }: React.ButtonHTMLAttributes<HT
 function StatusBadge({ status }: { status: string }) { const positive = status === 'ACTIVE' || status === 'PUBLISHED'; return <span className={`inline-flex rounded-full px-2 py-1 text-[11px] font-bold ${positive ? 'bg-sage/12 text-sage' : 'bg-ink/8 text-ink/55 dark:bg-white/10 dark:text-white/55'}`}>{humanize(status)}</span>; }
 function ClientTableSkeleton() { return <div className="space-y-2 rounded-md border border-ink/10 bg-white/50 p-4 dark:border-white/10 dark:bg-white/5">{Array.from({ length: 6 }).map((_, index) => <Skeleton key={index} className="h-14" />)}</div>; }
 function panelTitle(panel: Exclude<Panel, null>) { return ({ create: 'Create client', edit: 'Edit client', bulk: 'Bulk upload clients' } as const)[panel]; }
-function fromClient(client: AdminClient): ClientUpsertRequest { return { id: client.id, name: client.name, email: client.email, mobileNumber: client.mobileNumber ?? '', assignedAdvisor: client.assignedAdvisor ?? '', status: client.status || 'ACTIVE', dateOfBirth: client.dateOfBirth ?? '', riskProfile: client.riskProfile ?? '', investmentGoal: client.investmentGoal ?? '', portfolioId: client.portfolioId ?? '', notes: client.notes ?? '', password: '' }; }
+function fromClient(client: AdminClient): ClientUpsertRequest { return { id: client.id, name: client.name, email: client.email, mobileNumber: client.mobileNumber ?? '', assignedAdvisor: client.assignedAdvisor ?? '', status: client.status || 'ACTIVE', dateOfBirth: client.dateOfBirth ?? '', riskProfile: client.riskProfile ?? '', investmentGoal: client.investmentGoal ?? '', portfolioId: client.portfolioId ?? '', portfolio: client.portfolio ?? emptyPortfolio, notes: client.notes ?? '', password: '' }; }
 function errorMessage(error: unknown) { const queryError = error as FetchBaseQueryError; if (typeof queryError?.data === 'object' && queryError.data && 'error' in queryError.data) return String((queryError.data as { error: string }).error); return 'Please try again.'; }
 function humanize(value: string) { return value.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/_/g, ' ').toLowerCase().replace(/^./, (letter) => letter.toUpperCase()); }

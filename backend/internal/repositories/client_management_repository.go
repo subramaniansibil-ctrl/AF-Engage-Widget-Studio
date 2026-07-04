@@ -159,7 +159,7 @@ func clientFromUpsertRequest(request models.ClientUpsertRequest) models.Client {
 		PortfolioID:     portfolioID,
 		Notes:           request.Notes,
 		CreatedAt:       time.Now(),
-		Portfolio:       PortfolioZeroValue(),
+		Portfolio:       request.Portfolio,
 		RetirementGoal:  models.RetirementGoal{TargetAge: 65},
 	}
 }

@@ -169,6 +169,10 @@ func client(id string, name string, age int, email string, risk models.RiskProfi
 			SavingsPotBalance:    savings,
 			RetirementPotBalance: retirement,
 			MonthlyContribution:  monthly,
+			MonthlyIncome:        monthly * 16,
+			MonthlyExpenses:      monthly * 10,
+			MonthlySavings:       monthly * 6,
+			NetWorth:             total + savings,
 		},
 		RetirementGoal: models.RetirementGoal{
 			TargetAmount: goal,

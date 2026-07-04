@@ -14,6 +14,10 @@ const previewPortfolio: Portfolio = {
   savingsPotBalance: 125000,
   retirementPotBalance: 625000,
   monthlyContribution: 5000,
+  monthlyIncome: 60000,
+  monthlyExpenses: 38000,
+  monthlySavings: 22000,
+  netWorth: 980000,
 };
 
 const previewGoal: RetirementGoal = { targetAmount: 1500000, targetAge: 65, progress: 50 };

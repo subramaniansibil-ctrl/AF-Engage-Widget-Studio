@@ -1,5 +1,6 @@
 import { apiSlice } from '../api/apiSlice';
 import { normalizePaginatedResponse, type PaginatedResponse } from '../api/pagination';
+import type { Portfolio } from '../advisor/advisorApi';
 
 export type ClientStatus = 'ACTIVE' | 'INACTIVE';
 export type RiskProfile = 'CONSERVATIVE' | 'MODERATE' | 'GROWTH' | 'AGGRESSIVE';
@@ -17,6 +18,7 @@ export interface AdminClient {
   retirementStage: string;
   investmentGoal?: string;
   portfolioId?: string;
+  portfolio: Portfolio;
   notes?: string;
   createdAt: string;
 }
@@ -32,6 +34,7 @@ export interface ClientUpsertRequest {
   riskProfile: RiskProfile | '';
   investmentGoal: string;
   portfolioId: string;
+  portfolio: Portfolio;
   notes: string;
   password: string;
 }
