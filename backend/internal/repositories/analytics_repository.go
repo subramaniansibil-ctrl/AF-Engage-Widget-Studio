@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/models"
+	"github.com/af-engage-widget-studio/backend/internal/models"
 )
 
 var ErrNotificationNotFound = errors.New("notification not found")
@@ -38,15 +38,15 @@ func NewMockAnalyticsRepository() AnalyticsRepository {
 	return &mockAnalyticsRepository{
 		widgetUsage: widgetUsage,
 		notifications: []models.Notification{
-			{ID: "notification-001", Title: "Dashboard published", Message: "Avery Chen's personalized dashboard is live.", Type: "success", Read: false, CreatedAt: now.Add(-25 * time.Minute)},
+			{ID: "notification-001", Title: "Dashboard published", Message: "John Smith's personalized dashboard is live.", Type: "success", Read: false, CreatedAt: now.Add(-25 * time.Minute)},
 			{ID: "notification-002", Title: "Simulation saved", Message: "Two-Pot Impact illustration was saved by a client.", Type: "info", Read: false, CreatedAt: now.Add(-2 * time.Hour)},
 			{ID: "notification-003", Title: "Review high-risk segment", Message: "Three clients have aggressive allocations near retirement.", Type: "warning", Read: true, CreatedAt: now.Add(-24 * time.Hour)},
 		},
 		auditLogs: []models.AuditLog{
-			{ID: "audit-001", Actor: "Advisor User", Action: "Published client dashboard", Entity: "client-001", CreatedAt: now.Add(-25 * time.Minute)},
-			{ID: "audit-002", Actor: "Avery Chen", Action: "Saved two-pot simulation", Entity: "two-pot-impact", CreatedAt: now.Add(-2 * time.Hour)},
+			{ID: "audit-001", Actor: "Sarah Williams", Action: "Published client dashboard", Entity: "client-001", CreatedAt: now.Add(-25 * time.Minute)},
+			{ID: "audit-002", Actor: "John Smith", Action: "Saved two-pot simulation", Entity: "two-pot-impact", CreatedAt: now.Add(-2 * time.Hour)},
 			{ID: "audit-003", Actor: "Admin User", Action: "Reviewed platform analytics", Entity: "analytics", CreatedAt: now.Add(-8 * time.Hour)},
-			{ID: "audit-004", Actor: "Advisor User", Action: "Assigned widget", Entity: "onefee-wealth-reclaim", CreatedAt: now.Add(-28 * time.Hour)},
+			{ID: "audit-004", Actor: "Sarah Williams", Action: "Assigned widget", Entity: "onefee-wealth-reclaim", CreatedAt: now.Add(-28 * time.Hour)},
 		},
 	}
 }

@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/config"
+	"github.com/af-engage-widget-studio/backend/internal/config"
 )
 
 func CORS(cfg config.Config) gin.HandlerFunc {

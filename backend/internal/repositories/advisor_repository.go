@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/models"
+	"github.com/af-engage-widget-studio/backend/internal/models"
 )
 
 var ErrClientNotFound = errors.New("client not found")
@@ -115,7 +115,7 @@ func (r *mockAdvisorRepository) GetClientByID(ctx context.Context, id string) (m
 
 func mockClients() []models.Client {
 	return []models.Client{
-		client("client-001", "Avery Chen", 42, "avery.chen@example.com", models.RiskModerate, models.RetirementStageAccumulation, 875000, 96000, 515000, 3200, 1800000, 62),
+		client("client-001", "John Smith", 42, "client@afengage.com", models.RiskModerate, models.RetirementStageAccumulation, 875000, 96000, 515000, 3200, 1800000, 62),
 		client("client-002", "Jordan Patel", 35, "jordan.patel@example.com", models.RiskGrowth, models.RetirementStageAccumulation, 245000, 41000, 122000, 2100, 1250000, 65),
 		client("client-003", "Sam Rivera", 61, "sam.rivera@example.com", models.RiskConservative, models.RetirementStagePreRetirement, 1325000, 210000, 865000, 4500, 2100000, 66),
 		client("client-004", "Mina Thompson", 58, "mina.thompson@example.com", models.RiskModerate, models.RetirementStagePreRetirement, 1640000, 185000, 1100000, 5200, 2400000, 64),
@@ -141,7 +141,7 @@ func mockClients() []models.Client {
 func mockAdvisors() []models.Advisor {
 	now := time.Now()
 	return []models.Advisor{
-		{ID: "user_advisor_001", Name: "Advisor User", Email: "advisor@afengage.com", Status: models.AdvisorStatusActive, CreatedAt: now.AddDate(0, -2, 0)},
+		{ID: "user_advisor_001", Name: "Sarah Williams", Email: "advisor@afengage.com", Status: models.AdvisorStatusActive, CreatedAt: now.AddDate(0, -2, 0)},
 	}
 }
 
@@ -157,7 +157,7 @@ func client(id string, name string, age int, email string, risk models.RiskProfi
 		Age:             age,
 		Email:           email,
 		MobileNumber:    "+1 555 0100",
-		AssignedAdvisor: "Advisor User",
+		AssignedAdvisor: "Sarah Williams",
 		Status:          models.ClientStatusActive,
 		RiskProfile:     risk,
 		InvestmentGoal:  "Long-term retirement security",

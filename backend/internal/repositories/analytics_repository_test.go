@@ -3,7 +3,7 @@ package repositories
 import (
 	"testing"
 
-	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/models"
+	"github.com/af-engage-widget-studio/backend/internal/models"
 )
 
 func TestWidgetUsageRowsToModelsPreservesIndependentCounts(t *testing.T) {

@@ -3,8 +3,8 @@ package services
 import (
 	"context"
 
-	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/models"
-	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/repositories"
+	"github.com/af-engage-widget-studio/backend/internal/models"
+	"github.com/af-engage-widget-studio/backend/internal/repositories"
 )
 
 type AdvisorService interface {

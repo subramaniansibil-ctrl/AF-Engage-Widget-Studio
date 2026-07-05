@@ -8,7 +8,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/models"
+	"github.com/af-engage-widget-studio/backend/internal/models"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -46,7 +46,7 @@ func NewMockAuthRepository() AuthRepository {
 			"advisor@afengage.com": {
 				user: models.User{
 					ID:    "user_advisor_001",
-					Name:  "Advisor User",
+					Name:  "Sarah Williams",
 					Email: "advisor@afengage.com",
 					Role:  models.RoleAdvisor,
 					Status: string(models.AdvisorStatusActive),
@@ -56,7 +56,7 @@ func NewMockAuthRepository() AuthRepository {
 			"client@afengage.com": {
 				user: models.User{
 					ID:       "user_client_001",
-					Name:     "Avery Chen",
+					Name:     "John Smith",
 					Email:    "client@afengage.com",
 					Role:     models.RoleClient,
 					ClientID: "client-001",

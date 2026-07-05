@@ -1,4 +1,4 @@
-module github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend
+module github.com/af-engage-widget-studio/backend
 
 go 1.22
 

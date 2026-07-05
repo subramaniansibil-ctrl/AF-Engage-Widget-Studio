@@ -5,10 +5,10 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/models"
-	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/repositories"
-	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/services"
-	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/utils"
+	"github.com/af-engage-widget-studio/backend/internal/models"
+	"github.com/af-engage-widget-studio/backend/internal/repositories"
+	"github.com/af-engage-widget-studio/backend/internal/services"
+	"github.com/af-engage-widget-studio/backend/internal/utils"
 )
 
 type AnalyticsHandler struct {

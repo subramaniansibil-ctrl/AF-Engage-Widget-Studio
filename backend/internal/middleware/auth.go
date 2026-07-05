@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/models"
-	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/services"
+	"github.com/af-engage-widget-studio/backend/internal/models"
+	"github.com/af-engage-widget-studio/backend/internal/services"
 )
 
 func JWTReady() gin.HandlerFunc {

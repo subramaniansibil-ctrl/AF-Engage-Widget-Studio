@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/services"
-	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/utils"
+	"github.com/af-engage-widget-studio/backend/internal/services"
+	"github.com/af-engage-widget-studio/backend/internal/utils"
 )
 
 type StatusHandler struct {

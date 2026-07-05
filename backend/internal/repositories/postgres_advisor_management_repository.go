@@ -6,7 +6,7 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/models"
+	"github.com/af-engage-widget-studio/backend/internal/models"
 )
 
 func (r *postgresAdvisorRepository) ListManagedAdvisors(ctx context.Context, filters models.AdvisorManagementFilters) ([]models.Advisor, int, error) {

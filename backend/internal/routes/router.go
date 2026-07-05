@@ -4,11 +4,11 @@ import (
 	"log/slog"
 
 	"github.com/gin-gonic/gin"
-	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/config"
-	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/handlers"
-	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/middleware"
-	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/models"
-	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/services"
+	"github.com/af-engage-widget-studio/backend/internal/config"
+	"github.com/af-engage-widget-studio/backend/internal/handlers"
+	"github.com/af-engage-widget-studio/backend/internal/middleware"
+	"github.com/af-engage-widget-studio/backend/internal/models"
+	"github.com/af-engage-widget-studio/backend/internal/services"
 )
 
 func NewRouter(cfg config.Config, statusService services.StatusService, authService services.AuthService, advisorService services.AdvisorService, widgetService services.WidgetService, clientService services.ClientService, simulationService services.SimulationService, analyticsService services.AnalyticsService, clientManagementService services.ClientManagementService, advisorManagementService services.AdvisorManagementService) *gin.Engine {
@@ -107,7 +107,7 @@ func NewRouter(cfg config.Config, statusService services.StatusService, authServ
 		{
 			adminAdvisors.GET("", advisorManagementHandler.List)                     // GET lists advisors for administration with search and filters.
 			adminAdvisors.GET("/:advisorId", advisorManagementHandler.Get)           // GET returns one managed advisor.
-			adminAdvisors.POST("", advisorManagementHandler.Create)                  // POST creates an advisor user.
+			adminAdvisors.POST("", advisorManagementHandler.Create)                  // POST creates an Sarah Williams.
 			adminAdvisors.PUT("/:advisorId", advisorManagementHandler.Update)        // PUT updates an existing advisor.
 			adminAdvisors.DELETE("/:advisorId", advisorManagementHandler.Deactivate) // DELETE disables advisor access without deleting history.
 		}
