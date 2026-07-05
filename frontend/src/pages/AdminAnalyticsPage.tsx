@@ -77,8 +77,7 @@ export function AdminAnalyticsPage() {
         </p>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
-        <KpiCard label="Total users" value={String(analytics?.totalUsers ?? 0)} icon={<UsersRound className="h-4 w-4" />} />
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         <KpiCard label="Total clients" value={String(analytics?.totalClients ?? 0)} icon={<UsersRound className="h-4 w-4" />} />
         <KpiCard label="Total widgets" value={String(analytics?.totalWidgets ?? 0)} icon={<Boxes className="h-4 w-4" />} tone="success" />
         <KpiCard label="Published dashboards" value={String(analytics?.publishedDashboards ?? 0)} icon={<LayoutDashboard className="h-4 w-4" />} />

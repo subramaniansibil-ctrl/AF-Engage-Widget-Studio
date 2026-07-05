@@ -57,8 +57,7 @@ export function AdminDashboardPage() {
         </p>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <KpiCard label="Total users" value={valueOrLoading(analytics?.totalUsers, isLoading)} icon={<UsersRound className="h-4 w-4" />} />
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <KpiCard label="Total clients" value={valueOrLoading(analytics?.totalClients, isLoading)} icon={<UsersRound className="h-4 w-4" />} />
         <KpiCard label="Total widgets" value={valueOrLoading(analytics?.totalWidgets, isLoading)} icon={<Boxes className="h-4 w-4" />} tone="success" />
         <KpiCard label="Total simulations" value={valueOrLoading(analytics?.totalSimulations, isLoading)} icon={<MousePointerClick className="h-4 w-4" />} />

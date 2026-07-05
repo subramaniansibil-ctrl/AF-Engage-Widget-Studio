@@ -22,7 +22,7 @@ const navItems: NavItem[] = [
   { to: '/advisor/analytics', label: 'Analytics', icon: ChartNoAxesCombined, roles: ['ADVISOR'] },
   { to: '/client/dashboard', label: 'Overview', icon: UsersRound, roles: ['CLIENT'] },
   { to: '/admin/audit-logs', label: 'Audit Log', icon: FileClock, roles: ['ADMIN'] },
-  { to: '/admin/clients', label: 'Clients', icon: UsersRound, roles: ['ADMIN'] },
+  { to: '/admin/clients', label: 'Client Management', icon: UsersRound, roles: ['ADMIN'] },
   { to: '/admin/advisors', label: 'Advisor Management', icon: UserCog, roles: ['ADMIN'] },
 ];
 
