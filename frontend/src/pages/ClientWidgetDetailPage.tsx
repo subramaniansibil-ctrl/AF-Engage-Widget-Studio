@@ -22,8 +22,8 @@ const emptySnapshot: SimulationSnapshot = { inputs: {}, results: {}, summary: ''
 export function ClientWidgetDetailPage() {
   const { widgetId = '' } = useParams();
   const dispatch = useAppDispatch();
-  const { data: assignment, isLoading, isError } = useGetClientWidgetByIdQuery(widgetId, { skip: !widgetId });
-  const { data: dashboard, isLoading: dashboardLoading } = useGetClientDashboardQuery();
+  const { data: assignment, isLoading, isError } = useGetClientWidgetByIdQuery(widgetId, { skip: !widgetId, refetchOnMountOrArgChange: true });
+  const { data: dashboard, isLoading: dashboardLoading } = useGetClientDashboardQuery(undefined, { refetchOnMountOrArgChange: true });
   const { data: simulations = [], isLoading: simulationsLoading } = useGetClientSimulationsQuery(widgetId, { skip: !widgetId });
   const [saveSimulation, { isLoading: saving }] = useSaveSimulationMutation();
   const [updateSimulation, { isLoading: updating }] = useUpdateClientSimulationMutation();

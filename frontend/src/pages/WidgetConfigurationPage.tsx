@@ -144,7 +144,10 @@ export function WidgetConfigurationPage() {
   const isEditMode = searchParams.get('mode') === 'edit' && Boolean(initialClientId && initialWidgetId && assignmentId);
   const requestedReturnTo = searchParams.get('returnTo') ?? '';
   const returnTo = requestedReturnTo.startsWith('/advisor/clients/') ? requestedReturnTo : `/advisor/clients/${initialClientId}`;
-  const { data: clientPage, isLoading: clientsLoading } = useGetClientsQuery({ page: 1, pageSize: CLIENT_PAGE_SIZE });
+  const { data: clientPage, isLoading: clientsLoading } = useGetClientsQuery(
+    { page: 1, pageSize: CLIENT_PAGE_SIZE },
+    { refetchOnMountOrArgChange: true },
+  );
   const clients = clientPage?.items ?? [];
   const { data: widgets = [], isLoading: widgetsLoading } = useGetWidgetsQuery();
   const [clientId, setClientId] = useState(initialClientId);

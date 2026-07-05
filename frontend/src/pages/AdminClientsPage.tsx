@@ -60,7 +60,10 @@ export function AdminClientsPage() {
   const [selected, setSelected] = useState<AdminClient | null>(null);
   const [deactivateId, setDeactivateId] = useState<string | null>(null);
   const [sortBy, sortOrder] = sort.split('-') as ['createdAt' | 'name' | 'status' | 'advisor', 'asc' | 'desc'];
-  const { data: clientPage, isLoading, isFetching, error } = useGetAdminClientsQuery({ search, status, assignedAdvisor: advisor, recent, sortBy, sortOrder, page, pageSize });
+  const { data: clientPage, isLoading, isFetching, error } = useGetAdminClientsQuery(
+    { search, status, assignedAdvisor: advisor, recent, sortBy, sortOrder, page, pageSize },
+    { refetchOnMountOrArgChange: true },
+  );
   const [deactivate, { isLoading: isDeactivating }] = useDeactivateAdminClientMutation();
 
   useEffect(() => setPage(1), [search, status, advisor, recent, sort]);

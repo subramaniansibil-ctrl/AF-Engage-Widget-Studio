@@ -11,13 +11,13 @@ import { zarCurrency as currency } from '../utils/currency';
 import { ClientPortfolioSection } from '../components/portfolio/ClientPortfolioSection';
 
 export function ClientDashboardPage() {
-  const { data: dashboard, isLoading, isError } = useGetClientDashboardQuery();
+  const { data: dashboard, isLoading, isError } = useGetClientDashboardQuery(undefined, { refetchOnMountOrArgChange: true });
 
   if (isLoading) {
     return <p className="text-sm text-ink/60">Loading your dashboard...</p>;
   }
 
-  if (isError || !dashboard) {
+  if (!dashboard) {
     return (
       <div className="rounded-lg border border-ink/10 bg-white p-6 shadow-panel">
         <p className="font-semibold">We could not load your dashboard.</p>
@@ -28,6 +28,7 @@ export function ClientDashboardPage() {
 
   return (
     <div className="space-y-6">
+      {isError && <div role="alert" className="rounded-md border border-gold/30 bg-gold/10 px-4 py-3 text-sm text-ink/70">Your dashboard could not be refreshed. Showing the most recent available data.</div>}
       <section className="grid gap-5 rounded-lg border border-ink/10 bg-white p-6 shadow-panel lg:grid-cols-[1fr_320px]">
         <div>
           <p className="text-sm font-semibold text-sage">Client portal</p>

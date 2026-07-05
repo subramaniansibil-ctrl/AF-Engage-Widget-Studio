@@ -36,6 +36,6 @@ export function ClientPortfolioSection({ portfolio }: Readonly<{ portfolio: Port
   );
 }
 
-function numberOrZero(value: number | undefined) {
-  return Number.isFinite(value) ? value : 0;
+function numberOrZero(value: number | undefined): number {
+  return value !== undefined && Number.isFinite(value) ? value : 0;
 }
