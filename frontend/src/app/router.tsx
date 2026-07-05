@@ -66,7 +66,7 @@ export const router = createBrowserRouter([
   {
     path: '/',
     children: [
-      { index: true, element: <Navigate to="/advisor/dashboard" replace /> },
+      { index: true, element: <Navigate to="/advisor/analytics" replace /> },
       {
         element: <ProtectedRoute />,
         children: [
@@ -76,7 +76,7 @@ export const router = createBrowserRouter([
               {
                 element: <AdvisorRoute />,
                 children: [
-                  { path: 'advisor/dashboard', element: routeElement(AdvisorDashboardPage) },
+                  { path: 'advisor/dashboard', element: <Navigate to="/advisor/analytics" replace /> },
                   { path: 'advisor/clients', element: <Navigate to="/advisor/client-management" replace /> },
                   { path: 'advisor/client-management', element: routeElement(AdminClientsPage) },
                   { path: 'advisor/clients/:clientId', element: routeElement(AdvisorClientDetailPage) },

@@ -1,4 +1,4 @@
-import { AlertTriangle, Gauge, LayoutDashboard, UsersRound, WalletCards } from 'lucide-react';
+import { Gauge, LayoutDashboard } from 'lucide-react';
 import { Bar } from 'react-chartjs-2';
 import { Link } from 'react-router-dom';
 import { afChartBarColor } from '../components/charts/chartjs';
@@ -80,18 +80,6 @@ export function AdvisorDashboardPage() {
         >
           View clients
         </Link>
-      </section>
-
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <KpiCard label="Total clients" value={metric(stats?.totalClients)} icon={<UsersRound className="h-4 w-4" />} />
-        <KpiCard
-          label="Assets under advice"
-          value={stats ? currency.format(stats.totalAssetsUnderAdvice) : '...'}
-          icon={<WalletCards className="h-4 w-4" />}
-          tone="success"
-        />
-        <KpiCard label="High-risk clients" value={metric(stats?.highRiskClients)} icon={<AlertTriangle className="h-4 w-4" />} tone="warning" />
-        <KpiCard label="Published dashboards" value={metric(stats?.activeDashboards)} icon={<LayoutDashboard className="h-4 w-4" />} />
       </section>
 
       <section>

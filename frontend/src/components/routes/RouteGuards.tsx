@@ -9,7 +9,7 @@ interface RoleRouteProps {
 function dashboardForRole(role?: Role) {
   switch (role) {
     case 'ADVISOR':
-      return '/advisor/dashboard';
+      return '/advisor/analytics';
     case 'CLIENT':
       return '/client/dashboard';
     case 'ADMIN':
