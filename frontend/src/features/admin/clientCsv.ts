@@ -80,7 +80,7 @@ export function clientTemplateCsv(options: ClientCsvOptions = {}) {
   const includeAdvisor = options.includeAdvisor ?? true;
   const headers = CLIENT_TEMPLATE_HEADERS.filter((header) => includeAdvisor || header !== 'Assigned Advisor');
   const values = ['Taylor Morgan', 'client-101', 'taylor.morgan@example.com', '+27 82 555 0101'];
-  if (includeAdvisor) values.push(options.validAdvisors?.[0] ?? 'Advisor User');
+  if (includeAdvisor) values.push(options.validAdvisors?.[0] ?? 'Sarah Williams');
   values.push('ACTIVE', '1985-06-15', 'MODERATE', 'Retirement income', 'portfolio-101');
   return [
     headers.join(','),

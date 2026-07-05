@@ -12,8 +12,8 @@ describe('client CSV parsing', () => {
   it('supports quoted commas and keeps invalid rows out of the import payload', () => {
     const csv = [
       'Client Name,Client ID,Email,Mobile Number,Assigned Advisor,Status,Date of Birth,Risk Profile,Investment Goal,Portfolio ID',
-      '"Morgan, Taylor",client-201,morgan@example.com,+27 82 555 0101,Advisor User,ACTIVE,1988-01-02,GROWTH,"Growth, then income",portfolio-201',
-      'Broken client,client-202,not-an-email,+27 82 555 0102,Advisor User,ACTIVE,,,,',
+      '"Morgan, Taylor",client-201,morgan@example.com,+27 82 555 0101,Sarah Williams,ACTIVE,1988-01-02,GROWTH,"Growth, then income",portfolio-201',
+      'Broken client,client-202,not-an-email,+27 82 555 0102,Sarah Williams,ACTIVE,,,,',
     ].join('\n');
     const result = parseClientCsv(csv);
     expect(result.rows).toHaveLength(1);
@@ -27,7 +27,7 @@ describe('client CSV parsing', () => {
       'Missing,client-301,missing@example.com,+27 82 555 0101,,ACTIVE,,,,',
       'Unknown,client-302,unknown@example.com,+27 82 555 0102,Someone Else,ACTIVE,,,,',
     ].join('\n');
-    const result = parseClientCsv(csv, { validAdvisors: ['Advisor User'] });
+    const result = parseClientCsv(csv, { validAdvisors: ['Sarah Williams'] });
     expect(result.rows).toEqual([]);
     expect(result.errors).toContainEqual({ rowNumber: 2, field: 'Assigned Advisor', message: 'is required' });
     expect(result.errors).toContainEqual({ rowNumber: 3, field: 'Assigned Advisor', message: 'must match an active advisor' });

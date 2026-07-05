@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/config"
-	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/utils"
+	"github.com/af-engage-widget-studio/backend/internal/config"
+	"github.com/af-engage-widget-studio/backend/internal/utils"
 )
 
 type rateBucket struct {

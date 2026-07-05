@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/models"
+	"github.com/af-engage-widget-studio/backend/internal/models"
 )
 
 type widgetUsageRow struct {

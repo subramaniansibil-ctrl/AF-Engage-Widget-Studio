@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/models"
+	"github.com/af-engage-widget-studio/backend/internal/models"
 )
 
 var ErrSimulationNotFound = errors.New("simulation not found")
@@ -37,7 +37,7 @@ func NewMockClientRepository() ClientRepository {
 				Inputs:    map[string]string{"projectionYears": "20", "scenario": "No withdrawal"},
 				Results:   map[string]string{"projectedRetirementValue": "R 1 420 000"},
 				Result:    "Retirement goal remains on track at the current contribution rate.",
-				SavedByID: "client-001", SavedByName: "Avery Chen", SavedByRole: models.RoleClient,
+				SavedByID: "client-001", SavedByName: "John Smith", SavedByRole: models.RoleClient,
 				CreatedAt: createdAt, UpdatedAt: createdAt,
 			}},
 		},

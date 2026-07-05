@@ -8,10 +8,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/config"
-	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/models"
-	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/repositories"
-	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/services"
+	"github.com/af-engage-widget-studio/backend/internal/config"
+	"github.com/af-engage-widget-studio/backend/internal/models"
+	"github.com/af-engage-widget-studio/backend/internal/repositories"
+	"github.com/af-engage-widget-studio/backend/internal/services"
 )
 
 func TestAPISmokeHealthLoginAndAdvisorDashboard(t *testing.T) {
@@ -221,7 +221,7 @@ func TestAdminClientManagementPermissionsAndDuplicates(t *testing.T) {
 	}
 
 	adminToken := loginToken(t, router, "admin@afengage.com")
-	clientBody, _ := json.Marshal(models.ClientUpsertRequest{ID: "client-admin-001", Name: "Admin Created", Email: "created@example.com", MobileNumber: "+27 82 555 0199", AssignedAdvisor: "Advisor User", Status: models.ClientStatusActive, Password: "Password123", ConfirmPassword: "Password123"})
+	clientBody, _ := json.Marshal(models.ClientUpsertRequest{ID: "client-admin-001", Name: "Admin Created", Email: "created@example.com", MobileNumber: "+27 82 555 0199", AssignedAdvisor: "Sarah Williams", Status: models.ClientStatusActive, Password: "Password123", ConfirmPassword: "Password123"})
 	createRequest := httptest.NewRequest(http.MethodPost, "/api/v1/admin/clients", bytes.NewReader(clientBody))
 	createRequest.Header.Set("Authorization", "Bearer "+adminToken)
 	createRequest.Header.Set("Content-Type", "application/json")
@@ -293,7 +293,7 @@ func TestAdvisorClientListAndAuthorization(t *testing.T) {
 	if err := json.Unmarshal(managedCreateRecorder.Body.Bytes(), &managedClient); err != nil {
 		t.Fatalf("decode advisor managed client: %v", err)
 	}
-	if managedClient.AssignedAdvisor != "Advisor User" {
+	if managedClient.AssignedAdvisor != "Sarah Williams" {
 		t.Fatalf("expected backend to force logged-in advisor assignment, got %q", managedClient.AssignedAdvisor)
 	}
 

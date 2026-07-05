@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/models"
-	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/repositories"
+	"github.com/af-engage-widget-studio/backend/internal/models"
+	"github.com/af-engage-widget-studio/backend/internal/repositories"
 )
 
 func TestAdvisorManagementCreateRejectsDuplicates(t *testing.T) {

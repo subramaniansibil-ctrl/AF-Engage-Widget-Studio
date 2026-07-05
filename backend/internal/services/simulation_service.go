@@ -4,7 +4,7 @@ import (
 	"context"
 	"math"
 
-	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/models"
+	"github.com/af-engage-widget-studio/backend/internal/models"
 )
 
 const simulationDisclaimer = "Illustration only. Results use mock assumptions and are not financial advice."

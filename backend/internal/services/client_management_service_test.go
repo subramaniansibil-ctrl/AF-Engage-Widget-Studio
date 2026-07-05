@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/models"
-	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/repositories"
+	"github.com/af-engage-widget-studio/backend/internal/models"
+	"github.com/af-engage-widget-studio/backend/internal/repositories"
 )
 
 func TestClientManagementCreateRejectsDuplicates(t *testing.T) {
@@ -14,7 +14,7 @@ func TestClientManagementCreateRejectsDuplicates(t *testing.T) {
 	if _, err := service.CreateClient(context.Background(), request); err != repositories.ErrDuplicateClientID {
 		t.Fatalf("expected duplicate client ID, got %v", err)
 	}
-	request = validClientRequest("new-client", "avery.chen@example.com")
+	request = validClientRequest("new-client", "client@afengage.com")
 	if _, err := service.CreateClient(context.Background(), request); err != repositories.ErrDuplicateClientEmail {
 		t.Fatalf("expected duplicate email, got %v", err)
 	}
@@ -105,11 +105,11 @@ func TestAdvisorCreateForcesOwnAssignment(t *testing.T) {
 	request := validClientRequest("client-advisor-create", "advisor-create@example.com")
 	request.AssignedAdvisor = "Another Advisor"
 
-	created, err := service.CreateClient(context.Background(), request, models.User{Role: models.RoleAdvisor, Name: "Advisor User"})
+	created, err := service.CreateClient(context.Background(), request, models.User{Role: models.RoleAdvisor, Name: "Sarah Williams"})
 	if err != nil {
 		t.Fatalf("expected advisor create to succeed, got %v", err)
 	}
-	if created.AssignedAdvisor != "Advisor User" {
+	if created.AssignedAdvisor != "Sarah Williams" {
 		t.Fatalf("expected logged-in advisor assignment, got %q", created.AssignedAdvisor)
 	}
 }
@@ -117,7 +117,7 @@ func TestAdvisorCreateForcesOwnAssignment(t *testing.T) {
 func TestAdvisorUpdatePreservesAssignmentAndCannotAccessAnotherAdvisorClient(t *testing.T) {
 	repository := repositories.NewMockAdvisorRepository()
 	service := NewClientManagementService(repository, repositories.NewMockAuthRepository(), repository)
-	actor := models.User{Role: models.RoleAdvisor, Name: "Advisor User"}
+	actor := models.User{Role: models.RoleAdvisor, Name: "Sarah Williams"}
 	existing, err := service.GetClient(context.Background(), "client-001", actor)
 	if err != nil {
 		t.Fatalf("expected assigned client, got %v", err)
@@ -145,8 +145,8 @@ func TestAdvisorBulkImportForcesOwnAssignment(t *testing.T) {
 	service := NewClientManagementService(repository, repositories.NewMockAuthRepository(), repository)
 	row := validClientRequest("client-advisor-bulk", "advisor-bulk@example.com")
 	row.AssignedAdvisor = "Another Advisor"
-	response := service.ImportClients(context.Background(), models.BulkClientImportRequest{Rows: []models.BulkClientRow{{RowNumber: 2, Client: row}}}, models.User{Role: models.RoleAdvisor, Name: "Advisor User"})
-	if response.Imported != 1 || response.Clients[0].AssignedAdvisor != "Advisor User" {
+	response := service.ImportClients(context.Background(), models.BulkClientImportRequest{Rows: []models.BulkClientRow{{RowNumber: 2, Client: row}}}, models.User{Role: models.RoleAdvisor, Name: "Sarah Williams"})
+	if response.Imported != 1 || response.Clients[0].AssignedAdvisor != "Sarah Williams" {
 		t.Fatalf("expected advisor bulk assignment, got %+v", response)
 	}
 }
@@ -154,7 +154,7 @@ func TestAdvisorBulkImportForcesOwnAssignment(t *testing.T) {
 func validClientRequest(id, email string) models.ClientUpsertRequest {
 	return models.ClientUpsertRequest{
 		ID: id, Name: "Test Client", Email: email, MobileNumber: "+27 82 555 0101",
-		AssignedAdvisor: "Advisor User", Status: models.ClientStatusActive, RiskProfile: models.RiskModerate,
+		AssignedAdvisor: "Sarah Williams", Status: models.ClientStatusActive, RiskProfile: models.RiskModerate,
 		Password: "Password123", ConfirmPassword: "Password123",
 	}
 }

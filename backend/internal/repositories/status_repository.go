@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/config"
-	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/models"
+	"github.com/af-engage-widget-studio/backend/internal/config"
+	"github.com/af-engage-widget-studio/backend/internal/models"
 )
 
 type StatusRepository interface {

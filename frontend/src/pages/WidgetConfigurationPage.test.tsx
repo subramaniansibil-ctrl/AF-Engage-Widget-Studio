@@ -28,10 +28,10 @@ describe('Widget configuration simulation actions', () => {
     const print = vi.spyOn(window, 'print').mockImplementation(() => undefined);
     exportSimulationPdf();
     expect(print).toHaveBeenCalledOnce();
-    const { container } = render(<SimulationPrintReport clientName="Avery Naidoo" clientEmail="avery@example.com" advisorName="Advisor User" widgetName="Two-Pot Impact" simulationName="Early Retirement" values={{ withdrawalAmount: '25000' }} />);
+    const { container } = render(<SimulationPrintReport clientName="Avery Naidoo" clientEmail="avery@example.com" advisorName="Sarah Williams" widgetName="Two-Pot Impact" simulationName="Early Retirement" values={{ withdrawalAmount: '25000' }} />);
     const report = within(container);
     expect(report.getByText(/Avery Naidoo/)).toBeInTheDocument();
-    expect(report.getByText(/Advisor User/)).toBeInTheDocument();
+    expect(report.getByText(/Sarah Williams/)).toBeInTheDocument();
     expect(report.getByText(/Early Retirement/)).toBeInTheDocument();
     expect(report.getByText('Selected scenario values')).toBeInTheDocument();
     expect(report.getByText('Withdrawal Amount')).toBeInTheDocument();

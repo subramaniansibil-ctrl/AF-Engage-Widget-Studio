@@ -12,11 +12,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/config"
-	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/database"
-	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/repositories"
-	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/routes"
-	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/services"
+	"github.com/af-engage-widget-studio/backend/internal/config"
+	"github.com/af-engage-widget-studio/backend/internal/database"
+	"github.com/af-engage-widget-studio/backend/internal/repositories"
+	"github.com/af-engage-widget-studio/backend/internal/routes"
+	"github.com/af-engage-widget-studio/backend/internal/services"
 )
 
 func main() {

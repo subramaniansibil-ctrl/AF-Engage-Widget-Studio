@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/subramaniansibil-ctrl/af-engage-widget-studio/backend/internal/models"
+	"github.com/af-engage-widget-studio/backend/internal/models"
 )
 
 type postgresAdvisorRepository struct {

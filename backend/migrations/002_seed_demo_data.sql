@@ -1,5 +1,5 @@
 INSERT INTO clients (id, name, age, email, risk_profile, retirement_stage) VALUES
-  ('client-001', 'Avery Chen', 42, 'avery.chen@example.com', 'MODERATE', 'ACCUMULATION'),
+  ('client-001', 'John Smith', 42, 'client@afengage.com', 'MODERATE', 'ACCUMULATION'),
   ('client-002', 'Jordan Patel', 35, 'jordan.patel@example.com', 'GROWTH', 'ACCUMULATION'),
   ('client-003', 'Sam Rivera', 61, 'sam.rivera@example.com', 'CONSERVATIVE', 'PRE_RETIREMENT')
 ON CONFLICT (id) DO UPDATE SET
@@ -10,8 +10,8 @@ ON CONFLICT (id) DO UPDATE SET
   retirement_stage = EXCLUDED.retirement_stage;
 
 INSERT INTO users (id, name, email, password_hash, role, client_id) VALUES
-  ('user_advisor_001', 'Advisor User', 'advisor@afengage.com', 'password123', 'ADVISOR', NULL),
-  ('user_client_001', 'Avery Chen', 'client@afengage.com', 'password123', 'CLIENT', 'client-001'),
+  ('user_advisor_001', 'Sarah Williams', 'advisor@afengage.com', 'password123', 'ADVISOR', NULL),
+  ('user_client_001', 'John Smith', 'client@afengage.com', 'password123', 'CLIENT', 'client-001'),
   ('user_admin_001', 'Admin User', 'admin@afengage.com', 'password123', 'ADMIN', NULL)
 ON CONFLICT (id) DO UPDATE SET
   name = EXCLUDED.name,
@@ -108,7 +108,7 @@ INSERT INTO simulation_history (id, client_id, widget_id, inputs, result, create
 ON CONFLICT (id) DO UPDATE SET result = EXCLUDED.result;
 
 INSERT INTO notifications (id, title, message, type, read, created_at) VALUES
-  ('notification-001', 'Dashboard published', 'Avery Chen''s personalized dashboard is live.', 'success', FALSE, NOW() - INTERVAL '25 minutes'),
+  ('notification-001', 'Dashboard published', 'John Smith''s personalized dashboard is live.', 'success', FALSE, NOW() - INTERVAL '25 minutes'),
   ('notification-002', 'Simulation saved', 'Two-Pot Impact illustration was saved by a client.', 'info', FALSE, NOW() - INTERVAL '2 hours'),
   ('notification-003', 'Review high-risk segment', 'Three clients have aggressive allocations near retirement.', 'warning', TRUE, NOW() - INTERVAL '1 day')
 ON CONFLICT (id) DO UPDATE SET
@@ -117,8 +117,8 @@ ON CONFLICT (id) DO UPDATE SET
   type = EXCLUDED.type;
 
 INSERT INTO audit_logs (id, actor, action, entity, created_at) VALUES
-  ('audit-001', 'Advisor User', 'Published client dashboard', 'client-001', NOW() - INTERVAL '25 minutes'),
-  ('audit-002', 'Avery Chen', 'Saved two-pot simulation', 'two-pot-impact', NOW() - INTERVAL '2 hours'),
+  ('audit-001', 'Sarah Williams', 'Published client dashboard', 'client-001', NOW() - INTERVAL '25 minutes'),
+  ('audit-002', 'John Smith', 'Saved two-pot simulation', 'two-pot-impact', NOW() - INTERVAL '2 hours'),
   ('audit-003', 'Admin User', 'Reviewed platform analytics', 'analytics', NOW() - INTERVAL '8 hours'),
-  ('audit-004', 'Advisor User', 'Assigned widget', 'onefee-wealth-reclaim', NOW() - INTERVAL '28 hours')
+  ('audit-004', 'Sarah Williams', 'Assigned widget', 'onefee-wealth-reclaim', NOW() - INTERVAL '28 hours')
 ON CONFLICT (id) DO UPDATE SET action = EXCLUDED.action;

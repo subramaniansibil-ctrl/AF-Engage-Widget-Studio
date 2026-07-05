@@ -15,7 +15,7 @@ vi.mock('../features/advisor/advisorApi', () => ({
   useGetClientByIdQuery: () => ({
     data: {
       id: 'client-001', name: 'Avery Naidoo', email: 'avery@example.com', age: 44,
-      assignedAdvisor: 'Advisor User', status: 'ACTIVE', riskProfile: 'MODERATE', retirementStage: 'ACCUMULATION',
+      assignedAdvisor: 'Sarah Williams', status: 'ACTIVE', riskProfile: 'MODERATE', retirementStage: 'ACCUMULATION',
       portfolio: {
         totalValue: 1200000,
         savingsPotBalance: 85000,
@@ -57,7 +57,7 @@ describe('Advisor Client Details', () => {
     );
 
     expect(screen.getByRole('heading', { name: 'Avery Naidoo' })).toBeInTheDocument();
-    expect(screen.getByText('Advisor User')).toBeInTheDocument();
+    expect(screen.getByText('Sarah Williams')).toBeInTheDocument();
     expect(screen.getByText('active')).toBeInTheDocument();
     expect(screen.getByText('Two-Pot Impact')).toBeInTheDocument();
     expect(screen.getByText('Client portfolio')).toBeInTheDocument();

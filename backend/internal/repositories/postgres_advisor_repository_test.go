@@ -6,7 +6,7 @@ import (
 )
 
 func TestAdvisorDashboardScopeCteUsesScopedClientSet(t *testing.T) {
-	cte := advisorDashboardScopeCte("Advisor User")
+	cte := advisorDashboardScopeCte("Sarah Williams")
 	if !strings.Contains(cte, "advisor_clients") {
 		t.Fatalf("expected advisor dashboard scope to include advisor_clients CTE, got %q", cte)
 	}
