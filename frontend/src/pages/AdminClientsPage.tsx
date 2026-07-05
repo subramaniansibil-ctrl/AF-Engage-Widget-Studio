@@ -193,7 +193,7 @@ function ClientForm({ client, onDone, isAdmin, currentAdvisor, advisors }: { cli
   async function submit(event: FormEvent) {
     event.preventDefault();
     try {
-      const body = isAdmin ? form : { ...form, assignedAdvisor: '' };
+      const body = isAdmin ? form : { ...form, assignedAdvisor: currentAdvisor || form.assignedAdvisor };
       if (client) await updateClient({ id: client.id, body }).unwrap(); else await createClient(body).unwrap();
       dispatch(addToast({ title: client ? 'Client updated' : 'Client created', description: `${form.name} is ready for advisor workflows.`, variant: 'success' }));
       onDone();
@@ -241,7 +241,7 @@ function BulkUpload({ onDone, isAdmin, currentAdvisor, advisors }: { onDone: () 
   }
   async function readFile(file: File | undefined) {
     if (!file) return;
-    const parsed = parseClientCsv(await file.text(), { includeAdvisor: isAdmin, forcedAdvisor: isAdmin ? undefined : '', validAdvisors: isAdmin ? advisors : undefined }); setRows(parsed.rows); setErrors(parsed.errors); setFileName(file.name);
+    const parsed = parseClientCsv(await file.text(), { includeAdvisor: isAdmin, forcedAdvisor: isAdmin ? undefined : currentAdvisor, validAdvisors: isAdmin ? advisors : undefined }); setRows(parsed.rows); setErrors(parsed.errors); setFileName(file.name);
   }
   async function upload() {
     try {

@@ -109,7 +109,7 @@ type ClientUpsertRequest struct {
 	Name            string       `json:"name" binding:"required,min=2,max=120"`
 	Email           string       `json:"email" binding:"required,email"`
 	MobileNumber    string       `json:"mobileNumber" binding:"required,min=7,max=30"`
-	AssignedAdvisor string       `json:"assignedAdvisor" binding:"required,min=2,max=120"`
+	AssignedAdvisor string       `json:"assignedAdvisor" binding:"omitempty,min=2,max=120"`
 	Status          ClientStatus `json:"status" binding:"required,oneof=ACTIVE INACTIVE"`
 	DateOfBirth     string       `json:"dateOfBirth"`
 	RiskProfile     RiskProfile  `json:"riskProfile" binding:"omitempty,oneof=CONSERVATIVE MODERATE GROWTH AGGRESSIVE"`

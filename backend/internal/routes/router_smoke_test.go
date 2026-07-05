@@ -241,6 +241,24 @@ func TestAdminClientManagementPermissionsAndDuplicates(t *testing.T) {
 	}
 }
 
+func TestAdvisorClientManagementCreateAllowsEmptyAssignedAdvisor(t *testing.T) {
+	cfg := config.Config{Environment: "test", ServiceName: "af-engage-api-test", CORSOrigins: "http://localhost:5173", RateLimitRPM: "1000"}
+	authRepository := repositories.NewMockAuthRepository()
+	advisorRepository := repositories.NewMockAdvisorRepository()
+	router := NewRouter(cfg, services.NewStatusService(repositories.NewStatusRepository(cfg)), services.NewAuthService(authRepository), services.NewAdvisorService(advisorRepository), services.NewWidgetService(repositories.NewMockWidgetRepository()), services.NewClientService(advisorRepository, repositories.NewMockWidgetRepository(), repositories.NewMockClientRepository()), services.NewSimulationService(), services.NewAnalyticsService(repositories.NewMockAnalyticsRepository()), services.NewClientManagementService(advisorRepository, authRepository), services.NewAdvisorManagementService(advisorRepository))
+
+	advisorToken := loginToken(t, router, "advisor@afengage.com")
+	body, _ := json.Marshal(models.ClientUpsertRequest{ID: "client-advisor-empty", Name: "Advisor Empty", Email: "advisor-empty@example.com", MobileNumber: "+27 82 555 0102", AssignedAdvisor: "", Status: models.ClientStatusActive, Password: "Password123", ConfirmPassword: "Password123"})
+	request := httptest.NewRequest(http.MethodPost, "/api/v1/client-management", bytes.NewReader(body))
+	request.Header.Set("Authorization", "Bearer "+advisorToken)
+	request.Header.Set("Content-Type", "application/json")
+	recorder := httptest.NewRecorder()
+	router.ServeHTTP(recorder, request)
+	if recorder.Code != http.StatusCreated {
+		t.Fatalf("expected advisor client-management create 201, got %d: %s", recorder.Code, recorder.Body.String())
+	}
+}
+
 func TestAdvisorClientListAndAuthorization(t *testing.T) {
 	cfg := config.Config{Environment: "test", ServiceName: "af-engage-api-test", CORSOrigins: "http://localhost:5173", RateLimitRPM: "1000"}
 	authRepository := repositories.NewMockAuthRepository()
